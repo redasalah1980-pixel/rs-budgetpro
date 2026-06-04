@@ -1538,18 +1538,13 @@ function doLogin(){
 
 <div id="pane-dashboard" class="pane">
   <div class="ph">
-    <div class="pt">Dashboard <span>Visual overview</span></div>
-    <div class="ypills" id="yp-dash"></div>
+    <div class="pt">Dashboard <span>Visual overview · monthly performance · year summary</span></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="ypills" id="yp-dash"></div>
+      <button onclick="printDashboard()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer;white-space:nowrap" onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">🖨 Print Dashboard</button>
+    </div>
   </div>
-  <div class="krow" id="dash-kpis"></div>
-  <div class="dg">
-    <div class="cc"><div class="cc-title">Expenses: Actual vs Budget<div class="cleg"><div class="leg"><div class="ld2" style="background:var(--teal)"></div>Actual</div><div class="leg"><div class="ld2" style="background:rgba(255,179,71,.5)"></div>Budget</div></div></div><div class="bars" id="d-exp"></div></div>
-    <div class="cc"><div class="cc-title">KG Processed</div><div class="bars" id="d-kg"></div></div>
-  </div>
-  <div class="dg">
-    <div class="cc"><div class="cc-title">CPOR Actual (QAR)</div><div class="bars" id="d-cpor"></div></div>
-    <div class="cc"><div class="cc-title">Occupancy %</div><div class="bars" id="d-occ"></div></div>
-  </div>
+  <div id="dash-body"></div>
 </div>
 
 </div>
@@ -2166,48 +2161,355 @@ function saveSettings(){deriveS();saveAll();toast('Assumptions saved ✓')}
 /* ── DASHBOARD ── */
 function buildDash(){
   buildYP();
+  const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MF2=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // ── Gather monthly data ──
   const months=[];
-  let mxE=0,mxK=0,mxC=0;
+  let totRs=0,totKg=0,totLaA=0,totOpA=0,totPrA=0;
+  let totLaB=0,totOpB=0,totPrB=0,totAvail=0;
+
+  // Prior year totals
+  const py=dashY-1;
+  let pyTotA=0,pyRs=0;
+  for(let m=0;m<12;m++){
+    pyTotA+=((DATA[py]?.[m]?.laA||0)+(DATA[py]?.[m]?.opA||0)+(DATA[py]?.[m]?.prA||0));
+    pyRs+=(DATA[py]?.[m]?.roomsSold||0);
+  }
+  const pyCpor=pyRs&&pyTotA?pyTotA/pyRs:0;
+
   for(let m=0;m<12;m++){
     const r=DATA[dashY]?.[m]||{};
     const rs=r.roomsSold||0;
     const kg=r.kg||0;
+    const laA=r.laA||0,opA=r.opA||0,prA=r.prA||0;
     const b=bud(dashY,m,rs);
-    const totA=(r.laA||0)+(r.opA||0)+(r.prA||0);
     const avail=maxRN(dashY,m);
-    const occ=avail?rs/avail*100:0;
+    const occ=rs>0?rs/avail*100:0;
+    const totA=laA+opA+prA;
     const cporA=rs&&totA?totA/rs:0;
-    months.push({rs,kg,totA,totB:b.tot,occ,cporA});
-    mxE=Math.max(mxE,totA,b.tot);mxK=Math.max(mxK,kg);mxC=Math.max(mxC,cporA);
+    const cporB=rs&&b.tot?b.tot/rs:0;
+    totRs+=rs;totKg+=kg;totLaA+=laA;totOpA+=opA;totPrA+=prA;
+    totLaB+=b.la;totOpB+=b.op;totPrB+=b.pr;
+    if(rs>0)totAvail+=avail;
+    months.push({m,rs,kg,laA,opA,prA,totA,laB:b.la,opB:b.op,prB:b.pr,totB:b.tot,occ,cporA,cporB,avail});
   }
-  if(!mxE)mxE=1;if(!mxK)mxK=1;if(!mxC)mxC=1;
+  const totA=totLaA+totOpA+totPrA;
+  const totB=totLaB+totOpB+totPrB;
+  const vr=totA-totB;
+  const occ=totAvail?totRs/totAvail*100:0;
+  const cporA=totRs&&totA?totA/totRs:0;
+  const cporB=totRs&&totB?totB/totRs:0;
+  const costKg=totKg&&totA?totA/totKg:0;
+  const kgRn=totRs&&totKg?totKg/totRs:0;
+  const pyVr=pyTotA&&totA?((totA-pyTotA)/pyTotA*100):null;
 
-  let totRs=0,totKg=0,totA=0,totB=0,totAv=0;
-  months.forEach((m,i)=>{totRs+=m.rs;totKg+=m.kg;totA+=m.totA;totB+=m.totB;totAv+=maxRN(dashY,i)});
-  const occ=totAv?totRs/totAv*100:0,vr=totA-totB;
+  // ── SVG Chart builder ──
+  function svgBars(W,H,PAD_L,PAD_B,items,fmtFn){
+    const chartH=H-PAD_B-20;
+    const chartW=W-PAD_L-10;
+    const n=items.length;
+    const allVals=items.flatMap(d=>d.vals).filter(v=>v>0);
+    const maxV=allVals.length?Math.max(...allVals)*1.15:1;
+    const groupW=chartW/n;
+    const hasBud=items.some(d=>d.vals.length>1&&d.vals[1]>0);
+    const barW=hasBud?Math.min(18,groupW/2-3):Math.min(28,groupW-8);
+    let svg='';
 
-  document.getElementById('dash-kpis').innerHTML=`
-    <div class="kpi"><div class="kpi-a" style="background:var(--violet)"></div><div class="kpi-l">Rooms Sold</div><div class="kpi-v c-v">${totRs.toLocaleString()}</div><div class="kpi-s">Occ ${occ.toFixed(1)}%</div></div>
-    <div class="kpi"><div class="kpi-a" style="background:var(--sky)"></div><div class="kpi-l">Total KG</div><div class="kpi-v c-s">${f0(totKg)}</div></div>
-    <div class="kpi"><div class="kpi-a" style="background:var(--teal)"></div><div class="kpi-l">Total Actual</div><div class="kpi-v c-t">${fN(totA)}</div></div>
-    <div class="kpi"><div class="kpi-a" style="background:var(--amber)"></div><div class="kpi-l">Total Budget</div><div class="kpi-v c-a">${fN(totB)}</div></div>
-    <div class="kpi"><div class="kpi-a" style="background:${vr>0?'var(--coral)':'var(--teal)'}"></div><div class="kpi-l">Variance</div><div class="kpi-v ${vr>0?'neg':'pos'}">${(vr>0?'+':'')+fN(vr)}</div></div>
-    <div class="kpi"><div class="kpi-a" style="background:var(--violet)"></div><div class="kpi-l">CPOR Actual</div><div class="kpi-v c-v">${totRs&&totA?(totA/totRs).toFixed(2):'—'}</div></div>
-    <div class="kpi"><div class="kpi-a" style="background:var(--sky)"></div><div class="kpi-l">Cost / KG</div><div class="kpi-v c-s">${totKg&&totA?(totA/totKg).toFixed(2):'—'}</div></div>`;
+    // Grid lines
+    for(let t=0;t<=4;t++){
+      const v=maxV*t/4;
+      const y=20+chartH-(chartH*t/4);
+      svg+=`<line x1="${PAD_L}" y1="${y}" x2="${W-10}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+      if(t>0)svg+=`<text x="${PAD_L-3}" y="${y+3}" text-anchor="end" fill="#4a5568" font-size="8" font-family="DM Mono,monospace">${fmtFn(v)}</text>`;
+    }
+    // baseline
+    svg+=`<line x1="${PAD_L}" y1="${20+chartH}" x2="${W-10}" y2="${20+chartH}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
 
-  function mkBars(id,data,maxV,colFn){
-    const el=document.getElementById(id);el.innerHTML='';
-    data.forEach((d,i)=>{
-      const g=document.createElement('div');g.className='bg';
-      g.innerHTML=`<div class="bg-inner">${d.map(v=>`<div class="b" style="height:${Math.max(2,v/maxV*120)}px;background:${colFn(d,v)}" title="${fN(v)}"></div>`).join('')}</div><div class="blbl">${MS[i]}</div>`;
-      el.appendChild(g);
+    items.forEach((d,i)=>{
+      const cx=PAD_L+groupW*i+groupW/2;
+      d.vals.forEach((v,vi)=>{
+        if(!v)return;
+        const bw=hasBud?barW:barW;
+        const bx=hasBud?(vi===0?cx-barW-2:cx+2):cx-barW/2;
+        const bh=Math.max(2,chartH*v/maxV);
+        const by=20+chartH-bh;
+        svg+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="2" fill="${d.cols[vi]}" opacity="${vi===0?'.9':'.45'}"/>`;
+        if(vi===0&&v>0){
+          svg+=`<text x="${bx+bw/2}" y="${by-3}" text-anchor="middle" fill="${d.cols[vi]}" font-size="7.5" font-family="DM Mono,monospace" font-weight="600">${fmtFn(v)}</text>`;
+        }
+      });
+      // variance indicator for expense chart
+      if(hasBud&&d.vals[0]>0&&d.vals[1]>0){
+        const vv=d.vals[0]-d.vals[1];
+        const vy=20+chartH-Math.max(2,chartH*d.vals[0]/maxV)-13;
+        svg+=`<text x="${cx}" y="${vy}" text-anchor="middle" fill="${vv>0?'#ff6b6b':'#00d4b8'}" font-size="7" font-family="DM Mono,monospace">${vv>0?'▲':'✓'}</text>`;
+      }
+      // month label
+      svg+=`<text x="${cx}" y="${H-4}" text-anchor="middle" fill="#64748b" font-size="8" font-family="Syne,sans-serif" font-weight="600">${MS2[i]}</text>`;
     });
+    return svg;
   }
-  mkBars('d-exp',months.map(m=>[m.totA,m.totB]),mxE,(d,v)=>v===d[0]?'var(--teal)':'rgba(255,179,71,.4)');
-  mkBars('d-kg',months.map(m=>[m.kg]),mxK,()=>'var(--sky)');
-  mkBars('d-cpor',months.map(m=>[m.cporA]),mxC,()=>'var(--violet)');
-  mkBars('d-occ',months.map(m=>[m.occ||0]),100,(_,v)=>v>60?'var(--teal)':v>40?'var(--amber)':'var(--coral)');
+
+  function chartCard(title,legend,svgContent,W,H,footer){
+    return`<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:14px 16px;height:100%">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">${title}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">${legend}</div>
+      </div>
+      <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible" preserveAspectRatio="xMidYMid meet">
+        ${svgContent}
+      </svg>
+      ${footer?`<div style="margin-top:6px;font-size:10px;color:#64748b;font-family:'DM Mono',monospace">${footer}</div>`:''}
+    </div>`;
+  }
+
+  function leg(col,label){
+    return`<div style="display:flex;align-items:center;gap:4px;font-size:9px;color:#94a3b8">
+      <div style="width:8px;height:8px;border-radius:1px;background:${col}"></div>${label}</div>`;
+  }
+
+  // ── Build charts data ──
+  const expItems=months.map(d=>({vals:[d.totA,d.totB],cols:['#00d4b8','rgba(255,179,71,.7)']}));
+  const kgItems=months.map(d=>({vals:[d.kg],cols:['#38bdf8']}));
+  const cporItems=months.map(d=>({vals:[d.cporA,d.cporB],cols:['#a78bfa','rgba(255,179,71,.6)']}));
+  const occItems=months.map(d=>({vals:[d.occ],cols:[d.occ>60?'#00d4b8':d.occ>40?'#ffb347':'#ff6b6b']}));
+  const laItems=months.map(d=>({vals:[d.laA,d.laB],cols:['#00d4b8','rgba(0,212,184,.35)']}));
+  const opItems=months.map(d=>({vals:[d.opA,d.opB],cols:['#a3e635','rgba(163,230,53,.35)']}));
+  const prItems=months.map(d=>({vals:[d.prA,d.prB],cols:['#ff6b6b','rgba(255,107,107,.35)']}));
+
+  const W=460,H=160,PL=38,PB=18;
+  const fQAR=v=>v>=1000?'QAR '+(v/1000).toFixed(0)+'k':v?'QAR '+v.toFixed(0):'—';
+  const fPct=v=>v?v.toFixed(1)+'%':'—';
+  const fKg=v=>v>=1000?(v/1000).toFixed(0)+'t':v?v.toFixed(0):'—';
+  const f2=v=>v?v.toFixed(2):'—';
+
+  // ── Monthly detail table ──
+  const detailRows=months.filter(d=>d.totA>0||d.totB>0||d.rs>0).map((d,i)=>{
+    const vr=d.totA-d.totB;
+    const vrPct=d.totB?((vr/d.totB)*100):null;
+    const bg=i%2===0?'transparent':'rgba(255,255,255,.02)';
+    return`<tr style="background:${bg}">
+      <td style="padding:5px 8px;font-family:'Syne',sans-serif;font-weight:600;color:#e2e8f0;white-space:nowrap">${MF2[d.m]}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#a78bfa;font-size:11px">${d.rs?d.rs.toLocaleString():'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8;font-size:10px">${d.occ?d.occ.toFixed(1)+'%':'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#00d4b8;font-size:11px">${d.laA?fN(d.laA):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8;font-size:10px">${d.laB?fN(d.laB):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#a3e635;font-size:11px">${d.opA?fN(d.opA):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8;font-size:10px">${d.opB?fN(d.opB):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#ff6b6b;font-size:11px">${d.prA?fN(d.prA):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8;font-size:10px">${d.prB?fN(d.prB):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#e2e8f0;font-size:11px">${d.totA?fN(d.totA):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8;font-size:10px">${d.totB?fN(d.totB):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${vr>0?'#ff6b6b':'#00d4b8'};font-size:11px">${d.totB?(vr>0?'+':'')+fN(vr):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:${vrPct!==null?(vrPct>0?'#ff6b6b':'#00d4b8'):'#64748b'}">${vrPct!==null?(vrPct>0?'+':'')+vrPct.toFixed(1)+'%':'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#a78bfa;font-size:10px">${d.cporA?d.cporA.toFixed(4):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'DM Mono',monospace;color:#38bdf8;font-size:10px">${d.kg?fN(d.kg):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('dash-body').innerHTML=`
+
+    <!-- ══ KPI STRIP ══ -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:18px">
+
+      <div style="background:#1a2236;border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#a78bfa,transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Rooms Sold</div>
+        <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#a78bfa">${totRs.toLocaleString()}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px">Occ ${occ.toFixed(1)}% · KG/RN ${kgRn.toFixed(2)}</div>
+      </div>
+
+      <div style="background:#1a2236;border:1px solid rgba(0,212,184,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00d4b8,transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Total Actual</div>
+        <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#00d4b8">${fN(totA)}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px">${pyTotA?((totA>pyTotA?'▲':'▼')+Math.abs(((totA-pyTotA)/pyTotA*100)).toFixed(1)+'% vs '+(dashY-1)):'QAR'}</div>
+      </div>
+
+      <div style="background:#1a2236;border:1px solid rgba(255,179,71,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ffb347,transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Total Budget</div>
+        <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#ffb347">${fN(totB)}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px">QAR</div>
+      </div>
+
+      <div style="background:#1a2236;border:1px solid ${vr>0?'rgba(255,107,107,.3)':'rgba(0,212,184,.3)'};border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${vr>0?'#ff6b6b':'#00d4b8'},transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Variance A-B</div>
+        <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:${vr>0?'#ff6b6b':'#00d4b8'}">${vr>0?'+':''}${fN(vr)}</div>
+        <div style="font-size:10px;color:${vr>0?'#ff6b6b':'#00d4b8'};margin-top:3px">${totB?((vr>0?'+':'')+((vr/totB)*100).toFixed(1)+'% vs budget'):'—'}</div>
+      </div>
+
+      <div style="background:#1a2236;border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#a78bfa,transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">CPOR Actual</div>
+        <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#a78bfa">${cporA?cporA.toFixed(4):'—'}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px">${cporB?'Budget: '+cporB.toFixed(4):'—'} · ${pyCpor?((cporA>pyCpor?'▲':'▼')+Math.abs(((cporA-pyCpor)/pyCpor*100)).toFixed(1)+'% YoY'):'—'}</div>
+      </div>
+
+      <div style="background:#1a2236;border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#38bdf8,transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Total KG</div>
+        <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#38bdf8">${totKg.toLocaleString()}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px">Cost/KG: ${costKg?costKg.toFixed(2):'—'} · KG/RN: ${kgRn?kgRn.toFixed(2):'—'}</div>
+      </div>
+
+      <div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00d4b8,transparent)"></div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Line Breakdown</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:#00d4b8">Laundry</span><span style="font-family:'DM Mono',monospace;color:#00d4b8">${fN(totLaA)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:#a3e635">Operating</span><span style="font-family:'DM Mono',monospace;color:#a3e635">${fN(totOpA)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:#ff6b6b">Printing</span><span style="font-family:'DM Mono',monospace;color:#ff6b6b">${fN(totPrA)}</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ CHARTS ROW 1: Expenses + CPOR ══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      ${chartCard(
+        '📊 Total Expenses — Actual vs Budget',
+        leg('#00d4b8','Actual')+leg('rgba(255,179,71,.8)','Budget'),
+        svgBars(W,H,PL,PB,expItems,fQAR),W,H,
+        `Year total: Actual <strong style="color:#00d4b8">${fN(totA)}</strong> vs Budget <strong style="color:#ffb347">${fN(totB)}</strong> · Variance: <strong style="color:${vr>0?'#ff6b6b':'#00d4b8'}">${vr>0?'+':''}${fN(vr)}</strong>`
+      )}
+      ${chartCard(
+        '📈 CPOR — Actual vs Budget (QAR per Room Night)',
+        leg('#a78bfa','CPOR Actual')+leg('rgba(255,179,71,.6)','CPOR Budget'),
+        svgBars(W,H,PL,PB,cporItems,f2),W,H,
+        `CPOR Actual: <strong style="color:#a78bfa">${cporA.toFixed(4)}</strong> · Budget: <strong style="color:#ffb347">${cporB?cporB.toFixed(4):'—'}</strong> · ${pyCpor?'Prior year: <strong>'+pyCpor.toFixed(4)+'</strong>':''}`
+      )}
+    </div>
+
+    <!-- ══ CHARTS ROW 2: Line breakdown charts ══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+      ${chartCard(
+        '🧴 Laundry Supplies',
+        leg('#00d4b8','Actual')+leg('rgba(0,212,184,.35)','Budget'),
+        svgBars(W,140,PL,PB,laItems,fQAR),W,140,
+        `Actual: <strong style="color:#00d4b8">${fN(totLaA)}</strong> · Budget: <strong style="color:#4a9a8a">${fN(totLaB)}</strong>`
+      )}
+      ${chartCard(
+        '⚙️ Operating Supplies',
+        leg('#a3e635','Actual')+leg('rgba(163,230,53,.35)','Budget'),
+        svgBars(W,140,PL,PB,opItems,fQAR),W,140,
+        `Actual: <strong style="color:#a3e635">${fN(totOpA)}</strong> · Budget: <strong style="color:#658c1e">${fN(totOpB)}</strong>`
+      )}
+      ${chartCard(
+        '🖨️ Printing & Stationery',
+        leg('#ff6b6b','Actual')+leg('rgba(255,107,107,.35)','Budget'),
+        svgBars(W,140,PL,PB,prItems,fQAR),W,140,
+        `Actual: <strong style="color:#ff6b6b">${fN(totPrA)}</strong> · Budget: <strong style="color:#9a3030">${fN(totPrB)}</strong>`
+      )}
+    </div>
+
+    <!-- ══ CHARTS ROW 3: KG + Occupancy ══ -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      ${chartCard(
+        '⚖️ KG Processed per Month',
+        leg('#38bdf8','KG'),
+        svgBars(W,H,PL,PB,kgItems,fKg),W,H,
+        `Total: <strong style="color:#38bdf8">${totKg.toLocaleString()} KG</strong> · Cost/KG: <strong>${costKg?costKg.toFixed(2):'—'}</strong> · KG/RN: <strong>${kgRn?kgRn.toFixed(2):'—'}</strong>`
+      )}
+      ${chartCard(
+        '🏨 Occupancy % — Monthly (🟢>60% 🟡>40% 🔴<40%)',
+        leg('#00d4b8','>60%')+leg('#ffb347','40-60%')+leg('#ff6b6b','<40%'),
+        svgBars(W,H,PL,PB,occItems,fPct),W,H,
+        `Average occupancy: <strong style="color:#a78bfa">${occ.toFixed(1)}%</strong> · Based on ${months.filter(m=>m.rs>0).length} months with data`
+      )}
+    </div>
+
+    <!-- ══ MONTHLY DETAIL TABLE ══ -->
+    <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px;margin-bottom:4px">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+        <span>📋 Monthly Detail — ${dashY}</span>
+        <span style="font-size:10px;color:#64748b;font-weight:400">Actual · Budget · Variance per line per month</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:900px">
+          <thead>
+            <tr>
+              <th style="background:#212d42;padding:6px 8px;text-align:left;font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#64748b;white-space:nowrap">Month</th>
+              <th style="background:#212d42;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa">Rooms</th>
+              <th style="background:#212d42;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8">Occ%</th>
+              <th style="background:#003d30;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#00d4b8;white-space:nowrap">Laundry Act</th>
+              <th style="background:#003d30;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#4a9a8a;white-space:nowrap">Bud</th>
+              <th style="background:#1a3a1a;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#a3e635;white-space:nowrap">Oper Act</th>
+              <th style="background:#1a3a1a;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#658c1e;white-space:nowrap">Bud</th>
+              <th style="background:#3a1a1a;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#ff6b6b;white-space:nowrap">Print Act</th>
+              <th style="background:#3a1a1a;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#9a3030;white-space:nowrap">Bud</th>
+              <th style="background:#212d42;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#e2e8f0;white-space:nowrap">Total Act</th>
+              <th style="background:#212d42;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#94a3b8;white-space:nowrap">Budget</th>
+              <th style="background:#212d42;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#94a3b8;white-space:nowrap">Variance</th>
+              <th style="background:#212d42;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#94a3b8;white-space:nowrap">Var%</th>
+              <th style="background:#1a1a36;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#a78bfa;white-space:nowrap">CPOR</th>
+              <th style="background:#0f1e2a;padding:6px 8px;text-align:right;font-size:9px;font-weight:700;color:#38bdf8;white-space:nowrap">KG</th>
+            </tr>
+          </thead>
+          <tbody>${detailRows}</tbody>
+          <tfoot>
+            <tr style="background:#212d42;border-top:2px solid #2a3550">
+              <td style="padding:7px 8px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">YEAR TOTAL</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:#a78bfa">${totRs.toLocaleString()}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8">${occ.toFixed(1)}%</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:#00d4b8">${fN(totLaA)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#4a9a8a">${fN(totLaB)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:#a3e635">${fN(totOpA)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#658c1e">${fN(totOpB)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:#ff6b6b">${fN(totPrA)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#9a3030">${fN(totPrB)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#e2e8f0;font-size:12px">${fN(totA)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#94a3b8">${fN(totB)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:${vr>0?'#ff6b6b':'#00d4b8'};font-size:12px">${vr>0?'+':''}${fN(vr)}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:${vr>0?'#ff6b6b':'#00d4b8'}">${totB?((vr>0?'+':'')+((vr/totB)*100).toFixed(1)+'%'):'—'}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#a78bfa">${cporA?cporA.toFixed(4):'—'}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;color:#38bdf8">${totKg.toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  `;
 }
+
+// ── Print Dashboard ──
+function printDashboard(){
+  const y = dashY;
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const el = document.getElementById('dash-body');
+  if(!el||!el.innerHTML){ toast('Open Dashboard tab first'); return; }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Dashboard ${y} — Four Seasons Hotel Doha Laundry</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4 landscape;margin:8mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;color:#1e293b;background:#fff}
+    .hdr{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:12px 18px;border-radius:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  <\/style>
+  <\/head><body>
+  <div class="hdr">
+    <div>
+      <div style="font-size:8px;color:rgba(255,255,255,.5)">FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT</div>
+      <div style="font-size:16px;font-weight:800;color:#f5c542;margin:2px 0">Dashboard — Year ${y}</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.5)">Prepared by: Reda Salah, Laundry Manager · Generated: ${now}</div>
+    </div>
+    <div style="font-size:18px;font-weight:800;color:#f5c542">CONFIDENTIAL</div>
+  </div>
+  <div style="font-size:8px;color:#94a3b8;font-style:italic;margin-bottom:8px">Note: Charts render from screen — for best results use Chrome browser print</div>
+  ${el.innerHTML}
+  <\/body><\/html>`;
+
+  const win = window.open('','_blank','width=1300,height=900');
+  win.document.write(html);
+  win.document.close();
+  win.onload = ()=>{ setTimeout(()=>win.print(),800); };
+  toast('Dashboard PDF ready ✓');
+}
+
 
 /* ── EXPORT ── */
 function exportCSV(){
