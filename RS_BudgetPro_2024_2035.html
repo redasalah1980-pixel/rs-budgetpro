@@ -1168,13 +1168,13 @@ function doLogin(){
 <nav class="nav">
   <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry</div>
   <div class="ntab"         onclick="goTab(this,'project')">  🔮 Projection Planner</div>
-  <div class="ntab"         onclick="goTab(this,'overview')"> 📊 Multi-Year</div>
+  <div class="ntab"         onclick="goTab(this,'overview')">📊 Multi-Year Overview</div>
   <div class="ntab"         onclick="goTab(this,'increases')">⚙ Budget Adjustments</div>
-  <div class="ntab"         onclick="goTab(this,'settings')"> ⚙️ Assumptions</div>
+  <div class="ntab"         onclick="goTab(this,'settings')">⚙️ Settings &amp; Base Data</div>
   <div class="ntab"         onclick="goTab(this,'revenue')"> 💰 Revenue</div>
   <div class="ntab"         onclick="goTab(this,'dashboard')">🎯 Dashboard</div>
   <div class="ntab" onclick="goTab(this,'report')">📄 Budget Report</div>
-  <div class="ntab" onclick="goTab(this,'trends')">📉 CPOR Trends</div>
+  <div class="ntab" onclick="goTab(this,'trends')">📈 Trends &amp; Efficiency</div>
   <div class="ntab" onclick="goTab(this,'backup')">🗄 Backup & Restore</div>
   <div class="ntab" onclick="goTab(this,'guide')">📖 User Guide</div>
 </nav>
@@ -1224,7 +1224,7 @@ function doLogin(){
 <!-- ══ TAB: MULTI-YEAR OVERVIEW ══ -->
 <div id="pane-overview" class="pane">
   <div class="ph">
-    <div class="pt">Multi-Year Overview <span>2024 – 2035 annual summary</span></div>
+    <div class="pt">Multi-Year Overview <span>2024–2035 annual summary · Budget export</span></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="budget-export-year" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:12px;padding:6px 10px">
         <option value="">Select year...</option>
@@ -1409,7 +1409,7 @@ function doLogin(){
 <!-- ══ TAB: ASSUMPTIONS ══ -->
 <div id="pane-settings" class="pane">
   <div class="ph">
-    <div class="pt">Assumptions & Base Data <span>Foundation of all budget calculations</span></div>
+    <div class="pt">Settings & Base Data <span>Foundation of all budget calculations</span></div>
     <button class="pill pill-teal" onclick="saveSettings()">💾 Save Assumptions</button>
   </div>
 
@@ -4310,7 +4310,7 @@ function buildTrendsTab(){
   });
 
   if(!ydata.length){
-    el.innerHTML=`<div class="ph"><div class="pt">CPOR Trends</div></div>
+    el.innerHTML=`<div class="ph"><div class="pt">Trends & Efficiency</div></div>
       <div class="notice amber"><strong>No data yet.</strong> Enter actuals in Monthly Entry for at least one year.</div>`;
     return;
   }
@@ -4423,7 +4423,7 @@ function buildTrendsTab(){
   el.innerHTML=`
     <!-- ══ HEADER ══ -->
     <div class="ph">
-      <div class="pt">CPOR Trends <span>Year-on-year cost & efficiency · Actuals only · ${ydata.length} year${ydata.length>1?'s':''}: ${ydata.map(d=>d.y).join(', ')}</span></div>
+      <div class="pt">Trends & Efficiency <span>Year-on-year cost & efficiency · Actuals only · ${ydata.length} year${ydata.length>1?'s':''}: ${ydata.map(d=>d.y).join(', ')}</span></div>
       <button class="pill pill-sky" onclick="buildTrendsTab()" style="border-radius:6px;padding:6px 14px;font-size:12px">↺ Refresh</button>
     </div>
 
@@ -4879,12 +4879,16 @@ const AR={
   'Monthly Entry':'إدخال شهري',
   'Projection Planner':'مخطط التوقعات',
   'Multi-Year':'متعدد السنوات',
+  'Multi-Year Overview':'نظرة عامة متعددة السنوات',
   'Budget Adjustments':'تعديلات الميزانية',
   'Assumptions':'الافتراضات',
+  'Settings & Base Data':'الإعدادات والبيانات الأساسية',
   'Revenue':'الإيرادات',
   'Dashboard':'لوحة التحكم',
   'Budget Report':'تقرير الميزانية',
   'CPOR Trends':'اتجاهات CPOR',
+  'Trends & Efficiency':'الاتجاهات والكفاءة',
+  'Smart Insights':'رؤى ذكية',
   'Backup & Restore':'النسخ الاحتياطي',
   'User Guide':'دليل المستخدم',
   'Save':'حفظ','CSV':'تصدير','Sign Out':'تسجيل الخروج',
@@ -6993,7 +6997,7 @@ window.addEventListener('beforeunload',saveAll);
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:18px 20px;margin-bottom:24px">
     <div style="font-size:12px;color:#94a3b8;line-height:1.8;margin-bottom:16px">
       The system uses a <strong style="color:#e2e8f0">cascading CPOR model</strong> — each year's actual CPOR becomes the budget driver for the next year.
-      The only exception is 2025, which uses the manually entered 2024 base values in the Assumptions tab.
+      The only exception is 2025, which uses the manually entered 2024 base values in the Settings &amp; Base Data tab.
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
@@ -7082,7 +7086,7 @@ window.addEventListener('beforeunload',saveAll);
       <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">4</div>
       <div><strong>August workflow:</strong> YTD CPOR from actuals → becomes next year budget driver → enter next year rooms → budgets appear</div></div>
         <div style="background:rgba(245,197,66,.06);border-left:2px solid rgba(245,197,66,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
-          💡 <strong style="color:#94a3b8">Tip:</strong> August workflow: Check the YTD CPOR shown at the top → it becomes next year's budget driver. Enter next year rooms → review totals → export Budget PDF from Multi-Year tab.
+          💡 <strong style="color:#94a3b8">Tip:</strong> August workflow: Check the YTD CPOR shown at the top → it becomes next year's budget driver. Enter next year rooms → review totals → export Budget PDF from Multi-Year Overview tab.
         </div>
       </div>
     </div>
@@ -7227,6 +7231,58 @@ window.addEventListener('beforeunload',saveAll);
           💡 <strong style="color:#94a3b8">Tip:</strong> Open this tab at the start of each month after entering actuals. A startup alert banner also shows the most critical items automatically 2 seconds after login.
         </div>
       </div>
+
+    <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(167,139,250,.06);padding:12px 16px;border-bottom:1px solid rgba(167,139,250,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">⚙️</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#a78bfa">Settings &amp; Base Data</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Base CPOR · property config · colour guide</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">1</div>
+      <div>Enter <strong>2024 actual expenses</strong> for all 3 lines — this is the base that drives all future budgets</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">2</div>
+      <div>Enter <strong>Total Rooms Sold 2024</strong> — divides into each expense line to get CPOR per line</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">3</div>
+      <div>CPOR values auto-calculate on the right — these become the 2025 budget drivers</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">4</div>
+      <div>Set <strong>Rooms Available</strong> (237 for FS Doha) — drives occupancy % everywhere in the system</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">5</div>
+      <div>Colour guide shows what every colour means across all tabs</div></div>
+        <div style="background:rgba(167,139,250,.06);border-left:2px solid rgba(167,139,250,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Only change these values if your 2024 confirmed actuals change. Updating here automatically recalculates ALL budgets for 2025 and beyond.
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(167,139,250,.06);padding:12px 16px;border-bottom:1px solid rgba(167,139,250,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📈</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#a78bfa">Trends &amp; Efficiency</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">CPOR year-on-year · KG efficiency · occupancy trends</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">1</div>
+      <div>6 KPI cards at the top: CPOR Actual vs Budget, Total Expenses, Cost/KG, KG/RN, Occupancy — all with YoY comparison</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">2</div>
+      <div>Main CPOR chart: actual vs budget side by side per year with ▲ over / ✓ ok labels</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">3</div>
+      <div>3 line breakdown CPOR charts: Laundry, Operating, Printing each vs budget</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">4</div>
+      <div>Cost per KG and KG per Room Night efficiency charts</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">5</div>
+      <div>Full Trend Summary Table: all years × all metrics with colour-coded columns</div></div>
+        <div style="background:rgba(167,139,250,.06);border-left:2px solid rgba(167,139,250,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Use this tab when Finance asks "why is CPOR rising?" — it breaks down exactly which line is driving the increase and shows the year-on-year trend clearly.
+        </div>
+      </div>
+    </div>
     </div>
 
   </div>
