@@ -1930,7 +1930,7 @@ function buildOverview(){
       const b=bud(y,m,rooms);
       rs+=rooms;kg+=(r.kg||0);
       la+=(r.laA||0);lb+=b.la;op+=(r.opA||0);ob+=b.op;pr+=(r.prA||0);pb+=b.pr;
-      av+=maxRN(y,m);
+      if(rooms>0) av+=maxRN(y,m); // only count months with data
     }
     const totA=la+op+pr,totB=lb+ob+pb;
     yv[y]={rs,kg,occ:av?rs/av*100:0,laA:la,laB:lb,opA:op,opB:ob,prA:pr,prB:pb,
