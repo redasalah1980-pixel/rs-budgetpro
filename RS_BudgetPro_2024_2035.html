@@ -812,6 +812,21 @@ select option{background:var(--bg4)}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes shimmerBtn{0%{background-position:0% center}100%{background-position:250% center}}
 @keyframes sandDrift{0%{transform:translateX(0) translateY(0);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateX(100px) translateY(15px);opacity:0}}
+
+/* ── Revenue Projection Steps ── */
+.rp-step{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:80px}
+.rp-step-num{width:28px;height:28px;border-radius:50%;background:#2a3550;color:#64748b;
+  display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;
+  font-size:12px;font-weight:800;transition:all .3s;border:2px solid #2a3550}
+.rp-step-txt{font-size:9px;font-weight:700;color:#4a5568;letter-spacing:.5px;text-transform:uppercase;
+  text-align:center;white-space:nowrap;transition:all .3s}
+.rp-step.active .rp-step-num{background:#f5c542;color:#0f172a;border-color:#f5c542;
+  box-shadow:0 0 12px rgba(245,197,66,.4)}
+.rp-step.active .rp-step-txt{color:#f5c542}
+.rp-step.done .rp-step-num{background:#00d4b8;color:#0f172a;border-color:#00d4b8}
+.rp-step.done .rp-step-txt{color:#00d4b8}
+.rp-step-line{flex:1;height:2px;background:#2a3550;min-width:30px;margin-bottom:13px}
+
 </style>
 
 <script>
@@ -1233,7 +1248,7 @@ function doLogin(){
 <!-- TAB: REVENUE -->
 <div id="pane-revenue" class="pane">
   <div class="ph">
-    <div class="pt">Revenue Tracker <span>Laundry Revenue &amp; Other Valet Revenue (Pearl) &middot; Actual vs Budget</span></div>
+    <div class="pt">Revenue Tracker <span>Laundry Revenue &amp; Pearl Valet Revenue — FS Pearl &middot; Actual vs Budget</span></div>
     <div class="ypills" id="yp-rev"></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
       <select id="rev-export-year" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:12px;padding:6px 10px">
@@ -1247,110 +1262,252 @@ function doLogin(){
     </div>
   </div>
   <!-- REVENUE PROJECTION PANEL -->
-  <div class="rev-proj-panel" id="rev-proj-panel">
-    <div class="rev-proj-hdr">
-      <div class="rev-proj-hdr-title">
-        📐 Revenue Budget Projection
-        <span style="font-family:var(--ff-b);font-size:11px;color:var(--text2);font-weight:400">
-          Project next year budget from prior-year RPOR × rooms sold × growth %
-        </span>
+<div style="background:#141e30;border:1px solid #2a3550;border-radius:14px;margin-bottom:20px;overflow:hidden">
+
+  <!-- Panel Header -->
+  <div style="background:linear-gradient(135deg,#1a2744,#1e1b4b);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2a3550">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f5c542;margin-bottom:3px">
+        📐 Revenue Budget Projection Tool
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="pill pill-teal" onclick="toggleRevProj()" id="rev-proj-toggle" style="border-radius:6px;font-size:11px">
-          ▼ Expand
-        </button>
+      <div style="font-size:11px;color:rgba(255,255,255,.5)">
+        Build next year's revenue budget in 4 steps · Uses prior year RPOR × growth % × projected rooms
       </div>
     </div>
-    <div id="rev-proj-body" style="display:none;padding:18px 20px">
+    <button onclick="toggleRevProj()" id="rev-proj-toggle"
+      style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+        border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1);cursor:pointer;
+        transition:all .2s;white-space:nowrap"
+      onmouseover="this.style.background='rgba(245,197,66,.2)'"
+      onmouseout="this.style.background='rgba(245,197,66,.1)'">
+      ▼ Open Tool
+    </button>
+  </div>
 
-        <div style="background:rgba(56,189,248,.06);border-left:3px solid var(--sky);border-radius:0 6px 6px 0;padding:9px 14px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.5">
-          <strong style="color:var(--sky)">How it works:</strong> Reads prior year actual revenue → calculates RPOR (Revenue Per Occupied Room) → applies your growth % × new rooms sold → projects each month. Click <strong style="color:var(--teal)">Apply as Budget</strong> to set it.
+  <!-- Panel Body -->
+  <div id="rev-proj-body" style="display:none;padding:20px 22px">
+
+    <!-- ── STEP INDICATOR ── -->
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:22px;overflow-x:auto;padding-bottom:4px">
+      <div class="rp-step active" id="rp-step-1">
+        <div class="rp-step-num">1</div>
+        <div class="rp-step-txt">Select Years</div>
+      </div>
+      <div class="rp-step-line"></div>
+      <div class="rp-step" id="rp-step-2">
+        <div class="rp-step-num">2</div>
+        <div class="rp-step-txt">Set Growth %</div>
+      </div>
+      <div class="rp-step-line"></div>
+      <div class="rp-step" id="rp-step-3">
+        <div class="rp-step-num">3</div>
+        <div class="rp-step-txt">Generate</div>
+      </div>
+      <div class="rp-step-line"></div>
+      <div class="rp-step" id="rp-step-4">
+        <div class="rp-step-num">4</div>
+        <div class="rp-step-txt">Apply Budget</div>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: SELECT YEARS + ROOMS SOURCE ── -->
+    <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f5c542;
+        letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <div style="width:22px;height:22px;border-radius:50%;background:#f5c542;color:#0f172a;
+          display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">1</div>
+        Select Budget Year & Base Year
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;display:block;margin-bottom:6px">
+            📅 Budget Year (New)
+          </label>
+          <select id="rp-year" onchange="updateRevProj()" style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.3);border-radius:7px;color:#f5c542;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;padding:9px 12px">
+            <option value="2025">2025</option><option value="2026">2026</option>
+            <option value="2027">2027</option><option value="2028">2028</option>
+            <option value="2029">2029</option><option value="2030">2030</option>
+            <option value="2031">2031</option><option value="2032">2032</option>
+            <option value="2033">2033</option><option value="2034">2034</option>
+            <option value="2035">2035</option>
+          </select>
+          <div style="font-size:9px;color:#64748b;margin-top:4px">The year you are building the budget for</div>
         </div>
-
-        <!-- Controls grid - Row 1: Year selectors + Rooms source -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568">Project Year</label>
-            <select id="rp-year" onchange="updateRevProj()" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:13px;padding:8px 10px;width:100%">
-              <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option><option value="2031">2031</option><option value="2032">2032</option><option value="2033">2033</option><option value="2034">2034</option><option value="2035">2035</option>
-            </select>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568">Base Year (Prior Year)</label>
-            <select id="rp-base" onchange="updateRevProj()" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:13px;padding:8px 10px;width:100%">
-              <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option><option value="2031">2031</option><option value="2032">2032</option><option value="2033">2033</option><option value="2034">2034</option><option value="2035">2035</option>
-            </select>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568">Rooms Sold Source</label>
-            <select id="rp-rooms-src" onchange="updateRevProj()" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:13px;padding:8px 10px;width:100%">
-              <option value="actual">From Monthly Entry (actuals)</option>
-              <option value="proj">From Projection Planner</option>
-            </select>
-          </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;display:block;margin-bottom:6px">
+            📊 Base Year (Prior Year Actuals)
+          </label>
+          <select id="rp-base" onchange="updateRevProj()" style="width:100%;background:#0f1a2e;border:1px solid rgba(56,189,248,.3);border-radius:7px;color:#38bdf8;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;padding:9px 12px">
+            <option value="2024">2024</option><option value="2025">2025</option>
+            <option value="2026">2026</option><option value="2027">2027</option>
+            <option value="2028">2028</option><option value="2029">2029</option>
+          </select>
+          <div style="font-size:9px;color:#64748b;margin-top:4px">RPOR is calculated from this year's actuals</div>
         </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;display:block;margin-bottom:6px">
+            🏨 Rooms Sold Source
+          </label>
+          <select id="rp-rooms-src" onchange="updateRevProj()" style="width:100%;background:#0f1a2e;border:1px solid rgba(167,139,250,.3);border-radius:7px;color:#a78bfa;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;padding:9px 12px">
+            <option value="actual">From Monthly Entry (actuals)</option>
+            <option value="proj">From Projection Planner</option>
+          </select>
+          <div style="font-size:9px;color:#64748b;margin-top:4px">Enter rooms in Projection Planner for future years</div>
+        </div>
+      </div>
+    </div>
 
-        <!-- Row 2: Growth % side by side + Manual rooms -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#00d4b8">
-              🩵 Laundry Revenue Growth %
-            </label>
-            <input type="number" id="rp-la-growth" value="0" step="0.1" placeholder="0" oninput="updateRevProj()"
-              style="background:#212d42;border:1px solid rgba(0,212,184,.3);border-radius:6px;color:#00d4b8;font-family:'DM Mono',monospace;font-size:15px;font-weight:500;padding:10px 10px;width:100%;text-align:right">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a78bfa">
-              🟣 Valet Revenue Growth % (Pearl)
-            </label>
-            <input type="number" id="rp-va-growth" value="0" step="0.1" placeholder="0" oninput="updateRevProj()"
-              style="background:#212d42;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#a78bfa;font-family:'DM Mono',monospace;font-size:15px;font-weight:500;padding:10px 10px;width:100%;text-align:right">
-          </div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#00d4b8">💡 How rooms work</label>
-            <div style="background:#0f1a2e;border:1px solid rgba(0,212,184,.15);border-radius:6px;padding:8px 10px;font-size:11px;color:#4a5568;line-height:1.5">
-              To use custom rooms → enter them in <strong style="color:#a78bfa">Projection Planner</strong> first, then select "From Projection Planner" above
+    <!-- ── RPOR INFO BAR ── -->
+    <div style="background:#0f1a2e;border:1px solid rgba(56,189,248,.15);border-radius:10px;
+      padding:12px 18px;margin-bottom:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Base Year</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#94a3b8" id="rp-base-yr-lbl">—</div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Rooms Sold (Base Year)</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#a78bfa" id="rp-base-rooms">—</div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">RPOR — Laundry (FS Doha)</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#00d4b8" id="rp-rpor-la">—</div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">RPOR — Pearl Valet (FS Pearl)</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:#a78bfa" id="rp-rpor-va">—</div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: GROWTH % ── -->
+    <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#00d4b8;
+        letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <div style="width:22px;height:22px;border-radius:50%;background:#00d4b8;color:#0f172a;
+          display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">2</div>
+        Set Expected Growth % vs Prior Year
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Laundry Growth -->
+        <div style="background:#0f1a2e;border:1px solid rgba(0,212,184,.2);border-radius:8px;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#00d4b8;flex-shrink:0"></div>
+            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#00d4b8">
+              Laundry Revenue — FS Doha
             </div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="number" id="rp-la-growth" value="0" step="0.1" placeholder="0"
+              oninput="updateRevProj()"
+              style="flex:1;background:#141e30;border:1px solid rgba(0,212,184,.3);border-radius:6px;
+                color:#00d4b8;font-family:'DM Mono',monospace;font-size:18px;font-weight:600;
+                padding:10px 12px;text-align:right;outline:none"
+              onfocus="this.style.borderColor='rgba(0,212,184,.7)'"
+              onblur="this.style.borderColor='rgba(0,212,184,.3)'">
+            <div style="font-size:18px;color:#00d4b8;font-weight:700">%</div>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px" id="rp-growth-la-disp">
+            Enter % above → adjusted RPOR will show here
+          </div>
         </div>
-
-        <!-- RPOR stats bar -->
-        <div style="background:#212d42;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
-          <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">Base Year</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:#94a3b8" id="rp-base-yr-lbl">—</div></div>
-          <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">Base Rooms Sold</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:#a78bfa" id="rp-base-rooms">—</div></div>
-          <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">RPOR — Laundry</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:#00d4b8" id="rp-rpor-la">—</div></div>
-          <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">RPOR — Valet (Pearl)</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:#a78bfa" id="rp-rpor-va">—</div></div>
-          <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">Adjusted RPOR — Laundry</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:#00d4b8" id="rp-growth-la-disp">—</div></div>
-          <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">Adjusted RPOR — Valet</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:#a78bfa" id="rp-growth-va-disp">—</div></div>
+        <!-- Pearl Growth -->
+        <div style="background:#0f1a2e;border:1px solid rgba(167,139,250,.2);border-radius:8px;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:#a78bfa;flex-shrink:0"></div>
+            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#a78bfa">
+              Pearl Valet Revenue — FS Pearl
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="number" id="rp-va-growth" value="0" step="0.1" placeholder="0"
+              oninput="updateRevProj()"
+              style="flex:1;background:#141e30;border:1px solid rgba(167,139,250,.3);border-radius:6px;
+                color:#a78bfa;font-family:'DM Mono',monospace;font-size:18px;font-weight:600;
+                padding:10px 12px;text-align:right;outline:none"
+              onfocus="this.style.borderColor='rgba(167,139,250,.7)'"
+              onblur="this.style.borderColor='rgba(167,139,250,.3)'">
+            <div style="font-size:18px;color:#a78bfa;font-weight:700">%</div>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px" id="rp-growth-va-disp">
+            Enter % above → adjusted RPOR will show here
+          </div>
         </div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:#4a5568;background:#0f1a2e;border-radius:6px;padding:8px 12px">
+        💡 <strong style="color:#94a3b8">Tip:</strong> Enter 0% to keep same as prior year · Enter 5% to project 5% growth · Enter -3% for a decrease
+      </div>
+    </div>
 
-        <!-- Generate button -->
-        <div style="margin-bottom:16px">
-          <button onclick="updateRevProj()" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.4);border-radius:6px;color:#38bdf8;padding:9px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
-            ↺ Generate Projection
-          </button>
+    <!-- ── STEP 3: GENERATE + RESULTS TABLE ── -->
+    <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px;margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a78bfa;
+        letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:22px;height:22px;border-radius:50%;background:#a78bfa;color:#0f172a;
+            display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">3</div>
+          Review Monthly Projection
         </div>
+        <button onclick="updateRevProj()" style="padding:8px 20px;border-radius:7px;font-size:12px;font-weight:700;
+          font-family:'Syne',sans-serif;border:1px solid rgba(167,139,250,.5);color:#a78bfa;
+          background:rgba(167,139,250,.12);cursor:pointer;transition:all .2s"
+          onmouseover="this.style.background='rgba(167,139,250,.22)'"
+          onmouseout="this.style.background='rgba(167,139,250,.12)'">
+          ↺ Generate Projection
+        </button>
+      </div>
 
-        <!-- Result table -->
-        <div id="rp-table-wrap"></div>
+      <!-- Results table -->
+      <div id="rp-table-wrap" style="overflow-x:auto">
+        <div style="text-align:center;padding:20px;color:#4a5568;font-size:12px;font-style:italic">
+          Click "Generate Projection" to see monthly breakdown
+        </div>
+      </div>
+    </div>
 
-        <!-- Apply button -->
-        <div id="rp-actions" style="display:none;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center">
-          <button onclick="applyRevProjection()" style="background:rgba(0,212,184,.12);border:1px solid #00907d;border-radius:6px;color:#00d4b8;padding:10px 24px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 0 16px rgba(0,212,184,.2)">
+    <!-- ── STEP 4: APPLY ── -->
+    <div id="rp-actions" style="display:none">
+      <div style="background:linear-gradient(135deg,rgba(0,212,184,.08),rgba(0,144,125,.05));
+        border:1px solid rgba(0,212,184,.25);border-radius:10px;padding:16px 18px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#00d4b8;
+          letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <div style="width:22px;height:22px;border-radius:50%;background:#00d4b8;color:#0f172a;
+            display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">4</div>
+          Apply as Official Revenue Budget
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:14px;line-height:1.6">
+          Happy with the projection? Click <strong style="color:#00d4b8">Apply as Budget</strong> to save these figures as the official revenue budget for the selected year.
+          They will appear in Budget Report, Revenue tab, and all exports.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button onclick="applyRevProjection()" style="background:rgba(0,212,184,.15);border:2px solid #00d4b8;
+            border-radius:8px;color:#00d4b8;padding:11px 28px;font-family:'Syne',sans-serif;font-size:14px;
+            font-weight:800;cursor:pointer;transition:all .2s;
+            box-shadow:0 0 20px rgba(0,212,184,.2)"
+            onmouseover="this.style.background='rgba(0,212,184,.25)';this.style.boxShadow='0 0 30px rgba(0,212,184,.35)'"
+            onmouseout="this.style.background='rgba(0,212,184,.15)';this.style.boxShadow='0 0 20px rgba(0,212,184,.2)'">
             ✓ Apply as Revenue Budget
           </button>
-          <button onclick="exportRevProjExcel()" style="background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.4);border-radius:6px;color:#a3e635;padding:10px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
+          <button onclick="exportRevProjExcel()" style="background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.4);
+            border-radius:8px;color:#a3e635;padding:11px 20px;font-family:'Syne',sans-serif;font-size:13px;
+            font-weight:700;cursor:pointer;transition:all .2s"
+            onmouseover="this.style.background='rgba(163,230,53,.2)'"
+            onmouseout="this.style.background='rgba(163,230,53,.1)'">
             📊 Export Excel
           </button>
-          <button onclick="exportRevProjPDF()" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.4);border-radius:6px;color:#a78bfa;padding:10px 20px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer">
+          <button onclick="exportRevProjPDF()" style="background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.4);
+            border-radius:8px;color:#a78bfa;padding:11px 20px;font-family:'Syne',sans-serif;font-size:13px;
+            font-weight:700;cursor:pointer;transition:all .2s"
+            onmouseover="this.style.background='rgba(167,139,250,.2)'"
+            onmouseout="this.style.background='rgba(167,139,250,.1)'">
             🖨 Print / PDF
           </button>
         </div>
-
+      </div>
     </div>
-  </div>
 
-  <div id="rev-summary"></div>
+  </div>
+</div>
+
+<div id="rev-summary"></div>
   <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
     <button class="pill pill-amber" onclick="openRevModal()" style="border-radius:6px;padding:7px 18px;font-size:12px;font-weight:600">
       📋 Bulk Set Budgets for All Months
@@ -2247,7 +2404,7 @@ function makeRevCard(y,m){
       <!-- Revenue streams -->
       <div class="rev-streams">
         ${streamHTML('Laundry Revenue',laA,laB,laPct,'var(--teal)','#00907d')}
-        ${streamHTML('Other Valet Revenue (Pearl)',valA,valB,valPct,'var(--violet)','#7c3aed')}
+        ${streamHTML('Pearl Valet Revenue — FS Pearl',valA,valB,valPct,'var(--violet)','#7c3aed')}
       </div>
 
       <!-- Input fields: Actual + Budget side by side -->
@@ -2346,7 +2503,7 @@ function buildRevModalTable(){
   const body=document.getElementById('rev-modal-body');
   if(!REV_BUD[_revModalYear])REV_BUD[_revModalYear]={};
   let html=`<table class="rev-modal-table">
-    <thead><tr><th>Month</th><th style="color:var(--teal)">Laundry Revenue Budget</th><th style="color:var(--violet)">Valet Revenue Budget (Pearl)</th></tr></thead><tbody>`;
+    <thead><tr><th>Month</th><th style="color:var(--teal)">Laundry Revenue Budget</th><th style="color:var(--violet)">Pearl Valet Revenue Budget — FS Pearl</th></tr></thead><tbody>`;
   for(let m=0;m<12;m++){
     const b=REV_BUD[_revModalYear]?.[m]||{};
     html+=`<tr>
@@ -2558,7 +2715,7 @@ function buildReport(){
     </div>
     <div class="rpt-kpi-cell"><div class="rk-l">CPOR Actual</div><div class="rk-v">${yd.cporA?yd.cporA.toFixed(4):'—'}</div><div class="rk-s">Budget: ${yd.cporB?yd.cporB.toFixed(4):'—'}</div></div>
     <div class="rpt-kpi-cell"><div class="rk-l">Laundry Revenue</div><div class="rk-v">${v(yd.totRevLaA)}</div><div class="rk-s">Budget: ${v(yd.totRevLaB)}</div></div>
-    <div class="rpt-kpi-cell"><div class="rk-l">Valet Revenue (Pearl)</div><div class="rk-v">${v(yd.totRevVaA)}</div><div class="rk-s">Budget: ${v(yd.totRevVaB)}</div></div>
+    <div class="rpt-kpi-cell"><div class="rk-l">Pearl Valet Revenue — FS Pearl</div><div class="rk-v">${v(yd.totRevVaA)}</div><div class="rk-s">Budget: ${v(yd.totRevVaB)}</div></div>
   </div>
 
   <!-- MAIN TABLE -->
@@ -2580,7 +2737,7 @@ function buildReport(){
       <!-- REVENUE -->
       ${buildSection('REVENUE',[
         {label:'Laundry Revenue',     keyA:'revLaA',keyB:'revLaB',inv:false,accent:'#00d4b8'},
-        {label:'Other Valet Rev (Pearl)', keyA:'revVaA',keyB:'revVaB',inv:false,accent:'#a78bfa'},
+        {label:'Other Pearl Valet Rev — FS Pearl', keyA:'revVaA',keyB:'revVaB',inv:false,accent:'#a78bfa'},
       ],'#00d4b8')}
       ${buildTotalRow('TOTAL REVENUE','totRevA','totRevB',false,'#00d4b8')}
 
@@ -2772,7 +2929,7 @@ function exportReportExcel(){
 
   rows.push(['--- REVENUE ---']);
   addLine('Laundry Revenue','revLaA','revLaB');
-  addLine('Other Valet Revenue (Pearl)','revVaA','revVaB');
+  addLine('Pearl Valet Revenue — FS Pearl','revVaA','revVaB');
   addTotal('TOTAL REVENUE','totRevA','totRevB');
   rows.push(['--- OPERATING EXPENSES ---']);
   addLine('Laundry Supplies','laA','laB');
@@ -2965,26 +3122,28 @@ function updateRevProj(){
   // Build projection table
   let totProjLa=0, totProjVa=0;
   let totActLa=0, totActVa=0;
+  const hasBud = Object.keys(REV_BUD[projYear]||{}).some(m=>REV_BUD[projYear][m]?.laB||REV_BUD[projYear][m]?.valB);
 
   let rows = '';
   for(let m=0;m<12;m++){
     const rm = rooms[m];
     const projLa = rporLaAdj * rm;
     const projVa = rporVaAdj * rm;
-    const totProj = projLa + projVa;
-    const curLaB  = REV_BUD[projYear]?.[m]?.laB || 0;
-    const curVaB  = REV_BUD[projYear]?.[m]?.valB || 0;
+    const totProjM = projLa + projVa;
+    const curLaB = REV_BUD[projYear]?.[m]?.laB || 0;
+    const curVaB = REV_BUD[projYear]?.[m]?.valB || 0;
     totProjLa += projLa; totProjVa += projVa;
     totActLa  += curLaB; totActVa  += curVaB;
-
-    rows += `<tr>
-      <td style="background:var(--bg3);font-family:var(--ff-b);font-size:12px;color:var(--text2)">${MF[m]}</td>
-      <td style="text-align:center;font-family:var(--ff-m);font-size:11px;color:var(--violet)">${rm?rm.toLocaleString():'—'}</td>
-      <td style="text-align:right;font-family:var(--ff-m);color:var(--teal)">${projLa?fN(projLa):'—'}</td>
-      <td style="text-align:right;font-family:var(--ff-m);color:var(--text3);font-size:11px">${curLaB?fN(curLaB):'not set'}</td>
-      <td style="text-align:right;font-family:var(--ff-m);color:var(--violet)">${projVa?fN(projVa):'—'}</td>
-      <td style="text-align:right;font-family:var(--ff-m);color:var(--text3);font-size:11px">${curVaB?fN(curVaB):'not set'}</td>
-      <td style="text-align:right;font-family:var(--ff-m);font-weight:600;color:var(--text)">${totProj?fN(totProj):'—'}</td>
+    const noRm = !rm;
+    const bg = m%2===0?'transparent':'rgba(255,255,255,.015)';
+    rows += `<tr style="background:${bg};opacity:${noRm?.45:1}">
+      <td style="padding:8px 10px;font-family:'Syne',sans-serif;font-weight:600;color:${noRm?'#4a5568':'#e2e8f0'};white-space:nowrap">${MF[m]}</td>
+      <td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;color:${noRm?'#4a5568':'#a78bfa'}">${rm?rm.toLocaleString():'— add in Planner'}</td>
+      <td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${noRm?'#2a3550':'#00d4b8'}">${projLa?fN(projLa):'—'}</td>
+      ${hasBud?`<td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;color:${curLaB?'#4a9a8a':'#2a3550'};font-style:${curLaB?'normal':'italic'}">${curLaB?fN(curLaB):'not set'}</td>`:''}
+      <td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${noRm?'#2a3550':'#a78bfa'}">${projVa?fN(projVa):'—'}</td>
+      ${hasBud?`<td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;color:${curVaB?'#7c5cc0':'#2a3550'};font-style:${curVaB?'normal':'italic'}">${curVaB?fN(curVaB):'not set'}</td>`:''}
+      <td style="padding:8px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:${noRm?'#2a3550':'#f5c542'}">${totProjM?fN(totProjM):'—'}</td>
     </tr>`;
   }
 
@@ -2993,41 +3152,46 @@ function updateRevProj(){
   const vr = totProj - totCur;
 
   document.getElementById('rp-table-wrap').innerHTML = `
-    <table class="rev-proj-table">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8"><div style="width:9px;height:9px;border-radius:2px;background:#00d4b8"></div>Laundry — FS Doha</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8"><div style="width:9px;height:9px;border-radius:2px;background:#a78bfa"></div>Pearl Valet — FS Pearl</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#94a3b8"><div style="width:9px;height:9px;border-radius:2px;background:#f5c542"></div>Combined Total</div>
+        ${hasBud?'<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#4a9a8a"><div style="width:9px;height:9px;border-radius:2px;background:#4a9a8a"></div>Saved Budget (for comparison)</div>':''}
+      </div>
+      <div style="font-size:10px;color:${hasBud?'var(--teal)':'#f5c542'};font-style:italic">
+        ${hasBud?'✓ Saved budget shown for comparison — click Apply to update':'💡 No budget saved yet — review then click Apply as Budget below'}
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
       <thead>
         <tr>
-          <th style="text-align:left;min-width:100px">Month</th>
-          <th style="text-align:center;color:var(--violet)">Rooms Sold</th>
-          <th style="color:var(--teal)">Laundry Rev — Projected</th>
-          <th style="color:var(--text3)">Laundry — Current Budget</th>
-          <th style="color:var(--violet)">Valet Rev — Projected</th>
-          <th style="color:var(--text3)">Valet — Current Budget</th>
-          <th style="color:var(--amber)">Total Projected</th>
+          <th style="background:#1a2236;padding:8px 10px;text-align:left;font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#64748b">Month</th>
+          <th style="background:#1a2236;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa">Rooms Sold</th>
+          <th style="background:#003d30;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#00d4b8">🏨 Laundry Projected</th>
+          ${hasBud?'<th style="background:#002a21;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;color:#4a9a8a;letter-spacing:.5px;text-transform:uppercase">Saved Budget</th>':''}
+          <th style="background:#2d1a5e;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa">💎 Pearl Projected</th>
+          ${hasBud?'<th style="background:#1e0f42;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;color:#7c5cc0;letter-spacing:.5px;text-transform:uppercase">Saved Budget</th>':''}
+          <th style="background:#3d3000;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#f5c542">📊 Total Projected</th>
         </tr>
       </thead>
-      <tbody>
-        ${rows}
-        <tr class="proj-total-row">
-          <td>YEAR TOTAL</td>
-          <td style="text-align:center;color:var(--violet);font-family:var(--ff-m)">${totProjRooms?totProjRooms.toLocaleString():'—'}</td>
-          <td style="color:var(--teal);font-family:var(--ff-m)">${fN(totProjLa)}</td>
-          <td style="color:var(--text3);font-family:var(--ff-m)">${fN(totActLa)}</td>
-          <td style="color:var(--violet);font-family:var(--ff-m)">${fN(totProjVa)}</td>
-          <td style="color:var(--text3);font-family:var(--ff-m)">${fN(totActVa)}</td>
-          <td style="color:var(--amber);font-family:var(--ff-m)">${fN(totProj)}</td>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #2a3550">
+          <td style="padding:9px 10px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0;background:#1a2236">YEAR TOTAL</td>
+          <td style="padding:9px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:#a78bfa;background:#1a2236">${totProjRooms?totProjRooms.toLocaleString():'—'}</td>
+          <td style="padding:9px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#00d4b8;background:#1a2236">${fN(totProjLa)}</td>
+          ${hasBud?`<td style="padding:9px 10px;text-align:right;font-family:'DM Mono',monospace;color:#4a9a8a;background:#1a2236">${totActLa?fN(totActLa):'—'}</td>`:''}
+          <td style="padding:9px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#a78bfa;background:#1a2236">${fN(totProjVa)}</td>
+          ${hasBud?`<td style="padding:9px 10px;text-align:right;font-family:'DM Mono',monospace;color:#7c5cc0;background:#1a2236">${totActVa?fN(totActVa):'—'}</td>`:''}
+          <td style="padding:9px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:#f5c542;font-size:13px;background:#1a2236">${fN(totProj)}</td>
         </tr>
-        <tr>
-          <td colspan="6" style="background:var(--bg4);font-size:11px;color:var(--text3);padding:8px 12px">
-            vs Current Budget:
-            <span class="${vr>=0?'growth-pos':'growth-neg'}" style="margin-left:6px">
-              ${vr>=0?'+':''}${fN(vr)}
-            </span>
-            <span style="margin-left:8px;color:var(--text3)">${totCur?(((vr/totCur)*100).toFixed(1)+'% change'):'(no current budget set)'}</span>
-          </td>
-          <td style="background:var(--bg4)"></td>
-        </tr>
-      </tbody>
-    </table>`;
+        ${hasBud&&totCur?`<tr><td colspan="10" style="padding:8px 10px;background:#0f1a2e;border-radius:0 0 8px 8px;font-size:11px;color:${vr>=0?'#00d4b8':'var(--coral)'}">
+          ${vr>=0?'▲':'▼'} New projection is <strong>${vr>=0?'+':''}${fN(vr)}</strong> (${(vr/totCur*100).toFixed(1)}%) vs saved budget
+        </td></tr>`:''}
+      </tfoot>
+    </table></div>`;
 
   document.getElementById('rp-actions').style.display='flex';
 
@@ -3057,302 +3221,247 @@ function applyRevProjection(){
    REVENUE PROJECTION EXPORTS
    ════════════════════════════════════════ */
 function exportRevProjExcel(){
-  if(!window._revProjData){ toast('Generate projection first'); return; }
+  if(!window._revProjData){ toast('⚠ Generate projection first (Step 3)'); return; }
   const {projYear, rooms, rporLaAdj, rporVaAdj, laGrowth, vaGrowth} = window._revProjData;
   const baseYear = parseInt(document.getElementById('rp-base').value);
   const base = getRevRPOR(baseYear);
   const now = new Date().toLocaleDateString('en-US');
+  const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MF2=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const rows = [];
 
-  let rows = [];
   rows.push(['FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT']);
-  rows.push(['Revenue Budget Projection Report']);
-  rows.push([`Project Year: ${projYear}  |  Base Year: ${baseYear}  |  Generated: ${now}`]);
-  rows.push(['Prepared by: Reda Salah, Laundry Manager']);
+  rows.push([`REVENUE BUDGET PROJECTION — YEAR ${projYear}`]);
+  rows.push([`Prepared by: Reda Salah, Laundry Manager | Generated: ${now}`]);
+  rows.push([`Base Year: ${baseYear} | Laundry Growth: ${laGrowth>=0?'+':''}${laGrowth}% | Pearl Valet Growth: ${vaGrowth>=0?'+':''}${vaGrowth}%`]);
   rows.push([]);
-  rows.push(['BASE YEAR ANALYSIS']);
-  rows.push(['Base Year', baseYear, '', 'Base Rooms Sold', base.rooms.toLocaleString()]);
-  rows.push(['RPOR — Laundry Revenue', base.rporLa.toFixed(4), 'QAR/room night']);
-  rows.push(['RPOR — Valet Revenue (Pearl)', base.rporVa.toFixed(4), 'QAR/room night']);
-  rows.push(['Growth Applied — Laundry', laGrowth+'%', '', 'Adjusted RPOR', rporLaAdj.toFixed(4)]);
-  rows.push(['Growth Applied — Valet', vaGrowth+'%', '', 'Adjusted RPOR', rporVaAdj.toFixed(4)]);
-  rows.push([]);
-  rows.push(['MONTHLY PROJECTION — YEAR '+projYear]);
-  rows.push(['Month','Rooms Sold','Laundry Rev Budget','Valet Rev Budget (Pearl)','Total Revenue Budget','vs Current Budget','Variance']);
 
-  let totRooms=0,totLa=0,totVa=0,totCurLa=0,totCurVa=0;
-  for(let m=0;m<12;m++){
-    const rm = rooms[m];
-    const projLa = Math.round(rporLaAdj * rm * 100)/100;
-    const projVa = Math.round(rporVaAdj * rm * 100)/100;
-    const tot = projLa + projVa;
-    const curLa = REV_BUD[projYear]?.[m]?.laB||0;
-    const curVa = REV_BUD[projYear]?.[m]?.valB||0;
-    const curTot = curLa+curVa;
-    const vr = tot - curTot;
-    totRooms+=rm; totLa+=projLa; totVa+=projVa; totCurLa+=curLa; totCurVa+=curVa;
-    rows.push([MF[m], rm, projLa.toFixed(2), projVa.toFixed(2), tot.toFixed(2),
-      curTot?curTot.toFixed(2):'not set', curTot?vr.toFixed(2):'—']);
-  }
+  rows.push(['BASE YEAR ANALYSIS ('+baseYear+')']);
+  rows.push(['Rooms Sold (Base Year)', base.rooms.toLocaleString()]);
+  rows.push(['RPOR — Laundry Revenue (FS Doha)', base.rporLa.toFixed(4), 'QAR per room night']);
+  rows.push(['RPOR — Pearl Valet (FS Pearl)', base.rporVa.toFixed(4), 'QAR per room night']);
+  rows.push(['Growth Applied — Laundry', (laGrowth>=0?'+':'')+laGrowth+'%', 'Adjusted RPOR: '+rporLaAdj.toFixed(4)]);
+  rows.push(['Growth Applied — Pearl Valet', (vaGrowth>=0?'+':'')+vaGrowth+'%', 'Adjusted RPOR: '+rporVaAdj.toFixed(4)]);
   rows.push([]);
-  const totProj=totLa+totVa, totCur=totCurLa+totCurVa;
-  rows.push(['YEAR TOTAL', totRooms, totLa.toFixed(2), totVa.toFixed(2), totProj.toFixed(2),
-    totCur?totCur.toFixed(2):'not set', totCur?(totProj-totCur).toFixed(2):'—']);
+
+  rows.push(['MONTHLY PROJECTION — '+projYear]);
+  rows.push(['Month','Rooms Sold',
+    'Laundry Rev Projected (FS Doha)','Laundry Saved Budget','Laundry Variance',
+    'Pearl Valet Projected (FS Pearl)','Pearl Saved Budget','Pearl Variance',
+    'Total Projected','Total Saved Budget','Total Variance']);
+
+  let totRooms=0,totProjLa=0,totProjVa=0,totBudLa=0,totBudVa=0;
+  for(let m=0;m<12;m++){
+    const rm=rooms[m];
+    const projLa=rporLaAdj*rm, projVa=rporVaAdj*rm;
+    const budLa=REV_BUD[projYear]?.[m]?.laB||0;
+    const budVa=REV_BUD[projYear]?.[m]?.valB||0;
+    totRooms+=rm;totProjLa+=projLa;totProjVa+=projVa;totBudLa+=budLa;totBudVa+=budVa;
+    rows.push([MF2[m],rm||'— no rooms',
+      projLa?projLa.toFixed(2):'—', budLa?budLa.toFixed(2):'not set', budLa?(projLa-budLa).toFixed(2):'—',
+      projVa?projVa.toFixed(2):'—', budVa?budVa.toFixed(2):'not set', budVa?(projVa-budVa).toFixed(2):'—',
+      (projLa+projVa).toFixed(2), (budLa+budVa)?((budLa+budVa).toFixed(2)):'not set',
+      (budLa+budVa)?((projLa+projVa-budLa-budVa).toFixed(2)):'—']);
+  }
+  const totProj=totProjLa+totProjVa;
+  const totBud=totBudLa+totBudVa;
+  rows.push(['YEAR TOTAL',totRooms,
+    totProjLa.toFixed(2),totBudLa?totBudLa.toFixed(2):'not set',totBudLa?(totProjLa-totBudLa).toFixed(2):'—',
+    totProjVa.toFixed(2),totBudVa?totBudVa.toFixed(2):'not set',totBudVa?(totProjVa-totBudVa).toFixed(2):'—',
+    totProj.toFixed(2),totBud?totBud.toFixed(2):'not set',totBud?(totProj-totBud).toFixed(2):'—']);
+
   rows.push([]);
   rows.push(['SUMMARY']);
-  rows.push(['Total Projected Laundry Revenue', totLa.toFixed(2)]);
-  rows.push(['Total Projected Valet Revenue (Pearl)', totVa.toFixed(2)]);
-  rows.push(['Total Projected Revenue', totProj.toFixed(2)]);
-  rows.push(['Current Budget Total', totCur?totCur.toFixed(2):'not set']);
-  rows.push(['Variance vs Current Budget', totCur?(totProj-totCur).toFixed(2):'—']);
+  rows.push(['Laundry Revenue Projected (FS Doha)', totProjLa.toFixed(2),'QAR']);
+  rows.push(['Pearl Valet Revenue Projected (FS Pearl)', totProjVa.toFixed(2),'QAR']);
+  rows.push(['TOTAL PROJECTED REVENUE', totProj.toFixed(2),'QAR']);
+  rows.push(['RPOR Laundry', rporLaAdj.toFixed(4),'QAR/room night (adjusted)']);
+  rows.push(['RPOR Pearl Valet', rporVaAdj.toFixed(4),'QAR/room night (adjusted)']);
 
-  const csv = rows.map(r=>r.map(c=>{
+  const csv=rows.map(r=>r.map(c=>{
     const s=String(c??'');
     return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:s;
   }).join(',')).join('\n');
-
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download = `RS_RevenueBudgetProjection_${projYear}_${new Date().toISOString().slice(0,10)}.csv`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`RS_RevenueBudgetProjection_${projYear}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
-  toast('Excel exported ✓');
+  toast(`Projection ${projYear} exported to Excel ✓`);
 }
 
+
 function exportRevProjPDF(){
-  if(!window._revProjData){ toast('Generate projection first'); return; }
+  if(!window._revProjData){ toast('⚠ Generate projection first (Step 3)'); return; }
   const {projYear, rooms, rporLaAdj, rporVaAdj, laGrowth, vaGrowth} = window._revProjData;
   const baseYear = parseInt(document.getElementById('rp-base').value);
   const base = getRevRPOR(baseYear);
   const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const MF2=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  let totRooms=0,totLa=0,totVa=0,totCurLa=0,totCurVa=0;
+  let totRooms=0,totProjLa=0,totProjVa=0,totBudLa=0,totBudVa=0;
   let tableRows='';
+  const hasBud = Object.keys(REV_BUD[projYear]||{}).some(m=>REV_BUD[projYear][m]?.laB||REV_BUD[projYear][m]?.valB);
+
   for(let m=0;m<12;m++){
     const rm=rooms[m];
-    const projLa=rporLaAdj*rm, projVa=rporVaAdj*rm, tot=projLa+projVa;
-    const curLa=REV_BUD[projYear]?.[m]?.laB||0, curVa=REV_BUD[projYear]?.[m]?.valB||0, curTot=curLa+curVa;
-    const vr=tot-curTot;
-    const vrCls=vr>=0?'color:#0f5132':'color:#dc2626';
-    totRooms+=rm;totLa+=projLa;totVa+=projVa;totCurLa+=curLa;totCurVa+=curVa;
-    const rowBg=m%2===0?'#ffffff':'#f8fafc';
-    tableRows+=`<tr style="background:${rowBg}">
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;font-weight:600;color:#1e293b">${MF[m]}</td>
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:'DM Mono',monospace;color:#7c3aed">${rm?rm.toLocaleString():'—'}</td>
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:'DM Mono',monospace;color:#0d9488">${projLa?projLa.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:'DM Mono',monospace;color:#7c3aed">${projVa?projVa.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#0f5132">${tot?tot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:'DM Mono',monospace;color:#64748b">${curTot?curTot.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td style="padding:7px 14px;border-bottom:1px solid #e2e8f0;text-align:right;font-family:'DM Mono',monospace;${vrCls}">${curTot?(vr>=0?'+':'')+vr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+    const projLa=rporLaAdj*rm, projVa=rporVaAdj*rm, totM=projLa+projVa;
+    const budLa=REV_BUD[projYear]?.[m]?.laB||0;
+    const budVa=REV_BUD[projYear]?.[m]?.valB||0;
+    const vrLa=projLa-budLa, vrVa=projVa-budVa;
+    totRooms+=rm;totProjLa+=projLa;totProjVa+=projVa;totBudLa+=budLa;totBudVa+=budVa;
+    const bg=m%2===0?'#fff':'#f8fafc';
+    const noRm=!rm;
+    const q=v=>v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+    tableRows+=`<tr style="background:${bg};opacity:${noRm?.5:1}">
+      <td style="padding:6px 9px;font-weight:600;color:${noRm?'#94a3b8':'#1e293b'}">${MF2[m].substring(0,3)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#475569">${rm?rm.toLocaleString():'— no rooms'}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:#0369a1">${q(projLa)}</td>
+      ${hasBud?`<td style="padding:6px 8px;text-align:right;color:${budLa?'#0f766e':'#94a3b8'};font-style:${budLa?'normal':'italic'}">${budLa?q(budLa):'not set'}</td>
+      <td style="padding:6px 8px;text-align:right;color:${vrLa>=0?'#16a34a':'#dc2626'};font-weight:600">${budLa?(vrLa>=0?'+':'')+q(vrLa):'—'}</td>`:''}
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:#7c3aed">${q(projVa)}</td>
+      ${hasBud?`<td style="padding:6px 8px;text-align:right;color:${budVa?'#5b21b6':'#94a3b8'};font-style:${budVa?'normal':'italic'}">${budVa?q(budVa):'not set'}</td>
+      <td style="padding:6px 8px;text-align:right;color:${vrVa>=0?'#16a34a':'#dc2626'};font-weight:600">${budVa?(vrVa>=0?'+':'')+q(vrVa):'—'}</td>`:''}
+      <td style="padding:6px 8px;text-align:right;font-weight:700;color:#92400e">${q(totM)}</td>
     </tr>`;
   }
-  const totProj=totLa+totVa, totCur=totCurLa+totCurVa, totVr=totProj-totCur;
-  const laPct=totProj?((totLa/totProj)*100).toFixed(1):'—';
-  const vaPct=totProj?((totVa/totProj)*100).toFixed(1):'—';
+  const totProj=totProjLa+totProjVa;
+  const totBud=totBudLa+totBudVa;
+  const totVr=totProj-totBud;
+  const q=v=>v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>Revenue Budget Projection ${projYear}</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;box-sizing:border-box;margin:0;padding:0}
-  @page{size:A4 landscape;margin:10mm}
-  body{font-family:'Outfit',sans-serif;background:#fff;color:#1e293b;font-size:13px}
+  <title>Revenue Budget Projection ${projYear} — Four Seasons Hotel Doha</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4 landscape;margin:10mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e293b;background:#fff}
+    .hdr{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:14px 20px;border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+    .steps{display:flex;align-items:center;gap:0;margin-bottom:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px}
+    .step{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700}
+    .step-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+    .step-line{flex:1;height:1px;background:#e2e8f0;min-width:20px}
+    .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px}
+    .kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:8px 10px}
+    .kpi-l{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:3px}
+    .kpi-v{font-size:13px;font-weight:700}
+    .sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#1e3a5f;padding:5px 0 4px;border-bottom:2px solid #1e3a5f;margin:10px 0 7px}
+    .tbl{width:100%;border-collapse:collapse;font-size:9px}
+    .tbl th{padding:5px 8px;text-align:right;font-weight:600;font-size:8px;letter-spacing:.2px;white-space:nowrap;color:#fff}
+    .tbl th.left{text-align:left}
+    .tbl .tot td{background:#e2e8f0;font-weight:700;border-top:2px solid #1e293b}
+    .notice{background:#fffbeb;border:1px solid #f59e0b;border-radius:6px;padding:8px 12px;font-size:9px;color:#92400e;margin-bottom:10px}
+    .footer{margin-top:10px;padding-top:7px;border-top:1px solid #e2e8f0;font-size:8px;color:#94a3b8;display:flex;justify-content:space-between}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  <\/style><\/head><body>
 
-/* ── NOTES ── */
-.note-field{margin-top:8px;padding-top:8px;border-top:1px solid #2a3550}
-.note-field textarea{
-  width:100% !important;
-  background:#0f1a2e !important;
-  border:1px dashed #2a3550 !important;
-  border-radius:6px !important;
-  color:#4a5568 !important;
-  font-family:'Outfit',sans-serif !important;
-  font-size:11px !important;
-  padding:7px 9px !important;
-  resize:none !important;
-  transition:all .2s !important;
-  line-height:1.5 !important;
-  box-sizing:border-box !important;
-  display:block !important;
-}
-.note-field textarea::placeholder{color:#2d3748 !important;font-size:11px;font-style:italic}
-.note-field textarea:focus{
-  outline:none !important;
-  border:1px solid rgba(167,139,250,.5) !important;
-  background:rgba(167,139,250,.05) !important;
-  color:#a78bfa !important;
-}
-.note-field textarea.has-note{
-  border:1px solid rgba(167,139,250,.3) !important;
-  color:#a78bfa !important;
-  background:rgba(167,139,250,.04) !important;
-}
-
-/* ── TREND TAB ── */
-.trend-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:18px}
-.trend-title{font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.trend-chart{height:200px;display:flex;align-items:flex-end;gap:6px;padding:8px 0 0}
-.trend-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
-.trend-bar-wrap{flex:1;display:flex;align-items:flex-end;width:100%}
-.trend-bar{width:100%;border-radius:3px 3px 0 0;transition:all .4s ease;position:relative;cursor:default;min-height:3px}
-.trend-bar:hover{opacity:.8;filter:brightness(1.15)}
-.trend-lbl{font-size:10px;color:var(--text3);font-family:var(--ff-m);white-space:nowrap}
-.trend-val{font-size:9px;color:var(--text2);font-family:var(--ff-m);text-align:center}
-.trend-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
-.trend-table th{background:var(--bg4);padding:8px 12px;font-family:var(--ff-d);font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text3);border:1px solid var(--border);text-align:right}
-.trend-table th:first-child{text-align:left}
-.trend-table td{padding:7px 12px;border:1px solid rgba(42,53,80,.5);font-family:var(--ff-m);font-size:12px;text-align:right;color:var(--text2)}
-.trend-table td:first-child{text-align:left;font-family:var(--ff-b);color:var(--text2);background:var(--bg3)}
-.trend-table .trend-row-act td{background:rgba(0,212,184,.03)}
-.trend-arrow{font-size:11px;margin-left:4px}
-
-/* ── BACKUP ── */
-.backup-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;margin-bottom:14px}
-.backup-title{font-family:var(--ff-d);font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.backup-info{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px}
-.backup-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;background:var(--bg4);border-radius:var(--r);padding:12px 14px}
-.bs-item .bs-l{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
-.bs-item .bs-v{font-family:var(--ff-m);font-size:14px;font-weight:500}
-
-/* ── ARABIC ── */
-.ar-mode{direction:rtl;font-family:'Noto Kufi Arabic','Outfit',sans-serif!important}
-.ar-mode .hdr,.ar-mode .nav,.ar-mode .ph,.ar-mode .ys-title{direction:rtl}
-.ar-mode .ntab{font-family:'Noto Kufi Arabic','Outfit',sans-serif}
-.ar-mode .mc-name,.ar-mode .pt,.ar-mode .fld label,.ar-mode .csl{font-family:'Noto Kufi Arabic','Outfit',sans-serif}
-
-
-@keyframes fbPulse{
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:.5;transform:scale(1.3)}
-}
-
-<\/style>
-<\/head><body>
-
-<!-- HEADER -->
-<div style="background:linear-gradient(135deg,#0b3d2e,#1a5c42,#0f4c35);padding:24px 32px;margin-bottom:0">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px">
+  <div class="hdr">
     <div>
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-.5px">
-        Four Seasons Hotel Doha — Laundry Department
+      <div style="font-size:8px;color:rgba(255,255,255,.5);margin-bottom:2px">FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT</div>
+      <div style="font-size:18px;font-weight:800;color:#f5c542;margin-bottom:3px">Revenue Budget Projection — Year ${projYear}</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.5)">Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${now}</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:2px">Base Year: ${baseYear} &nbsp;|&nbsp; Laundry Growth: ${laGrowth>=0?'+':''}${laGrowth}% &nbsp;|&nbsp; Pearl Valet Growth: ${vaGrowth>=0?'+':''}${vaGrowth}%</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:20px;font-weight:800;color:#f5c542">PROJECTION</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.4)">RS BudgetPro V3.0</div>
+    </div>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="steps">
+    <div class="step"><div class="step-num" style="background:#00d4b8;color:#0f172a">✓</div><span style="color:#00d4b8">Years Selected</span></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" style="background:#00d4b8;color:#0f172a">✓</div><span style="color:#00d4b8">Growth % Set</span></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" style="background:#f5c542;color:#0f172a">3</div><span style="color:#f5c542">Projection Generated</span></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num" style="background:#2a3550;color:#94a3b8">4</div><span style="color:#94a3b8">Apply as Budget</span></div>
+    <div style="margin-left:auto;font-size:9px;color:#94a3b8;font-style:italic">
+      ${hasBud?'✓ Saved budget shown for comparison':'💡 Budget not yet applied — click Apply as Budget in the system'}
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-l">Budget Year</div><div class="kpi-v" style="color:#1e3a5f">${projYear}</div><div style="font-size:8px;color:#64748b">Base: ${baseYear}</div></div>
+    <div class="kpi"><div class="kpi-l">Total Rooms Projected</div><div class="kpi-v" style="color:#7c3aed">${totRooms.toLocaleString()}</div></div>
+    <div class="kpi" style="border-color:#0369a1"><div class="kpi-l">🏨 Laundry Projected</div><div class="kpi-v" style="color:#0369a1">QAR ${q(totProjLa)}</div><div style="font-size:8px;color:#64748b">RPOR: ${rporLaAdj.toFixed(4)}</div></div>
+    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">💎 Pearl Projected</div><div class="kpi-v" style="color:#7c3aed">QAR ${q(totProjVa)}</div><div style="font-size:8px;color:#64748b">RPOR: ${rporVaAdj.toFixed(4)}</div></div>
+    <div class="kpi" style="border-color:#92400e;background:#fffbeb"><div class="kpi-l">📊 Total Projected</div><div class="kpi-v" style="color:#92400e">QAR ${q(totProj)}</div></div>
+    <div class="kpi" style="border-color:${hasBud?'#0f766e':'#e2e8f0'}"><div class="kpi-l">vs Saved Budget</div><div class="kpi-v" style="color:${hasBud?totVr>=0?'#16a34a':'#dc2626':'#94a3b8'}">${hasBud?(totVr>=0?'+':'')+q(totVr):'Not set yet'}</div></div>
+  </div>
+
+  ${hasBud?'':`<div class="notice">⚠ No revenue budget has been applied yet for ${projYear}. Review the projection below, then go back to the system and click "✓ Apply as Revenue Budget" to make it official.</div>`}
+
+  <div class="sec">Monthly Revenue Projection — ${projYear} · All 12 Months</div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th class="left" style="background:#1e293b">Month</th>
+        <th style="background:#1e293b">Rooms</th>
+        <th style="background:#1e40af">🏨 Laundry Projected</th>
+        ${hasBud?'<th style="background:#0f766e">Saved Budget</th><th style="background:#0f766e">Variance</th>':''}
+        <th style="background:#5b21b6">💎 Pearl Projected</th>
+        ${hasBud?'<th style="background:#3b0764">Saved Budget</th><th style="background:#3b0764">Variance</th>':''}
+        <th style="background:#92400e">📊 Total Projected</th>
+      </tr>
+    </thead>
+    <tbody>${tableRows}</tbody>
+    <tfoot>
+      <tr class="tot">
+        <td style="padding:6px 9px">YEAR TOTAL</td>
+        <td style="padding:6px 8px;text-align:right">${totRooms.toLocaleString()}</td>
+        <td style="padding:6px 8px;text-align:right;color:#0369a1">QAR ${q(totProjLa)}</td>
+        ${hasBud?`<td style="padding:6px 8px;text-align:right;color:#0f766e">${totBudLa?'QAR '+q(totBudLa):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${(totProjLa-totBudLa)>=0?'#16a34a':'#dc2626'};font-weight:700">${totBudLa?((totProjLa-totBudLa)>=0?'+':'')+q(totProjLa-totBudLa):'—'}</td>`:''}
+        <td style="padding:6px 8px;text-align:right;color:#7c3aed">QAR ${q(totProjVa)}</td>
+        ${hasBud?`<td style="padding:6px 8px;text-align:right;color:#5b21b6">${totBudVa?'QAR '+q(totBudVa):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${(totProjVa-totBudVa)>=0?'#16a34a':'#dc2626'};font-weight:700">${totBudVa?((totProjVa-totBudVa)>=0?'+':'')+q(totProjVa-totBudVa):'—'}</td>`:''}
+        <td style="padding:6px 8px;text-align:right;font-weight:800;color:#92400e">QAR ${q(totProj)}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#0369a1;margin-bottom:6px">RPOR — Laundry Revenue (FS Doha)</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#475569;margin-bottom:3px">
+        <span>Base Year RPOR (${baseYear})</span><span style="font-weight:600">QAR ${base.rporLa.toFixed(4)}</span>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,.75);line-height:1.6">
-        Revenue Budget Projection Report &nbsp;|&nbsp; Year ${projYear}<br>
-        Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${now}
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#475569;margin-bottom:3px">
+        <span>Growth Applied</span><span style="font-weight:600;color:${laGrowth>=0?'#16a34a':'#dc2626'}">${laGrowth>=0?'+':''}${laGrowth}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#0369a1;font-weight:700;border-top:1px solid #bae6fd;padding-top:4px;margin-top:4px">
+        <span>Adjusted RPOR Used</span><span>QAR ${rporLaAdj.toFixed(4)}</span>
       </div>
     </div>
-    <div style="text-align:right;flex-shrink:0">
-      <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:800;color:#00d4b8;line-height:1">${projYear}</div>
-      <div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:2px;letter-spacing:1px">REVENUE PROJECTION</div>
+    <div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:6px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#7c3aed;margin-bottom:6px">RPOR — Pearl Valet Revenue (FS Pearl)</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#475569;margin-bottom:3px">
+        <span>Base Year RPOR (${baseYear})</span><span style="font-weight:600">QAR ${base.rporVa.toFixed(4)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:#475569;margin-bottom:3px">
+        <span>Growth Applied</span><span style="font-weight:600;color:${vaGrowth>=0?'#16a34a':'#dc2626'}">${vaGrowth>=0?'+':''}${vaGrowth}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#7c3aed;font-weight:700;border-top:1px solid #ddd6fe;padding-top:4px;margin-top:4px">
+        <span>Adjusted RPOR Used</span><span>QAR ${rporVaAdj.toFixed(4)}</span>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- KPI STRIP -->
-<div style="background:#f0fdf4;border-bottom:2px solid #bbf7d0;display:grid;grid-template-columns:repeat(6,1fr);gap:0">
-  <div style="padding:12px 16px;border-right:1px solid #bbf7d0;text-align:center">
-    <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Base Year</div>
-    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#0f5132">${baseYear}</div>
+  <div class="footer">
+    <span>Four Seasons Hotel Doha · Laundry Department · Revenue Budget Projection ${projYear} · CONFIDENTIAL</span>
+    <span>RS BudgetPro V3.0 · Prepared by Reda Salah, Laundry Manager · ${now}</span>
   </div>
-  <div style="padding:12px 16px;border-right:1px solid #bbf7d0;text-align:center">
-    <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Base RPOR — Laundry</div>
-    <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:#0d9488">QAR ${base.rporLa.toFixed(4)}</div>
-    <div style="font-size:10px;color:#94a3b8">+${laGrowth}% growth → ${rporLaAdj.toFixed(4)}</div>
-  </div>
-  <div style="padding:12px 16px;border-right:1px solid #bbf7d0;text-align:center">
-    <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Base RPOR — Valet</div>
-    <div style="font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:#7c3aed">QAR ${base.rporVa.toFixed(4)}</div>
-    <div style="font-size:10px;color:#94a3b8">+${vaGrowth}% growth → ${rporVaAdj.toFixed(4)}</div>
-  </div>
-  <div style="padding:12px 16px;border-right:1px solid #bbf7d0;text-align:center">
-    <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Total Rooms ${projYear}</div>
-    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#7c3aed">${totRooms.toLocaleString()}</div>
-  </div>
-  <div style="padding:12px 16px;border-right:1px solid #bbf7d0;text-align:center">
-    <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Total Projected Revenue</div>
-    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:#0f5132">QAR ${totProj.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-  </div>
-  <div style="padding:12px 16px;text-align:center">
-    <div style="font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#64748b;margin-bottom:4px">vs Current Budget</div>
-    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:${totVr>=0?'#0f5132':'#dc2626'}">${totCur?(totVr>=0?'+':'')+totVr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'not set'}</div>
-  </div>
-</div>
+  <\/body><\/html>`;
 
-<!-- MAIN TABLE -->
-<table style="width:100%;border-collapse:collapse;margin-top:0">
-  <thead>
-    <tr>
-      <th style="background:#1e293b;color:#e2e8f0;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:left">Month</th>
-      <th style="background:#2d1b69;color:#a78bfa;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:right">Rooms Sold</th>
-      <th style="background:#0f3d35;color:#2dd4bf;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:right">Laundry Revenue Budget</th>
-      <th style="background:#2d1b69;color:#a78bfa;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:right">Valet Revenue Budget (Pearl)</th>
-      <th style="background:#0f2d1a;color:#4ade80;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:right">Total Revenue Budget</th>
-      <th style="background:#1e293b;color:#94a3b8;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:right">Current Budget</th>
-      <th style="background:#1e293b;color:#94a3b8;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:10px 14px;border:1px solid #334155;text-align:right">Variance</th>
-    </tr>
-  </thead>
-  <tbody>
-    ${tableRows}
-    <tr style="background:#f0fdf4;border-top:3px solid #166534">
-      <td style="padding:10px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#0f5132;border-top:3px solid #166534">YEAR TOTAL</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#7c3aed;border-top:3px solid #166534">${totRooms.toLocaleString()}</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#0d9488;border-top:3px solid #166534">QAR ${totLa.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#7c3aed;border-top:3px solid #166534">QAR ${totVa.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:#0f5132;font-size:14px;border-top:3px solid #166534">QAR ${totProj.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#64748b;border-top:3px solid #166534">${totCur?'QAR '+totCur.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-      <td style="padding:10px 14px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:${totVr>=0?'#0f5132':'#dc2626'};border-top:3px solid #166534">${totCur?(totVr>=0?'+':'')+totVr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- SPLIT SUMMARY -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:16px">
-  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 18px;margin-right:8px">
-    <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#0f5132;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">Revenue Split</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:12px;color:#0d9488;font-weight:600">Laundry Revenue</span>
-      <span style="font-family:'DM Mono',monospace;font-size:13px;color:#0f5132">QAR ${totLa.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="color:#94a3b8;font-size:11px">(${laPct}%)</span></span>
-    </div>
-    <div style="height:6px;background:#e2e8f0;border-radius:3px;margin-bottom:10px;overflow:hidden">
-      <div style="height:100%;width:${laPct}%;background:linear-gradient(90deg,#0d9488,#14b8a6);border-radius:3px"></div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:12px;color:#7c3aed;font-weight:600">Valet Revenue (Pearl)</span>
-      <span style="font-family:'DM Mono',monospace;font-size:13px;color:#0f5132">QAR ${totVa.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="color:#94a3b8;font-size:11px">(${vaPct}%)</span></span>
-    </div>
-    <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
-      <div style="height:100%;width:${vaPct}%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:3px"></div>
-    </div>
-  </div>
-  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:14px 18px;margin-left:8px">
-    <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#c07a20;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px">Growth Applied</div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #fed7aa">
-      <span style="font-size:12px;color:#475569">Laundry Growth %</span>
-      <span style="font-family:'DM Mono',monospace;font-size:13px;color:${laGrowth>=0?'#0f5132':'#dc2626'};font-weight:700">${laGrowth>=0?'+':''}${laGrowth}%</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #fed7aa">
-      <span style="font-size:12px;color:#475569">Valet Growth %</span>
-      <span style="font-family:'DM Mono',monospace;font-size:13px;color:${vaGrowth>=0?'#0f5132':'#dc2626'};font-weight:700">${vaGrowth>=0?'+':''}${vaGrowth}%</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;padding:5px 0">
-      <span style="font-size:12px;color:#475569">Base Year RPOR Total</span>
-      <span style="font-family:'DM Mono',monospace;font-size:12px;color:#475569">${(base.rporLa+base.rporVa).toFixed(4)}</span>
-    </div>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<div style="margin-top:16px;padding:10px 16px;background:#f8fafc;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
-  <div style="font-size:11px;color:#94a3b8">Four Seasons Hotel Doha · Laundry Department · Confidential</div>
-  <div style="font-family:'DM Mono',monospace;font-size:10px;color:#cbd5e1">RS BudgetPro V3.0 · Revenue Projection ${projYear} · ${now}</div>
-</div>
-
-<\/body><\/html>`;
-
-  const win = window.open('','_blank','width=1200,height=850');
+  const win=window.open('','_blank','width=1300,height=850');
   win.document.write(html);
   win.document.close();
-  win.onload = ()=>{ setTimeout(()=>win.print(), 500); };
-  toast('PDF ready ✓');
+  win.onload=()=>{ setTimeout(()=>win.print(),600); };
+  toast(`Projection PDF ready ✓`);
 }
+
 
 
 function signOut(){
@@ -4620,9 +4729,9 @@ function exportRevExcel(){
   // Summary
   rows.push(['REVENUE SUMMARY']);
   rows.push(['','Actual','Budget','Variance','vs Prior Year Growth']);
-  rows.push(['Laundry Revenue (Doha)',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
+  rows.push(['Laundry Revenue — FS Doha',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
     d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—']);
-  rows.push(['Valet Revenue (Pearl)',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
+  rows.push(['Pearl Valet Revenue — FS Pearl',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
     d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—']);
   rows.push(['TOTAL REVENUE',(d.totLaA+d.totVaA).toFixed(2),(d.totLaB+d.totVaB).toFixed(2),
     d.totVr.toFixed(2),d.totGrowthFull!==null?g(d.totGrowthFull):'—']);
@@ -4632,7 +4741,7 @@ function exportRevExcel(){
   rows.push(['Laundry Revenue',d.laRpor.toFixed(4),
     d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—',
     d.totPyLaA&&d.laRpor?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—']);
-  rows.push(['Valet Revenue (Pearl)',d.vaRpor.toFixed(4),
+  rows.push(['Pearl Valet Revenue — FS Pearl',d.vaRpor.toFixed(4),
     d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—',
     d.totPyVaA&&d.vaRpor?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—']);
   rows.push([]);
@@ -4798,11 +4907,11 @@ function exportRevPDF(){
     ${kpi('Rooms Sold '+y, d.totRooms.toLocaleString(), 'Projected/Actual','#1e3a5f','')}
     ${kpi('Laundry Revenue', d.totLaA?'QAR '+q(d.totLaA):'No data yet', laGrowthTotal!==null?(laGrowthTotal>=0?'▲':'▼')+Math.abs(laGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#0369a1', laGrowthTotal!==null?(laGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
     ${kpi('Laundry Budget', d.totLaB?'QAR '+q(d.totLaB):'—', d.totLaB&&d.totLaA?(d.totLaA>=d.totLaB?'▲ Above target':'▼ Below target'):'Budget not set','#0369a1',d.totLaB&&d.totLaA?(d.totLaA>=d.totLaB?'#16a34a':'#dc2626'):'#94a3b8')}
-    ${kpi('Valet Revenue (Pearl)', d.totVaA?'QAR '+q(d.totVaA):'No data yet', vaGrowthTotal!==null?(vaGrowthTotal>=0?'▲':'▼')+Math.abs(vaGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#7c3aed',vaGrowthTotal!==null?(vaGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
+    ${kpi('Pearl Valet Revenue — FS Pearl', d.totVaA?'QAR '+q(d.totVaA):'No data yet', vaGrowthTotal!==null?(vaGrowthTotal>=0?'▲':'▼')+Math.abs(vaGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#7c3aed',vaGrowthTotal!==null?(vaGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
     ${kpi('Valet Budget (Pearl)', d.totVaB?'QAR '+q(d.totVaB):'—', d.totVaB&&d.totVaA?(d.totVaA>=d.totVaB?'▲ Above target':'▼ Below target'):'Budget not set','#7c3aed',d.totVaB&&d.totVaA?(d.totVaA>=d.totVaB?'#16a34a':'#dc2626'):'#94a3b8')}
     ${kpi('TOTAL REVENUE', d.totA?'QAR '+q(d.totA):'No data yet', totGrowthTotal!==null?(totGrowthTotal>=0?'▲':'▼')+Math.abs(totGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#0f172a',totGrowthTotal!==null?(totGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
     ${kpi('RPOR — Laundry', d.laRpor?d.laRpor.toFixed(4):'—', laRporPY?'LY: '+laRporPY.toFixed(4):'No prior data','#0369a1','')}
-    ${kpi('RPOR — Pearl (Valet)', d.vaRpor?d.vaRpor.toFixed(4):'—', vaRporPY?'LY: '+vaRporPY.toFixed(4):'No prior data','#7c3aed','')}
+    ${kpi('RPOR — Pearl Valet', d.vaRpor?d.vaRpor.toFixed(4):'—', vaRporPY?'LY: '+vaRporPY.toFixed(4):'No prior data','#7c3aed','')}
   </div>
 
   <div class="sec">Monthly Revenue Breakdown — All 12 Months · ${y} vs Budget vs Prior Year ${d.py}</div>
@@ -4813,7 +4922,7 @@ function exportRevPDF(){
         <th class="left grp-base" rowspan="2" style="min-width:32px">Month</th>
         <th class="grp-base" rowspan="2">Rooms</th>
         <th class="grp-la" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">🏨 LAUNDRY REVENUE — Four Seasons Doha</th>
-        <th class="grp-va" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">💎 VALET REVENUE — Four Seasons Pearl</th>
+        <th class="grp-va" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">💎 PEARL VALET REVENUE — FS The Pearl</th>
         <th class="grp-tot" colspan="3" style="border-bottom:1px solid rgba(255,255,255,.2)">📊 COMBINED</th>
       </tr>
       <tr>
@@ -4858,7 +4967,7 @@ function exportRevPDF(){
       <th class="grp-base">Growth %</th>
     </tr></thead>
     <tbody>
-      <tr><td style="padding:6px 9px;color:#0369a1;font-weight:600">Laundry Revenue (Doha)</td>
+      <tr><td style="padding:6px 9px;color:#0369a1;font-weight:600">Laundry Revenue — FS Doha</td>
         <td style="padding:6px 8px;text-align:right;color:#0369a1;font-weight:700">${d.laRpor?d.laRpor.toFixed(4):'—'}</td>
         <td style="padding:6px 8px;text-align:right;color:#64748b">${laRporPY?laRporPY.toFixed(4):'—'}</td>
         <td style="padding:6px 8px;text-align:right;color:${laRporPY&&d.laRpor?(d.laRpor-laRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
@@ -4866,7 +4975,7 @@ function exportRevPDF(){
         <td style="padding:6px 8px;text-align:right;color:${laRporPY&&d.laRpor?(d.laRpor-laRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
           ${laRporPY&&d.laRpor?((d.laRpor-laRporPY>=0?'+':'')+((d.laRpor-laRporPY)/laRporPY*100).toFixed(1)+'%'):'—'}</td>
       </tr>
-      <tr style="background:#f8fafc"><td style="padding:6px 9px;color:#7c3aed;font-weight:600">Valet Revenue (Pearl)</td>
+      <tr style="background:#f8fafc"><td style="padding:6px 9px;color:#7c3aed;font-weight:600">Pearl Valet Revenue — FS Pearl</td>
         <td style="padding:6px 8px;text-align:right;color:#7c3aed;font-weight:700">${d.vaRpor?d.vaRpor.toFixed(4):'—'}</td>
         <td style="padding:6px 8px;text-align:right;color:#64748b">${vaRporPY?vaRporPY.toFixed(4):'—'}</td>
         <td style="padding:6px 8px;text-align:right;color:${vaRporPY&&d.vaRpor?(d.vaRpor-vaRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
@@ -4915,9 +5024,9 @@ function exportRevExcel(){
   // Summary
   rows.push(['REVENUE SUMMARY']);
   rows.push(['','Actual','Budget','Variance','vs Prior Year Growth']);
-  rows.push(['Laundry Revenue (Doha)',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
+  rows.push(['Laundry Revenue — FS Doha',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
     d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—']);
-  rows.push(['Valet Revenue (Pearl)',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
+  rows.push(['Pearl Valet Revenue — FS Pearl',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
     d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—']);
   rows.push(['TOTAL REVENUE',(d.totLaA+d.totVaA).toFixed(2),(d.totLaB+d.totVaB).toFixed(2),
     d.totVr.toFixed(2),d.totGrowthFull!==null?g(d.totGrowthFull):'—']);
@@ -4927,7 +5036,7 @@ function exportRevExcel(){
   rows.push(['Laundry Revenue',d.laRpor.toFixed(4),
     d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—',
     d.totPyLaA&&d.laRpor?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—']);
-  rows.push(['Valet Revenue (Pearl)',d.vaRpor.toFixed(4),
+  rows.push(['Pearl Valet Revenue — FS Pearl',d.vaRpor.toFixed(4),
     d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—',
     d.totPyVaA&&d.vaRpor?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—']);
   rows.push([]);
@@ -5067,7 +5176,7 @@ function exportRevPDF(){
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-l">Rooms Sold</div><div class="kpi-v" style="color:#1e3a5f">${d.totRooms.toLocaleString()}</div><div class="kpi-s">Year ${y}</div></div>
     <div class="kpi" style="border-color:#0369a1"><div class="kpi-l">Laundry Revenue</div><div class="kpi-v" style="color:#0369a1">${q(d.totLaA)}</div><div class="kpi-s" style="color:${gc(d.totPyLaA?((d.totLaA-d.totPyLaA)/d.totPyLaA*100):null)}">${d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'vs LY: —'} vs LY</div></div>
-    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">Valet Rev (Pearl)</div><div class="kpi-v" style="color:#7c3aed">${q(d.totVaA)}</div><div class="kpi-s" style="color:${gc(d.totPyVaA?((d.totVaA-d.totPyVaA)/d.totPyVaA*100):null)}">${d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'vs LY: —'} vs LY</div></div>
+    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">Pearl Valet Rev — FS Pearl</div><div class="kpi-v" style="color:#7c3aed">${q(d.totVaA)}</div><div class="kpi-s" style="color:${gc(d.totPyVaA?((d.totVaA-d.totPyVaA)/d.totPyVaA*100):null)}">${d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'vs LY: —'} vs LY</div></div>
     <div class="kpi" style="border-color:#0f172a;background:#f0f9ff"><div class="kpi-l">Total Revenue</div><div class="kpi-v" style="color:#0f172a">${q(d.totA)}</div><div class="kpi-s" style="color:${gc(d.totGrowthFull)}">${g(d.totGrowthFull)} vs LY</div></div>
     <div class="kpi"><div class="kpi-l">vs Budget</div><div class="kpi-v" style="color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totVr>=0?'+':''}${q(d.totVr)}</div><div class="kpi-s" style="color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totB?g(d.totVr/d.totB*100):''}</div></div>
     <div class="kpi"><div class="kpi-l">RPOR Total</div><div class="kpi-v" style="color:#0f172a">${d.totRpor.toFixed(4)}</div><div class="kpi-s" style="color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">${pyTotRpor?g((d.totRpor-pyTotRpor)/pyTotRpor*100):'vs LY: —'} vs LY</div></div>
@@ -5081,7 +5190,7 @@ function exportRevPDF(){
         <th class="left" rowspan="2">Month</th>
         <th rowspan="2">Rooms</th>
         <th colspan="6" style="background:#1e40af;border-bottom:1px solid #3b82f6">🏨 LAUNDRY REVENUE — Four Seasons Doha</th>
-        <th colspan="6" style="background:#5b21b6;border-bottom:1px solid #8b5cf6">💎 VALET REVENUE — Four Seasons Pearl</th>
+        <th colspan="6" style="background:#5b21b6;border-bottom:1px solid #8b5cf6">💎 PEARL VALET REVENUE — FS The Pearl</th>
         <th colspan="3" style="background:#166534;border-bottom:1px solid #22c55e">📊 COMBINED TOTAL</th>
       </tr>
       <tr>
@@ -5127,7 +5236,7 @@ function exportRevPDF(){
       <th>RPOR ${y}</th><th>RPOR ${d.py}</th><th>Change</th><th>Growth %</th>
     </tr></thead>
     <tbody>
-      <tr><td style="color:#0369a1;font-weight:600">Laundry Revenue (Doha)</td>
+      <tr><td style="color:#0369a1;font-weight:600">Laundry Revenue — FS Doha</td>
         <td style="text-align:right;color:#0369a1">${d.laRpor.toFixed(4)}</td>
         <td style="text-align:right">${d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—'}</td>
         <td style="text-align:right;color:${d.totPyLaA&&d.laRpor?gc((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'#64748b'}">
@@ -5135,7 +5244,7 @@ function exportRevPDF(){
         <td style="text-align:right;color:${gc(d.totPyLaA&&d.laRpor?(d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100:null)}">
           ${d.totPyRooms&&d.totPyLaA?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—'}</td>
       </tr>
-      <tr style="background:#f8fafc"><td style="color:#7c3aed;font-weight:600">Valet Revenue (Pearl)</td>
+      <tr style="background:#f8fafc"><td style="color:#7c3aed;font-weight:600">Pearl Valet Revenue — FS Pearl</td>
         <td style="text-align:right;color:#7c3aed">${d.vaRpor.toFixed(4)}</td>
         <td style="text-align:right">${d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—'}</td>
         <td style="text-align:right;color:${d.totPyVaA&&d.vaRpor?gc((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'#64748b'}">
@@ -5526,7 +5635,7 @@ window.addEventListener('beforeunload',saveAll);
     <div class="guide-card">
       <div class="guide-card-hdr"><div class="guide-icon" style="background:var(--teal-bg)">💰</div><div><div class="guide-card-title" style="color:var(--teal)">Revenue Tracker</div><div class="guide-card-sub">Laundry & Valet revenue vs budget</div></div></div>
       <div class="guide-card-body">
-        <div class="guide-step"><div class="guide-step-num" style="background:var(--teal-bg);color:var(--teal)">1</div><div class="guide-step-text">Enter monthly <strong>budget</strong> and <strong>actual</strong> for Laundry Revenue and Other Valet Revenue (Pearl) directly in each month card</div></div>
+        <div class="guide-step"><div class="guide-step-num" style="background:var(--teal-bg);color:var(--teal)">1</div><div class="guide-step-text">Enter monthly <strong>budget</strong> and <strong>actual</strong> for Laundry Revenue and Pearl Valet Revenue — FS Pearl directly in each month card</div></div>
         <div class="guide-step"><div class="guide-step-num" style="background:var(--teal-bg);color:var(--teal)">2</div><div class="guide-step-text">Circular arc progress gauge and colour bars show achievement % live. Colours: <span style="color:var(--coral)">under 80%</span> · <span style="color:var(--amber)">80–99%</span> · <span style="color:var(--teal)">100%+</span></div></div>
         <div class="guide-step"><div class="guide-step-num" style="background:var(--teal-bg);color:var(--teal)">3</div><div class="guide-step-text"><strong>📐 Revenue Budget Projection:</strong> uses RPOR × growth% × rooms sold to auto-generate next year's monthly budgets. Click Apply to set them.</div></div>
       </div>
@@ -5544,7 +5653,7 @@ window.addEventListener('beforeunload',saveAll);
       <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg4);border-radius:5px"><div style="width:10px;height:10px;border-radius:50%;background:var(--coral);flex-shrink:0"></div><div style="font-size:11px;color:var(--text2)"><strong style="color:var(--coral)">Coral</strong> — Printing & Stationery / Over budget</div></div>
       <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg4);border-radius:5px"><div style="width:10px;height:10px;border-radius:50%;background:var(--teal);flex-shrink:0"></div><div style="font-size:11px;color:var(--text2)"><strong style="color:var(--teal)">Teal</strong> — Actuals / Under budget / Revenue</div></div>
       <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg4);border-radius:5px"><div style="width:10px;height:10px;border-radius:50%;background:var(--gold);flex-shrink:0"></div><div style="font-size:11px;color:var(--text2)"><strong style="color:var(--gold)">Gold</strong> — Forecast / Projected values</div></div>
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg4);border-radius:5px"><div style="width:10px;height:10px;border-radius:50%;background:var(--violet);flex-shrink:0"></div><div style="font-size:11px;color:var(--text2)"><strong style="color:var(--violet)">Violet</strong> — Valet Revenue (Pearl)</div></div>
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg4);border-radius:5px"><div style="width:10px;height:10px;border-radius:50%;background:var(--violet);flex-shrink:0"></div><div style="font-size:11px;color:var(--text2)"><strong style="color:var(--violet)">Violet</strong> — Pearl Valet Revenue — FS Pearl</div></div>
     </div>
   </div>
 
