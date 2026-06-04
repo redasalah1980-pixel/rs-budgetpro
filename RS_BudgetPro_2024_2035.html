@@ -1283,10 +1283,9 @@ function doLogin(){
           </div>
           <div style="display:flex;flex-direction:column;gap:5px">
             <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568">Rooms Sold Source</label>
-            <select id="rp-rooms-src" onchange="toggleManualRooms(this);updateRevProj()" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:13px;padding:8px 10px;width:100%">
+            <select id="rp-rooms-src" onchange="updateRevProj()" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:13px;padding:8px 10px;width:100%">
               <option value="actual">From Monthly Entry (actuals)</option>
               <option value="proj">From Projection Planner</option>
-              <option value="manual">Enter manually below ↓</option>
             </select>
           </div>
         </div>
@@ -1308,9 +1307,9 @@ function doLogin(){
               style="background:#212d42;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#a78bfa;font-family:'DM Mono',monospace;font-size:15px;font-weight:500;padding:10px 10px;width:100%;text-align:right">
           </div>
           <div style="display:flex;flex-direction:column;gap:5px">
-            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#ffb347">Manual Rooms (if selected above)</label>
-            <div style="background:#1a1a2e;border:1px solid #2a3550;border-radius:6px;padding:8px 10px;font-size:11px;color:#4a5568;font-style:italic">
-              Choose "Enter manually" → month grid appears below
+            <label style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#00d4b8">💡 How rooms work</label>
+            <div style="background:#0f1a2e;border:1px solid rgba(0,212,184,.15);border-radius:6px;padding:8px 10px;font-size:11px;color:#4a5568;line-height:1.5">
+              To use custom rooms → enter them in <strong style="color:#a78bfa">Projection Planner</strong> first, then select "From Projection Planner" above
             </div>
           </div>
         </div>
@@ -1323,15 +1322,6 @@ function doLogin(){
           <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">RPOR — Valet (Pearl)</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:#a78bfa" id="rp-rpor-va">—</div></div>
           <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">Adjusted RPOR — Laundry</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:#00d4b8" id="rp-growth-la-disp">—</div></div>
           <div><div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#4a5568;margin-bottom:3px">Adjusted RPOR — Valet</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:#a78bfa" id="rp-growth-va-disp">—</div></div>
-        </div>
-
-        <!-- Manual rooms grid - shown only when manual selected -->
-        <div id="rp-manual-grid" style="display:none;background:#1c2333;border:1px solid rgba(255,179,71,.25);border-radius:8px;padding:14px 16px;margin-bottom:16px">
-          <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#ffb347;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px">
-            📅 Enter Rooms Sold per Month
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="rp-manual-inputs">
-          </div>
         </div>
 
         <!-- Generate button -->
@@ -2926,53 +2916,23 @@ function getRevRPOR(baseYear){
   };
 }
 
-function getProjRooms(projYear, src, manualTotal){
+function getProjRooms(projYear, src){
   const rooms = [];
   for(let m=0;m<12;m++){
     let r = 0;
     if(src==='actual'){
       r = DATA[projYear]?.[m]?.roomsSold || 0;
-    } else if(src==='proj'){
-      r = PROJ[projYear]?.[m]?.roomsSold || DATA[projYear]?.[m]?.roomsSold || 0;
     } else {
-      // manual — read from individual month inputs
-      const inp = document.getElementById('rp-m-'+m);
-      r = inp ? (parseFloat(inp.value)||0) : 0;
+      // From Projection Planner — falls back to actuals if no projection entered
+      r = PROJ[projYear]?.[m]?.roomsSold || DATA[projYear]?.[m]?.roomsSold || 0;
     }
     rooms.push(r);
   }
   return rooms;
 }
 
-function toggleManualRooms(sel){
-  const grid = document.getElementById('rp-manual-grid');
-  const inpsContainer = document.getElementById('rp-manual-inputs');
-  if(!grid || !inpsContainer) return;
-  const isManual = sel.value === 'manual';
+// toggleManualRooms removed
 
-  if(isManual){
-    grid.style.display = 'block';
-    // Build 12 month inputs if not already built
-    if(!inpsContainer.children.length){
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      months.forEach((m,i)=>{
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'display:flex;flex-direction:column;gap:3px';
-        wrap.innerHTML = `
-          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#64748b">${m}</label>
-          <input type="number" id="rp-m-${i}" placeholder="0"
-            style="background:#212d42;border:1px solid #364060;border-radius:5px;color:#ffb347;
-                   font-family:'DM Mono',monospace;font-size:13px;padding:6px 8px;
-                   width:100%;text-align:right;-moz-appearance:textfield"
-            onchange="updateRevProj()">`;
-        inpsContainer.appendChild(wrap);
-      });
-    }
-    setTimeout(()=>{ const f=document.getElementById('rp-m-0'); if(f) f.focus(); }, 50);
-  } else {
-    grid.style.display = 'none';
-  }
-}
 
 function updateRevProj(){
   const projYear  = parseInt(document.getElementById('rp-year').value);
