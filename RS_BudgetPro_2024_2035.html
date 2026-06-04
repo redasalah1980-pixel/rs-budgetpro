@@ -560,14 +560,210 @@ select option{background:var(--bg4)}
     <!-- Full-width pyramids SVG -->
     <svg style="position:absolute;bottom:0;left:0;width:100%;z-index:3" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="p1g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#1a0800"/><stop offset="38%" stop-color="#8b5a1a"/><stop offset="100%" stop-color="#3d2200"/></linearGradient>
-        <linearGradient id="p2g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2d1200"/><stop offset="40%" stop-color="#7a4f18"/><stop offset="100%" stop-color="#1a0800"/></linearGradient>
-        <linearGradient id="p3g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0d0600"/><stop offset="50%" stop-color="#5c3810"/><stop offset="100%" stop-color="#0d0600"/></linearGradient>
-        <linearGradient id="sfg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8b5a1a"/><stop offset="100%" stop-color="#3d2200"/></linearGradient>
-        <filter id="gl"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <!-- Haze filter for background pyramids -->
+        <filter id="haze"><feGaussianBlur stdDeviation="2.5"/></filter>
+        <filter id="hazeStrong"><feGaussianBlur stdDeviation="5"/></filter>
+        <!-- Pyramid glow filter -->
+        <filter id="pyrGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
 
-      <!-- Horizon glow -->
+      <!-- Background hazy pyramids (atmospheric perspective) -->
+      <g filter="url(#hazeStrong)" opacity="0.45">
+        <!-- BG Pyramid Left -->
+<g>
+<polygon points="200,260 90.0,440 213.2,440" fill="#2a1800"/>
+<polygon points="200,260 213.2,440 310.0,440" fill="#1a0e00"/>
+<line x1="186.2" y1="282.5" x2="213.8" y2="282.5" stroke="#0d0700" stroke-width="0.4" opacity="0.39"/>
+<line x1="172.5" y1="305.0" x2="227.5" y2="305.0" stroke="#0d0700" stroke-width="0.4" opacity="0.42"/>
+<line x1="172.5" y1="305.0" x2="172.5" y2="327.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="190.8" y1="305.0" x2="190.8" y2="327.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="158.8" y1="327.5" x2="241.2" y2="327.5" stroke="#0d0700" stroke-width="0.4" opacity="0.46"/>
+<line x1="145.0" y1="350.0" x2="255.0" y2="350.0" stroke="#0d0700" stroke-width="0.6" opacity="0.50"/>
+<line x1="145.0" y1="350.0" x2="145.0" y2="372.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="181.7" y1="350.0" x2="181.7" y2="372.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="131.2" y1="372.5" x2="268.8" y2="372.5" stroke="#0d0700" stroke-width="0.8" opacity="0.54"/>
+<line x1="117.5" y1="395.0" x2="282.5" y2="395.0" stroke="#0d0700" stroke-width="0.9" opacity="0.57"/>
+<line x1="117.5" y1="395.0" x2="117.5" y2="417.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="158.8" y1="395.0" x2="158.8" y2="417.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="200.0" y1="395.0" x2="200.0" y2="417.5" stroke="#0d0700" stroke-width="0.5" opacity="0.2"/>
+<line x1="103.8" y1="417.5" x2="296.2" y2="417.5" stroke="#0d0700" stroke-width="1.1" opacity="0.61"/>
+<ellipse cx="200" cy="260" rx="8" ry="4" fill="#f5c542" opacity="0.15"/><polygon points="200,258 196,266.0 204,266.0" fill="#c8860a" opacity="0.9"/>
+<line x1="200" y1="260" x2="90.0" y2="440" stroke="#d4a055" stroke-width="1.2" opacity="0.4"/>
+</g>
+
+        <!-- BG Pyramid Right -->
+<g>
+<polygon points="1280,295 1190.0,445 1290.8,445" fill="#251500"/>
+<polygon points="1280,295 1290.8,445 1370.0,445" fill="#160d00"/>
+<line x1="1267.1" y1="316.4" x2="1292.9" y2="316.4" stroke="#0a0500" stroke-width="0.4" opacity="0.39"/>
+<line x1="1254.3" y1="337.9" x2="1305.7" y2="337.9" stroke="#0a0500" stroke-width="0.4" opacity="0.44"/>
+<line x1="1254.3" y1="337.9" x2="1254.3" y2="359.3" stroke="#0a0500" stroke-width="0.5" opacity="0.2"/>
+<line x1="1271.4" y1="337.9" x2="1271.4" y2="359.3" stroke="#0a0500" stroke-width="0.5" opacity="0.2"/>
+<line x1="1241.4" y1="359.3" x2="1318.6" y2="359.3" stroke="#0a0500" stroke-width="0.5" opacity="0.48"/>
+<line x1="1228.6" y1="380.7" x2="1331.4" y2="380.7" stroke="#0a0500" stroke-width="0.7" opacity="0.52"/>
+<line x1="1228.6" y1="380.7" x2="1228.6" y2="402.1" stroke="#0a0500" stroke-width="0.5" opacity="0.2"/>
+<line x1="1262.9" y1="380.7" x2="1262.9" y2="402.1" stroke="#0a0500" stroke-width="0.5" opacity="0.2"/>
+<line x1="1215.7" y1="402.1" x2="1344.3" y2="402.1" stroke="#0a0500" stroke-width="0.9" opacity="0.56"/>
+<line x1="1202.9" y1="423.6" x2="1357.1" y2="423.6" stroke="#0a0500" stroke-width="1.0" opacity="0.61"/>
+<ellipse cx="1280" cy="295" rx="8" ry="4" fill="#f5c542" opacity="0.15"/><polygon points="1280,293 1276,301.0 1284,301.0" fill="#c8860a" opacity="0.9"/>
+<line x1="1280" y1="295" x2="1190.0" y2="445" stroke="#d4a055" stroke-width="1.2" opacity="0.4"/>
+</g>
+
+      </g>
+
+      <!-- Middle-ground pyramid -->
+      <g filter="url(#haze)" opacity="0.75">
+        <!-- Mid Pyramid Left -->
+<g>
+<polygon points="320,198 160.0,458 339.2,458" fill="#4a2e0a"/>
+<polygon points="320,198 339.2,458 480.0,458" fill="#251400"/>
+<line x1="305.5" y1="221.6" x2="334.5" y2="221.6" stroke="#120900" stroke-width="0.4" opacity="0.38"/>
+<line x1="290.9" y1="245.3" x2="349.1" y2="245.3" stroke="#120900" stroke-width="0.4" opacity="0.40"/>
+<line x1="290.9" y1="245.3" x2="290.9" y2="268.9" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="310.3" y1="245.3" x2="310.3" y2="268.9" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="329.7" y1="245.3" x2="329.7" y2="268.9" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="276.4" y1="268.9" x2="363.6" y2="268.9" stroke="#120900" stroke-width="0.4" opacity="0.43"/>
+<line x1="261.8" y1="292.5" x2="378.2" y2="292.5" stroke="#120900" stroke-width="0.4" opacity="0.46"/>
+<line x1="261.8" y1="292.5" x2="261.8" y2="316.2" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="300.6" y1="292.5" x2="300.6" y2="316.2" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="247.3" y1="316.2" x2="392.7" y2="316.2" stroke="#120900" stroke-width="0.5" opacity="0.49"/>
+<line x1="232.7" y1="339.8" x2="407.3" y2="339.8" stroke="#120900" stroke-width="0.7" opacity="0.51"/>
+<line x1="232.7" y1="339.8" x2="232.7" y2="363.5" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="290.9" y1="339.8" x2="290.9" y2="363.5" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="218.2" y1="363.5" x2="421.8" y2="363.5" stroke="#120900" stroke-width="0.8" opacity="0.54"/>
+<line x1="203.6" y1="387.1" x2="436.4" y2="387.1" stroke="#120900" stroke-width="0.9" opacity="0.57"/>
+<line x1="203.6" y1="387.1" x2="203.6" y2="410.7" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="261.8" y1="387.1" x2="261.8" y2="410.7" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="320.0" y1="387.1" x2="320.0" y2="410.7" stroke="#120900" stroke-width="0.5" opacity="0.2"/>
+<line x1="189.1" y1="410.7" x2="450.9" y2="410.7" stroke="#120900" stroke-width="1.0" opacity="0.60"/>
+<line x1="174.5" y1="434.4" x2="465.5" y2="434.4" stroke="#120900" stroke-width="1.1" opacity="0.62"/>
+<ellipse cx="320" cy="198" rx="11.52" ry="5.76" fill="#f5c542" opacity="0.15"/><polygon points="320,196 314.24,206.64 325.76,206.64" fill="#c8860a" opacity="0.9"/>
+<line x1="320" y1="198" x2="160.0" y2="458" stroke="#d4a055" stroke-width="1.2" opacity="0.4"/>
+</g>
+
+      </g>
+
+      <!-- Right pyramid -->
+      <g opacity="0.85">
+        <!-- Right Pyramid -->
+<g>
+<polygon points="1150,175 975.0,455 1171.0,455" fill="#5c3810"/>
+<polygon points="1150,175 1171.0,455 1325.0,455" fill="#2d1606"/>
+<line x1="1135.4" y1="198.3" x2="1164.6" y2="198.3" stroke="#150800" stroke-width="0.4" opacity="0.38"/>
+<line x1="1120.8" y1="221.7" x2="1179.2" y2="221.7" stroke="#150800" stroke-width="0.4" opacity="0.40"/>
+<line x1="1120.8" y1="221.7" x2="1120.8" y2="245.0" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1140.3" y1="221.7" x2="1140.3" y2="245.0" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1159.7" y1="221.7" x2="1159.7" y2="245.0" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1106.2" y1="245.0" x2="1193.8" y2="245.0" stroke="#150800" stroke-width="0.4" opacity="0.42"/>
+<line x1="1091.7" y1="268.3" x2="1208.3" y2="268.3" stroke="#150800" stroke-width="0.4" opacity="0.45"/>
+<line x1="1091.7" y1="268.3" x2="1091.7" y2="291.7" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1130.6" y1="268.3" x2="1130.6" y2="291.7" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1077.1" y1="291.7" x2="1222.9" y2="291.7" stroke="#150800" stroke-width="0.5" opacity="0.47"/>
+<line x1="1062.5" y1="315.0" x2="1237.5" y2="315.0" stroke="#150800" stroke-width="0.6" opacity="0.50"/>
+<line x1="1062.5" y1="315.0" x2="1062.5" y2="338.3" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1120.8" y1="315.0" x2="1120.8" y2="338.3" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1047.9" y1="338.3" x2="1252.1" y2="338.3" stroke="#150800" stroke-width="0.7" opacity="0.53"/>
+<line x1="1033.3" y1="361.7" x2="1266.7" y2="361.7" stroke="#150800" stroke-width="0.8" opacity="0.55"/>
+<line x1="1033.3" y1="361.7" x2="1033.3" y2="385.0" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1091.7" y1="361.7" x2="1091.7" y2="385.0" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1150.0" y1="361.7" x2="1150.0" y2="385.0" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1018.8" y1="385.0" x2="1281.2" y2="385.0" stroke="#150800" stroke-width="0.9" opacity="0.57"/>
+<line x1="1004.2" y1="408.3" x2="1295.8" y2="408.3" stroke="#150800" stroke-width="1.0" opacity="0.60"/>
+<line x1="1004.2" y1="408.3" x2="1004.2" y2="431.7" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1062.5" y1="408.3" x2="1062.5" y2="431.7" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="1120.8" y1="408.3" x2="1120.8" y2="431.7" stroke="#150800" stroke-width="0.5" opacity="0.2"/>
+<line x1="989.6" y1="431.7" x2="1310.4" y2="431.7" stroke="#150800" stroke-width="1.1" opacity="0.62"/>
+<ellipse cx="1150" cy="175" rx="12.6" ry="6.3" fill="#f5c542" opacity="0.15"/><polygon points="1150,173 1143.7,184.45 1156.3,184.45" fill="#c8860a" opacity="0.9"/>
+<line x1="1150" y1="175" x2="975.0" y2="455" stroke="#d4a055" stroke-width="1.2" opacity="0.4"/>
+</g>
+
+      </g>
+
+      <!-- Main center pyramid (full detail) -->
+      <g filter="url(#pyrGlow)">
+        <!-- Main Center Pyramid -->
+<g>
+<polygon points="720,82 430.0,462 754.8,462" fill="#8b5a1a"/>
+<polygon points="720,82 754.8,462 1010.0,462" fill="#3d1e04"/>
+<line x1="703.9" y1="103.1" x2="736.1" y2="103.1" stroke="#1a0a00" stroke-width="0.4" opacity="0.37"/>
+<line x1="687.8" y1="124.2" x2="752.2" y2="124.2" stroke="#1a0a00" stroke-width="0.4" opacity="0.38"/>
+<line x1="687.8" y1="124.2" x2="687.8" y2="145.3" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="709.3" y1="124.2" x2="709.3" y2="145.3" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="730.7" y1="124.2" x2="730.7" y2="145.3" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="671.7" y1="145.3" x2="768.3" y2="145.3" stroke="#1a0a00" stroke-width="0.4" opacity="0.40"/>
+<line x1="655.6" y1="166.4" x2="784.4" y2="166.4" stroke="#1a0a00" stroke-width="0.4" opacity="0.42"/>
+<line x1="655.6" y1="166.4" x2="655.6" y2="187.6" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="698.5" y1="166.4" x2="698.5" y2="187.6" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="741.5" y1="166.4" x2="741.5" y2="187.6" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="639.4" y1="187.6" x2="800.6" y2="187.6" stroke="#1a0a00" stroke-width="0.4" opacity="0.43"/>
+<line x1="623.3" y1="208.7" x2="816.7" y2="208.7" stroke="#1a0a00" stroke-width="0.4" opacity="0.45"/>
+<line x1="623.3" y1="208.7" x2="623.3" y2="229.8" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="687.8" y1="208.7" x2="687.8" y2="229.8" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="607.2" y1="229.8" x2="832.8" y2="229.8" stroke="#1a0a00" stroke-width="0.5" opacity="0.47"/>
+<line x1="591.1" y1="250.9" x2="848.9" y2="250.9" stroke="#1a0a00" stroke-width="0.5" opacity="0.48"/>
+<line x1="591.1" y1="250.9" x2="591.1" y2="272.0" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="677.0" y1="250.9" x2="677.0" y2="272.0" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="575.0" y1="272.0" x2="865.0" y2="272.0" stroke="#1a0a00" stroke-width="0.6" opacity="0.50"/>
+<line x1="558.9" y1="293.1" x2="881.1" y2="293.1" stroke="#1a0a00" stroke-width="0.7" opacity="0.52"/>
+<line x1="558.9" y1="293.1" x2="558.9" y2="314.2" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="666.3" y1="293.1" x2="666.3" y2="314.2" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="542.8" y1="314.2" x2="897.2" y2="314.2" stroke="#1a0a00" stroke-width="0.7" opacity="0.53"/>
+<line x1="526.7" y1="335.3" x2="913.3" y2="335.3" stroke="#1a0a00" stroke-width="0.8" opacity="0.55"/>
+<line x1="526.7" y1="335.3" x2="526.7" y2="356.4" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="623.3" y1="335.3" x2="623.3" y2="356.4" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="720.0" y1="335.3" x2="720.0" y2="356.4" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="510.6" y1="356.4" x2="929.4" y2="356.4" stroke="#1a0a00" stroke-width="0.9" opacity="0.57"/>
+<line x1="494.4" y1="377.6" x2="945.6" y2="377.6" stroke="#1a0a00" stroke-width="0.9" opacity="0.58"/>
+<line x1="494.4" y1="377.6" x2="494.4" y2="398.7" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="607.2" y1="377.6" x2="607.2" y2="398.7" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="720.0" y1="377.6" x2="720.0" y2="398.7" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="478.3" y1="398.7" x2="961.7" y2="398.7" stroke="#1a0a00" stroke-width="1.0" opacity="0.60"/>
+<line x1="462.2" y1="419.8" x2="977.8" y2="419.8" stroke="#1a0a00" stroke-width="1.1" opacity="0.62"/>
+<line x1="462.2" y1="419.8" x2="462.2" y2="440.9" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="565.3" y1="419.8" x2="565.3" y2="440.9" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="668.4" y1="419.8" x2="668.4" y2="440.9" stroke="#1a0a00" stroke-width="0.5" opacity="0.2"/>
+<line x1="446.1" y1="440.9" x2="993.9" y2="440.9" stroke="#1a0a00" stroke-width="1.1" opacity="0.63"/>
+<ellipse cx="720" cy="82" rx="20.88" ry="10.44" fill="#f5c542" opacity="0.15"/><polygon points="720,80 709.56,97.66 730.44,97.66" fill="#c8860a" opacity="0.9"/>
+<line x1="720" y1="82" x2="430.0" y2="462" stroke="#d4a055" stroke-width="1.2" opacity="0.4"/>
+</g>
+
+      </g>
+
+      <!-- Sand with dunes -->
+      <!-- Sand dunes -->
+<defs>
+  <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#c8860a" stop-opacity="0.7"/>
+    <stop offset="40%" stop-color="#8b5a1a"/>
+    <stop offset="100%" stop-color="#3d2200"/>
+  </linearGradient>
+  <linearGradient id="sand2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#a06820"/>
+    <stop offset="100%" stop-color="#2d1200"/>
+  </linearGradient>
+</defs>
+<!-- Main sand floor -->
+<path d="M0,452 Q180,432 360,448 Q540,462 720,442 Q900,428 1080,446 Q1260,464 1440,450 L1440,500 L0,500 Z" fill="url(#sandGrad)"/>
+<!-- Dune highlights -->
+<path d="M0,452 Q180,432 360,448" stroke="#d4a044" stroke-width="1.5" fill="none" opacity="0.5"/>
+<path d="M360,448 Q540,462 720,442" stroke="#b08030" stroke-width="1" fill="none" opacity="0.3"/>
+<path d="M720,442 Q900,428 1080,446" stroke="#c49040" stroke-width="1.5" fill="none" opacity="0.4"/>
+<!-- Sand texture lines -->
+<line x1="0" y1="468" x2="1440" y2="465" stroke="#5c3810" stroke-width="0.6" opacity="0.4"/>
+<line x1="0" y1="478" x2="1440" y2="476" stroke="#4a2e0a" stroke-width="0.8" opacity="0.35"/>
+<!-- Sand ripples -->
+<path d="M200,472 Q280,468 360,474" stroke="#a06820" stroke-width="0.8" fill="none" opacity="0.35"/>
+<path d="M600,470 Q700,466 800,471" stroke="#a06820" stroke-width="0.7" fill="none" opacity="0.3"/>
+<path d="M1000,469 Q1100,465 1200,470" stroke="#8b5a1a" stroke-width="0.7" fill="none" opacity="0.3"/>
+
+
+      <!-- Sand shimmer / heat haze at base of pyramids -->
+      <ellipse cx="720" cy="462" rx="320" ry="8" fill="#c8860a" opacity="0.06"/>
+      <ellipse cx="320" cy="458" rx="180" ry="5" fill="#b07820" opacity="0.05"/>
+      <ellipse cx="1150" cy="455" rx="200" ry="6" fill="#a06810" opacity="0.05"/>
+
+    </svg>
+    <!-- Horizon glow -->
       <ellipse cx="720" cy="420" rx="800" ry="50" fill="rgba(201,168,76,.07)"/>
 
       <!-- MAIN PYRAMID (center) -->
@@ -1451,24 +1647,63 @@ function doLogin(){
       </div>
       <div style="padding:16px 18px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          ${[
-            ['#a78bfa','Violet','Rooms Sold · CPOR · Occupancy'],
-            ['#38bdf8','Sky Blue','Total KG · Cost per KG · KG/RN'],
-            ['#ffb347','Amber','Laundry Supplies · Budget values'],
-            ['#a3e635','Lime','Operating Supplies · Special Items'],
-            ['#ff6b6b','Coral','Printing · Over budget · Variance'],
-            ['#00d4b8','Teal','Actuals · Under budget · Revenue'],
-            ['#f5c542','Gold','Forecast · Projections · Future'],
-            ['#38bdf8','Sky','KG metrics · Efficiency data'],
-          ].map(([col,name,desc])=>`
-            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:9px">
-              <div style="width:12px;height:12px;border-radius:3px;background:${col};margin-top:2px;flex-shrink:0;
-                box-shadow:0 0 8px ${col}55"></div>
+          
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#a78bfa;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #a78bfa44"></div>
               <div>
-                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:${col}">${name}</div>
-                <div style="font-size:9px;color:#4a5568;margin-top:1px;line-height:1.4">${desc}</div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a78bfa">Violet</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Rooms Sold · CPOR · Occupancy</div>
               </div>
-            </div>`).join('')}
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#38bdf8;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #38bdf844"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#38bdf8">Sky Blue</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Total KG · Cost per KG · KG/RN</div>
+              </div>
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#ffb347;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #ffb34744"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#ffb347">Amber</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Laundry Supplies · Budget values</div>
+              </div>
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#a3e635;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #a3e63544"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a3e635">Lime</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Operating Supplies · Special Items</div>
+              </div>
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#ff6b6b;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #ff6b6b44"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#ff6b6b">Coral</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Printing · Over budget · Variance</div>
+              </div>
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#00d4b8;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #00d4b844"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#00d4b8">Teal</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Actuals · Under budget · Revenue</div>
+              </div>
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#f5c542;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #f5c54244"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f5c542">Gold</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">Forecast · Projections · Future</div>
+              </div>
+            </div>
+            <div style="background:#0f1a2e;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:#38bdf8;margin-top:2px;flex-shrink:0;box-shadow:0 0 6px #38bdf844"></div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#38bdf8">Sky</div>
+                <div style="font-size:10px;color:#4a5568;margin-top:1px;line-height:1.4">KG metrics · Efficiency data</div>
+              </div>
+            </div>
         </div>
       </div>
     </div>
