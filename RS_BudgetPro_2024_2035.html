@@ -1235,6 +1235,16 @@ function doLogin(){
   <div class="ph">
     <div class="pt">Revenue Tracker <span>Laundry Revenue &amp; Other Valet Revenue (Pearl) &middot; Actual vs Budget</span></div>
     <div class="ypills" id="yp-rev"></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <select id="rev-export-year" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:12px;padding:6px 10px">
+        <option value="">Select year to export...</option>
+        <option value="2025">2025</option><option value="2026">2026</option>
+        <option value="2027">2027</option><option value="2028">2028</option>
+        <option value="2029">2029</option><option value="2030">2030</option>
+      </select>
+      <button onclick="exportRevPDF()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer" onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">🖨 Revenue PDF</button>
+      <button onclick="exportRevExcel()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(56,189,248,.4);color:var(--sky);background:rgba(56,189,248,.1);cursor:pointer" onmouseover="this.style.background='rgba(56,189,248,.2)'" onmouseout="this.style.background='rgba(56,189,248,.1)'">📊 Revenue Excel</button>
+    </div>
   </div>
   <!-- REVENUE PROJECTION PANEL -->
   <div class="rev-proj-panel" id="rev-proj-panel">
@@ -4558,6 +4568,348 @@ function exportBudgetPDF(){
   win.document.close();
   win.onload=()=>{ setTimeout(()=>win.print(),600); };
   toast(`Budget ${y} PDF ready ✓`);
+}
+
+
+
+/* ════════════════════════════════════════
+   REVENUE YEAR EXPORT — PDF & EXCEL
+   ════════════════════════════════════════ */
+function getRevExportYear(){
+  const sel=document.getElementById('rev-export-year');
+  const y=sel?parseInt(sel.value):0;
+  if(!y){toast('⚠ Please select a year to export');return null;}
+  return y;
+}
+
+function getRevExportData(y){
+  const py=y-1;
+  const MF2=['January','February','March','April','May','June',
+             'July','August','September','October','November','December'];
+  const rows=[];
+  let totLaA=0,totLaB=0,totVaA=0,totVaB=0;
+  let totPyLaA=0,totPyVaA=0;
+  let totRooms=0,totPyRooms=0,totAvail=0;
+
+  for(let m=0;m<12;m++){
+    const rooms=DATA[y]?.[m]?.roomsSold||PROJ[y]?.[m]?.roomsSold||0;
+    const avail=maxRN(y,m);
+    const laA=REV[y]?.[m]?.laA||0;
+    const vaA=REV[y]?.[m]?.valA||0;
+    const laB=REV_BUD[y]?.[m]?.laB||0;
+    const vaB=REV_BUD[y]?.[m]?.valB||0;
+    // Prior year same month
+    const pyRooms=DATA[py]?.[m]?.roomsSold||0;
+    const pyLaA=REV[py]?.[m]?.laA||0;
+    const pyVaA=REV[py]?.[m]?.valA||0;
+    // Growth vs prior year
+    const laGrowth=pyLaA&&laA?((laA-pyLaA)/pyLaA*100):null;
+    const vaGrowth=pyVaA&&vaA?((vaA-pyVaA)/pyVaA*100):null;
+    const totGrowth=(pyLaA+pyVaA)&&(laA+vaA)?(((laA+vaA)-(pyLaA+pyVaA))/(pyLaA+pyVaA)*100):null;
+    // RPOR
+    const laRpor=rooms&&laA?laA/rooms:0;
+    const vaRpor=rooms&&vaA?vaA/rooms:0;
+    const pyLaRpor=pyRooms&&pyLaA?pyLaA/pyRooms:0;
+    const pyVaRpor=pyRooms&&pyVaA?pyVaA/pyRooms:0;
+    // Variance vs budget
+    const laVr=laA-laB;
+    const vaVr=vaA-vaB;
+
+    if(rooms>0) totAvail+=avail;
+    totRooms+=rooms; totLaA+=laA; totLaB+=laB; totVaA+=vaA; totVaB+=vaB;
+    totPyLaA+=pyLaA; totPyVaA+=pyVaA; totPyRooms+=pyRooms;
+
+    rows.push({m,month:MF2[m],rooms,avail,
+      laA,laB,laVr,laGrowth,laRpor,pyLaA,pyLaRpor,
+      vaA,vaB,vaVr,vaGrowth,vaRpor,pyVaA,pyVaRpor,
+      totA:laA+vaA,totB:laB+vaB,totVr:(laA+vaA)-(laB+vaB),
+      totGrowth,pyTot:pyLaA+pyVaA});
+  }
+
+  const occ=totAvail&&totRooms?totRooms/totAvail*100:0;
+  const totGrowthFull=(totPyLaA+totPyVaA)&&(totLaA+totVaA)?
+    (((totLaA+totVaA)-(totPyLaA+totPyVaA))/(totPyLaA+totPyVaA)*100):null;
+  const totRpor=totRooms&&(totLaA+totVaA)?(totLaA+totVaA)/totRooms:0;
+  const pyTotRpor=totPyRooms&&(totPyLaA+totPyVaA)?(totPyLaA+totPyVaA)/totPyRooms:0;
+
+  return{y,py,rows,occ,totRooms,totPyRooms,
+    totLaA,totLaB,totVaA,totVaB,
+    totPyLaA,totPyVaA,
+    totLaVr:totLaA-totLaB,totVaVr:totVaA-totVaB,
+    totA:totLaA+totVaA,totB:totLaB+totVaB,
+    totVr:(totLaA+totVaA)-(totLaB+totVaB),
+    totGrowthFull,totRpor,pyTotRpor,
+    laRpor:totRooms&&totLaA?totLaA/totRooms:0,
+    vaRpor:totRooms&&totVaA?totVaA/totRooms:0};
+}
+
+function exportRevExcel(){
+  const y=getRevExportYear();
+  if(!y)return;
+  const d=getRevExportData(y);
+  const now=new Date().toLocaleDateString('en-US');
+  const rows=[];
+  const g=v=>v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—';
+  const q=v=>v?'QAR '+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+
+  rows.push(['FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT']);
+  rows.push([`REVENUE REPORT — YEAR ${y}`]);
+  rows.push([`Prepared by: Reda Salah, Laundry Manager | Generated: ${now}`]);
+  rows.push([]);
+
+  // Summary
+  rows.push(['REVENUE SUMMARY']);
+  rows.push(['','Actual','Budget','Variance','vs Prior Year Growth']);
+  rows.push(['Laundry Revenue (Doha)',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
+    d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—']);
+  rows.push(['Valet Revenue (Pearl)',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
+    d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—']);
+  rows.push(['TOTAL REVENUE',(d.totLaA+d.totVaA).toFixed(2),(d.totLaB+d.totVaB).toFixed(2),
+    d.totVr.toFixed(2),d.totGrowthFull!==null?g(d.totGrowthFull):'—']);
+  rows.push([]);
+  rows.push(['RPOR Analysis','','','','']);
+  rows.push(['','RPOR Actual','RPOR Prior Year','Growth']);
+  rows.push(['Laundry Revenue',d.laRpor.toFixed(4),
+    d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—',
+    d.totPyLaA&&d.laRpor?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—']);
+  rows.push(['Valet Revenue (Pearl)',d.vaRpor.toFixed(4),
+    d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—',
+    d.totPyVaA&&d.vaRpor?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—']);
+  rows.push([]);
+
+  // Monthly breakdown
+  rows.push(['MONTHLY BREAKDOWN — SIDE BY SIDE']);
+  rows.push(['Month','Rooms Sold',
+    '— LAUNDRY REVENUE (DOHA) —','','','','','','',
+    '— VALET REVENUE (PEARL) —','','','','','','',
+    '— COMBINED —','','']);
+  rows.push(['','',
+    'Actual','Budget','Variance','Var%','vs LY Same Month','Growth%','RPOR',
+    'Actual','Budget','Variance','Var%','vs LY Same Month','Growth%','RPOR',
+    'Total Actual','Total Budget','Total Variance']);
+
+  d.rows.forEach(r=>{
+    rows.push([r.month,r.rooms,
+      r.laA.toFixed(2),r.laB.toFixed(2),(r.laVr).toFixed(2),
+      r.laB?g(r.laVr/r.laB*100):'—',
+      r.pyLaA?r.pyLaA.toFixed(2):'—',r.laGrowth!==null?g(r.laGrowth):'—',
+      r.laRpor?r.laRpor.toFixed(4):'—',
+      r.vaA.toFixed(2),r.vaB.toFixed(2),(r.vaVr).toFixed(2),
+      r.vaB?g(r.vaVr/r.vaB*100):'—',
+      r.pyVaA?r.pyVaA.toFixed(2):'—',r.vaGrowth!==null?g(r.vaGrowth):'—',
+      r.vaRpor?r.vaRpor.toFixed(4):'—',
+      r.totA.toFixed(2),r.totB.toFixed(2),r.totVr.toFixed(2)]);
+  });
+
+  // Year total
+  rows.push(['YEAR TOTAL',d.totRooms,
+    d.totLaA.toFixed(2),d.totLaB.toFixed(2),d.totLaVr.toFixed(2),
+    d.totLaB?g(d.totLaVr/d.totLaB*100):'—',
+    d.totPyLaA?d.totPyLaA.toFixed(2):'—',
+    d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—',
+    d.laRpor.toFixed(4),
+    d.totVaA.toFixed(2),d.totVaB.toFixed(2),d.totVaVr.toFixed(2),
+    d.totVaB?g(d.totVaVr/d.totVaB*100):'—',
+    d.totPyVaA?d.totPyVaA.toFixed(2):'—',
+    d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—',
+    d.vaRpor.toFixed(4),
+    d.totA.toFixed(2),d.totB.toFixed(2),d.totVr.toFixed(2)]);
+
+  const csv=rows.map(r=>r.map(c=>{
+    const s=String(c??'');
+    return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:s;
+  }).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`RS_RevenueReport_${y}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`Revenue ${y} exported to Excel ✓`);
+}
+
+function exportRevPDF(){
+  const y=getRevExportYear();
+  if(!y)return;
+  const d=getRevExportData(y);
+  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const g=v=>v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—';
+  const q=(v,short)=>v?(short?'QAR ':'')+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+  const gc=v=>v===null?'#64748b':v>=0?'#16a34a':'#dc2626';
+
+  // Monthly rows
+  let tableRows='';
+  d.rows.forEach((r,i)=>{
+    const bg=i%2===0?'#ffffff':'#f8fafc';
+    const hasData=r.laA>0||r.vaA>0||r.rooms>0;
+    if(!hasData) return;
+    tableRows+=`<tr style="background:${bg}">
+      <td style="padding:6px 8px;font-weight:600;color:#1e293b;white-space:nowrap">${r.month}</td>
+      <td style="padding:6px 8px;text-align:right;color:#475569">${r.rooms?r.rooms.toLocaleString():'—'}</td>
+      <!-- LAUNDRY -->
+      <td style="padding:6px 8px;text-align:right;color:#0369a1">${q(r.laA)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.laB)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${r.laVr>=0?'#16a34a':'#dc2626'}">${r.laB?(r.laVr>=0?'+':'')+q(r.laVr):'—'}</td>
+      <td style="padding:6px 8px;text-align:right;color:${gc(r.laGrowth)}">${g(r.laGrowth)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.pyLaA)}</td>
+      <td style="padding:6px 8px;text-align:right;font-size:9px;color:#0369a1">${r.laRpor?r.laRpor.toFixed(2):'—'}</td>
+      <!-- VALET -->
+      <td style="padding:6px 8px;text-align:right;color:#7c3aed">${q(r.vaA)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.vaB)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${r.vaVr>=0?'#16a34a':'#dc2626'}">${r.vaB?(r.vaVr>=0?'+':'')+q(r.vaVr):'—'}</td>
+      <td style="padding:6px 8px;text-align:right;color:${gc(r.vaGrowth)}">${g(r.vaGrowth)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.pyVaA)}</td>
+      <td style="padding:6px 8px;text-align:right;font-size:9px;color:#7c3aed">${r.vaRpor?r.vaRpor.toFixed(2):'—'}</td>
+      <!-- TOTAL -->
+      <td style="padding:6px 8px;text-align:right;font-weight:700;color:#0f172a">${q(r.totA)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${r.totVr>=0?'#16a34a':'#dc2626'}">${r.totB?(r.totVr>=0?'+':'')+q(r.totVr):'—'}</td>
+      <td style="padding:6px 8px;text-align:right;color:${gc(r.totGrowth)}">${g(r.totGrowth)}</td>
+    </tr>`;
+  });
+
+  const pyTotRpor=d.totPyRooms&&(d.totPyLaA+d.totPyVaA)?(d.totPyLaA+d.totPyVaA)/d.totPyRooms:0;
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Revenue Report ${y} — Four Seasons Hotel Doha</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4 landscape;margin:10mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e293b;background:#fff}
+    .header{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:16px 22px;border-radius:6px;margin-bottom:14px}
+    .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+    .kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:8px 10px}
+    .kpi-l{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:3px}
+    .kpi-v{font-size:13px;font-weight:700}
+    .kpi-s{font-size:8px;color:#64748b;margin-top:1px}
+    .sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+      color:#1e3a5f;padding:6px 0 5px;border-bottom:2px solid #1e3a5f;margin-bottom:8px;margin-top:14px}
+    .tbl{width:100%;border-collapse:collapse;font-size:9px}
+    .tbl th{background:#1e3a5f;color:#fff;padding:5px 7px;text-align:right;font-weight:600;font-size:8px;letter-spacing:.2px;white-space:nowrap}
+    .tbl th:first-child,.tbl th.left{text-align:left}
+    .tbl td:first-child{text-align:left}
+    .tbl .tot td{background:#e2e8f0;font-weight:700;border-top:2px solid #1e3a5f}
+    .grp{background:#dbeafe;color:#1e40af;font-size:8px;font-weight:700;letter-spacing:.5px;padding:4px 7px;text-transform:uppercase}
+    .grp2{background:#ede9fe;color:#5b21b6}
+    .grp3{background:#f0fdf4;color:#166534}
+    .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;font-size:8px;color:#94a3b8;display:flex;justify-content:space-between}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  <\/style><\/head><body>
+
+  <div class="header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);margin-bottom:2px">FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT</div>
+        <div style="font-size:20px;font-weight:800;color:#f5c542;margin-bottom:3px">Revenue Report — Year ${y}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6)">Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${now}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:2px">Prior Year: ${d.py} &nbsp;|&nbsp; Properties: Four Seasons Doha (Laundry) + Four Seasons Pearl (Valet)</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:24px;font-weight:800;color:#f5c542">CONFIDENTIAL</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4)">RS BudgetPro V3.0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Strip -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-l">Rooms Sold</div><div class="kpi-v" style="color:#1e3a5f">${d.totRooms.toLocaleString()}</div><div class="kpi-s">Year ${y}</div></div>
+    <div class="kpi" style="border-color:#0369a1"><div class="kpi-l">Laundry Revenue</div><div class="kpi-v" style="color:#0369a1">${q(d.totLaA)}</div><div class="kpi-s" style="color:${gc(d.totPyLaA?((d.totLaA-d.totPyLaA)/d.totPyLaA*100):null)}">${d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'vs LY: —'} vs LY</div></div>
+    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">Valet Rev (Pearl)</div><div class="kpi-v" style="color:#7c3aed">${q(d.totVaA)}</div><div class="kpi-s" style="color:${gc(d.totPyVaA?((d.totVaA-d.totPyVaA)/d.totPyVaA*100):null)}">${d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'vs LY: —'} vs LY</div></div>
+    <div class="kpi" style="border-color:#0f172a;background:#f0f9ff"><div class="kpi-l">Total Revenue</div><div class="kpi-v" style="color:#0f172a">${q(d.totA)}</div><div class="kpi-s" style="color:${gc(d.totGrowthFull)}">${g(d.totGrowthFull)} vs LY</div></div>
+    <div class="kpi"><div class="kpi-l">vs Budget</div><div class="kpi-v" style="color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totVr>=0?'+':''}${q(d.totVr)}</div><div class="kpi-s" style="color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totB?g(d.totVr/d.totB*100):''}</div></div>
+    <div class="kpi"><div class="kpi-l">RPOR Total</div><div class="kpi-v" style="color:#0f172a">${d.totRpor.toFixed(4)}</div><div class="kpi-s" style="color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">${pyTotRpor?g((d.totRpor-pyTotRpor)/pyTotRpor*100):'vs LY: —'} vs LY</div></div>
+    <div class="kpi"><div class="kpi-l">RPOR Laundry</div><div class="kpi-v" style="color:#0369a1">${d.laRpor.toFixed(4)}</div><div class="kpi-l" style="margin-top:3px">RPOR Pearl</div><div class="kpi-v" style="color:#7c3aed">${d.vaRpor.toFixed(4)}</div></div>
+  </div>
+
+  <div class="sec">Monthly Revenue Breakdown — ${y} vs Budget vs Prior Year (${d.py})</div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th class="left" rowspan="2">Month</th>
+        <th rowspan="2">Rooms</th>
+        <th colspan="6" style="background:#1e40af;border-bottom:1px solid #3b82f6">🏨 LAUNDRY REVENUE — Four Seasons Doha</th>
+        <th colspan="6" style="background:#5b21b6;border-bottom:1px solid #8b5cf6">💎 VALET REVENUE — Four Seasons Pearl</th>
+        <th colspan="3" style="background:#166534;border-bottom:1px solid #22c55e">📊 COMBINED TOTAL</th>
+      </tr>
+      <tr>
+        <th style="background:#1e40af">Actual</th><th style="background:#1e40af">Budget</th>
+        <th style="background:#1e40af">Variance</th><th style="background:#1e40af">Var%</th>
+        <th style="background:#1e40af">LY ${d.py}</th><th style="background:#1e40af">Growth%</th>
+        <th style="background:#5b21b6">Actual</th><th style="background:#5b21b6">Budget</th>
+        <th style="background:#5b21b6">Variance</th><th style="background:#5b21b6">Var%</th>
+        <th style="background:#5b21b6">LY ${d.py}</th><th style="background:#5b21b6">Growth%</th>
+        <th style="background:#166534">Total</th><th style="background:#166534">vs Bud</th>
+        <th style="background:#166534">Growth%</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+      <tr class="tot">
+        <td>YEAR TOTAL</td>
+        <td style="text-align:right">${d.totRooms.toLocaleString()}</td>
+        <td style="text-align:right;color:#0369a1">${q(d.totLaA)}</td>
+        <td style="text-align:right">${q(d.totLaB)}</td>
+        <td style="text-align:right;color:${d.totLaVr>=0?'#16a34a':'#dc2626'}">${d.totLaB?(d.totLaVr>=0?'+':'')+q(d.totLaVr):'—'}</td>
+        <td style="text-align:right;color:${d.totLaB?gc(d.totLaVr/d.totLaB*100):'#64748b'}">${d.totLaB?g(d.totLaVr/d.totLaB*100):'—'}</td>
+        <td style="text-align:right">${q(d.totPyLaA)}</td>
+        <td style="text-align:right;color:${gc(d.totPyLaA?(d.totLaA-d.totPyLaA)/d.totPyLaA*100:null)}">${d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—'}</td>
+        <td style="text-align:right;color:#7c3aed">${q(d.totVaA)}</td>
+        <td style="text-align:right">${q(d.totVaB)}</td>
+        <td style="text-align:right;color:${d.totVaVr>=0?'#16a34a':'#dc2626'}">${d.totVaB?(d.totVaVr>=0?'+':'')+q(d.totVaVr):'—'}</td>
+        <td style="text-align:right;color:${d.totVaB?gc(d.totVaVr/d.totVaB*100):'#64748b'}">${d.totVaB?g(d.totVaVr/d.totVaB*100):'—'}</td>
+        <td style="text-align:right">${q(d.totPyVaA)}</td>
+        <td style="text-align:right;color:${gc(d.totPyVaA?(d.totVaA-d.totPyVaA)/d.totPyVaA*100:null)}">${d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—'}</td>
+        <td style="text-align:right;font-weight:700">${q(d.totA)}</td>
+        <td style="text-align:right;color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totB?(d.totVr>=0?'+':'')+q(d.totVr):'—'}</td>
+        <td style="text-align:right;color:${gc(d.totGrowthFull)}">${g(d.totGrowthFull)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- RPOR Summary -->
+  <div class="sec">RPOR Analysis — Revenue per Occupied Room Night</div>
+  <table class="tbl" style="width:60%">
+    <thead><tr>
+      <th class="left">Property / Line</th>
+      <th>RPOR ${y}</th><th>RPOR ${d.py}</th><th>Change</th><th>Growth %</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="color:#0369a1;font-weight:600">Laundry Revenue (Doha)</td>
+        <td style="text-align:right;color:#0369a1">${d.laRpor.toFixed(4)}</td>
+        <td style="text-align:right">${d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—'}</td>
+        <td style="text-align:right;color:${d.totPyLaA&&d.laRpor?gc((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'#64748b'}">
+          ${d.totPyRooms&&d.totPyLaA?(d.laRpor-(d.totPyLaA/d.totPyRooms)>=0?'+':'')+(d.laRpor-(d.totPyLaA/d.totPyRooms)).toFixed(4):'—'}</td>
+        <td style="text-align:right;color:${gc(d.totPyLaA&&d.laRpor?(d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100:null)}">
+          ${d.totPyRooms&&d.totPyLaA?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—'}</td>
+      </tr>
+      <tr style="background:#f8fafc"><td style="color:#7c3aed;font-weight:600">Valet Revenue (Pearl)</td>
+        <td style="text-align:right;color:#7c3aed">${d.vaRpor.toFixed(4)}</td>
+        <td style="text-align:right">${d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—'}</td>
+        <td style="text-align:right;color:${d.totPyVaA&&d.vaRpor?gc((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'#64748b'}">
+          ${d.totPyRooms&&d.totPyVaA?(d.vaRpor-(d.totPyVaA/d.totPyRooms)>=0?'+':'')+(d.vaRpor-(d.totPyVaA/d.totPyRooms)).toFixed(4):'—'}</td>
+        <td style="text-align:right;color:${gc(d.totPyVaA&&d.vaRpor?(d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100:null)}">
+          ${d.totPyRooms&&d.totPyVaA?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—'}</td>
+      </tr>
+      <tr style="background:#e2e8f0;font-weight:700"><td>TOTAL REVENUE</td>
+        <td style="text-align:right">${d.totRpor.toFixed(4)}</td>
+        <td style="text-align:right">${pyTotRpor?pyTotRpor.toFixed(4):'—'}</td>
+        <td style="text-align:right;color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">
+          ${pyTotRpor?(d.totRpor-pyTotRpor>=0?'+':'')+(d.totRpor-pyTotRpor).toFixed(4):'—'}</td>
+        <td style="text-align:right;color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">
+          ${pyTotRpor?g((d.totRpor-pyTotRpor)/pyTotRpor*100):'—'}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>Four Seasons Hotel Doha · Laundry Department · Revenue Report ${y} · CONFIDENTIAL</span>
+    <span>RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</span>
+  </div>
+  <\/body><\/html>`;
+
+  const win=window.open('','_blank','width=1400,height=900');
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>{ setTimeout(()=>win.print(),600); };
+  toast(`Revenue Report ${y} PDF ready ✓`);
 }
 
 
