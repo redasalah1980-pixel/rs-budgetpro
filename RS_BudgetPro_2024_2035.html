@@ -4731,6 +4731,301 @@ function exportRevPDF(){
   if(!y)return;
   const d=getRevExportData(y);
   const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const g=(v,always)=>{
+    if(v===null||v===undefined) return '<span style="color:#94a3b8">—</span>';
+    if(!always&&Math.abs(v)===100) return '<span style="color:#94a3b8">—</span>'; // no data case
+    const col=v>=0?'#16a34a':'#dc2626';
+    return `<span style="color:${col};font-weight:600">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
+  };
+  const q=v=>v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+  const qc=(v,col)=>v?`<span style="color:${col}">${v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'<span style="color:#94a3b8">—</span>';
+  const vrc=(v,bud)=>{
+    if(!bud||!v) return '<span style="color:#94a3b8">—</span>';
+    const col=v>=0?'#16a34a':'#dc2626';
+    return `<span style="color:${col};font-weight:600">${v>=0?'+':''}${v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
+  };
+
+  // Show ALL 12 months always
+  let tableRows='';
+  d.rows.forEach((r,i)=>{
+    const bg=i%2===0?'#ffffff':'#f8fafc';
+    const hasLaData = r.laA>0||r.laB>0;
+    const hasVaData = r.vaA>0||r.vaB>0;
+    const laGrowthSafe = r.pyLaA&&r.laA ? r.laGrowth : null;
+    const vaGrowthSafe = r.pyVaA&&r.vaA ? r.vaGrowth : null;
+    const totGrowthSafe = r.pyTot&&r.totA ? r.totGrowth : null;
+
+    tableRows+=`<tr style="background:${bg}">
+      <td style="padding:6px 9px;font-weight:600;color:#1e293b;white-space:nowrap;border-right:2px solid #e2e8f0">${r.month.substring(0,3)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#475569;border-right:1px solid #f1f5f9">${r.rooms?r.rooms.toLocaleString():'—'}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${qc(r.laA,'#0369a1')}</td>
+      <td style="padding:6px 8px;text-align:right;color:#64748b;border-right:1px solid #f1f5f9">${q(r.laB)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${vrc(r.laVr,r.laB)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${g(r.pyLaA&&r.laB?r.laVr/r.laB*100:null)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#94a3b8;border-right:1px solid #f1f5f9">${q(r.pyLaA)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:2px solid #c7d2fe">${g(laGrowthSafe)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${qc(r.vaA,'#7c3aed')}</td>
+      <td style="padding:6px 8px;text-align:right;color:#64748b;border-right:1px solid #f1f5f9">${q(r.vaB)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${vrc(r.vaVr,r.vaB)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${g(r.pyVaA&&r.vaB?r.vaVr/r.vaB*100:null)}</td>
+      <td style="padding:6px 8px;text-align:right;color:#94a3b8;border-right:1px solid #f1f5f9">${q(r.pyVaA)}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:2px solid #bbf7d0">${g(vaGrowthSafe)}</td>
+      <td style="padding:6px 8px;text-align:right;font-weight:700;color:#0f172a;border-right:1px solid #f1f5f9">${qc(r.totA,'#0f172a')}</td>
+      <td style="padding:6px 8px;text-align:right;border-right:1px solid #f1f5f9">${vrc(r.totVr,r.totB)}</td>
+      <td style="padding:6px 8px;text-align:right">${g(totGrowthSafe)}</td>
+    </tr>`;
+  });
+
+  // KPI values
+  const pyTotRpor=d.totPyRooms&&(d.totPyLaA+d.totPyVaA)?(d.totPyLaA+d.totPyVaA)/d.totPyRooms:0;
+  const laGrowthTotal=d.totPyLaA&&d.totLaA?((d.totLaA-d.totPyLaA)/d.totPyLaA*100):null;
+  const vaGrowthTotal=d.totPyVaA&&d.totVaA?((d.totVaA-d.totPyVaA)/d.totPyVaA*100):null;
+  const totGrowthTotal=d.totGrowthFull;
+  const laRporPY=d.totPyRooms&&d.totPyLaA?d.totPyLaA/d.totPyRooms:0;
+  const vaRporPY=d.totPyRooms&&d.totPyVaA?d.totPyVaA/d.totPyRooms:0;
+
+  function kpi(label,val,sub,col,subCol){
+    return`<div class="kpi" style="${col?'border-color:'+col:''}">
+      <div class="kpi-l">${label}</div>
+      <div class="kpi-v" style="color:${col||'#0f172a'}">${val}</div>
+      <div class="kpi-s" style="color:${subCol||'#64748b'}">${sub}</div>
+    </div>`;
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Revenue Report ${y} — Four Seasons Hotel Doha</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4 landscape;margin:8mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:9.5px;color:#1e293b;background:#fff}
+    .header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e1b4b 100%);color:#fff;padding:14px 20px;border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+    .header-left h2{font-size:18px;font-weight:800;color:#f5c542;margin:3px 0}
+    .header-left .sub{font-size:8px;color:rgba(255,255,255,.55);margin-top:2px}
+    .kpi-row{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-bottom:12px}
+    .kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:7px 9px}
+    .kpi-l{font-size:7.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:3px}
+    .kpi-v{font-size:13px;font-weight:700;line-height:1.2}
+    .kpi-s{font-size:7.5px;margin-top:2px}
+    .sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+      color:#1e3a5f;padding:5px 0 4px;border-bottom:2px solid #1e3a5f;margin:10px 0 7px}
+    .tbl{width:100%;border-collapse:collapse;font-size:8.5px}
+    .tbl th{padding:5px 8px;text-align:right;font-weight:600;font-size:7.5px;letter-spacing:.2px;white-space:nowrap;color:#fff}
+    .tbl th.left{text-align:left}
+    .tbl .grp-la{background:#1e40af}
+    .tbl .grp-va{background:#5b21b6}
+    .tbl .grp-tot{background:#166534}
+    .tbl .grp-base{background:#1e293b}
+    .tbl .tot-row td{background:#e2e8f0;font-weight:700;border-top:2px solid #1e293b}
+    .note{font-size:8px;color:#94a3b8;font-style:italic;margin-top:4px}
+    .footer{margin-top:10px;padding-top:7px;border-top:1px solid #e2e8f0;font-size:7.5px;color:#94a3b8;display:flex;justify-content:space-between}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  <\/style><\/head><body>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="sub">FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT</div>
+      <h2>Revenue Report — Year ${y}</h2>
+      <div class="sub">Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${now} &nbsp;|&nbsp; RS BudgetPro V3.0</div>
+      <div class="sub" style="margin-top:3px">Prior Year: ${d.py} &nbsp;|&nbsp; Properties: Four Seasons Doha (Laundry Revenue) + Four Seasons Pearl (Valet Revenue)</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:22px;font-weight:800;color:#f5c542">CONFIDENTIAL</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:3px">Internal use only</div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    ${kpi('Rooms Sold '+y, d.totRooms.toLocaleString(), 'Projected/Actual','#1e3a5f','')}
+    ${kpi('Laundry Revenue', d.totLaA?'QAR '+q(d.totLaA):'No data yet', laGrowthTotal!==null?(laGrowthTotal>=0?'▲':'▼')+Math.abs(laGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#0369a1', laGrowthTotal!==null?(laGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
+    ${kpi('Laundry Budget', d.totLaB?'QAR '+q(d.totLaB):'—', d.totLaB&&d.totLaA?(d.totLaA>=d.totLaB?'▲ Above target':'▼ Below target'):'Budget not set','#0369a1',d.totLaB&&d.totLaA?(d.totLaA>=d.totLaB?'#16a34a':'#dc2626'):'#94a3b8')}
+    ${kpi('Valet Revenue (Pearl)', d.totVaA?'QAR '+q(d.totVaA):'No data yet', vaGrowthTotal!==null?(vaGrowthTotal>=0?'▲':'▼')+Math.abs(vaGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#7c3aed',vaGrowthTotal!==null?(vaGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
+    ${kpi('Valet Budget (Pearl)', d.totVaB?'QAR '+q(d.totVaB):'—', d.totVaB&&d.totVaA?(d.totVaA>=d.totVaB?'▲ Above target':'▼ Below target'):'Budget not set','#7c3aed',d.totVaB&&d.totVaA?(d.totVaA>=d.totVaB?'#16a34a':'#dc2626'):'#94a3b8')}
+    ${kpi('TOTAL REVENUE', d.totA?'QAR '+q(d.totA):'No data yet', totGrowthTotal!==null?(totGrowthTotal>=0?'▲':'▼')+Math.abs(totGrowthTotal).toFixed(1)+'% vs '+d.py:'vs '+d.py+': —','#0f172a',totGrowthTotal!==null?(totGrowthTotal>=0?'#16a34a':'#dc2626'):'#94a3b8')}
+    ${kpi('RPOR — Laundry', d.laRpor?d.laRpor.toFixed(4):'—', laRporPY?'LY: '+laRporPY.toFixed(4):'No prior data','#0369a1','')}
+    ${kpi('RPOR — Pearl (Valet)', d.vaRpor?d.vaRpor.toFixed(4):'—', vaRporPY?'LY: '+vaRporPY.toFixed(4):'No prior data','#7c3aed','')}
+  </div>
+
+  <div class="sec">Monthly Revenue Breakdown — All 12 Months · ${y} vs Budget vs Prior Year ${d.py}</div>
+  <p class="note">— = No data entered yet &nbsp;|&nbsp; Growth% shown only when both current and prior year have data</p>
+  <table class="tbl" style="margin-top:5px">
+    <thead>
+      <tr>
+        <th class="left grp-base" rowspan="2" style="min-width:32px">Month</th>
+        <th class="grp-base" rowspan="2">Rooms</th>
+        <th class="grp-la" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">🏨 LAUNDRY REVENUE — Four Seasons Doha</th>
+        <th class="grp-va" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">💎 VALET REVENUE — Four Seasons Pearl</th>
+        <th class="grp-tot" colspan="3" style="border-bottom:1px solid rgba(255,255,255,.2)">📊 COMBINED</th>
+      </tr>
+      <tr>
+        <th class="grp-la">Actual</th><th class="grp-la">Budget</th><th class="grp-la">Variance</th>
+        <th class="grp-la">Var%</th><th class="grp-la">LY ${d.py}</th><th class="grp-la">Growth%</th>
+        <th class="grp-va">Actual</th><th class="grp-va">Budget</th><th class="grp-va">Variance</th>
+        <th class="grp-va">Var%</th><th class="grp-va">LY ${d.py}</th><th class="grp-va">Growth%</th>
+        <th class="grp-tot">Total</th><th class="grp-tot">vs Bud</th><th class="grp-tot">Growth%</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+      <tr class="tot-row">
+        <td style="padding:6px 9px">YEAR TOTAL</td>
+        <td style="padding:6px 8px;text-align:right">${d.totRooms.toLocaleString()}</td>
+        <td style="padding:6px 8px;text-align:right;color:#0369a1">${d.totLaA?q(d.totLaA):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totLaB?q(d.totLaB):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totLaB&&d.totLaA?((d.totLaVr>=0?'+':'')+q(d.totLaVr)):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totLaB&&d.totLaA?((d.totLaVr/d.totLaB*100>=0?'+':'')+d.totLaVr/d.totLaB*100 .toFixed(1)+'%'):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:#94a3b8">${d.totPyLaA?q(d.totPyLaA):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${laGrowthTotal!==null?((laGrowthTotal>=0?'+':'')+laGrowthTotal.toFixed(1)+'%'):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:#7c3aed">${d.totVaA?q(d.totVaA):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totVaB?q(d.totVaB):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totVaB&&d.totVaA?((d.totVaVr>=0?'+':'')+q(d.totVaVr)):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totVaB&&d.totVaA?((d.totVaVr/d.totVaB*100>=0?'+':'')+d.totVaVr/d.totVaB*100 .toFixed(1)+'%'):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:#94a3b8">${d.totPyVaA?q(d.totPyVaA):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${vaGrowthTotal!==null?((vaGrowthTotal>=0?'+':'')+vaGrowthTotal.toFixed(1)+'%'):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-weight:700">${d.totA?q(d.totA):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${d.totB&&d.totA?((d.totVr>=0?'+':'')+q(d.totVr)):'—'}</td>
+        <td style="padding:6px 8px;text-align:right">${totGrowthTotal!==null?((totGrowthTotal>=0?'+':'')+totGrowthTotal.toFixed(1)+'%'):'—'}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sec" style="margin-top:12px">RPOR Analysis — Revenue per Occupied Room Night</div>
+  <table class="tbl" style="width:55%">
+    <thead><tr>
+      <th class="left grp-base">Property / Line</th>
+      <th class="grp-base">RPOR ${y}</th>
+      <th class="grp-base">RPOR ${d.py}</th>
+      <th class="grp-base">Change</th>
+      <th class="grp-base">Growth %</th>
+    </tr></thead>
+    <tbody>
+      <tr><td style="padding:6px 9px;color:#0369a1;font-weight:600">Laundry Revenue (Doha)</td>
+        <td style="padding:6px 8px;text-align:right;color:#0369a1;font-weight:700">${d.laRpor?d.laRpor.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:#64748b">${laRporPY?laRporPY.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${laRporPY&&d.laRpor?(d.laRpor-laRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
+          ${laRporPY&&d.laRpor?((d.laRpor-laRporPY>=0?'+':'')+(d.laRpor-laRporPY).toFixed(4)):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${laRporPY&&d.laRpor?(d.laRpor-laRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
+          ${laRporPY&&d.laRpor?((d.laRpor-laRporPY>=0?'+':'')+((d.laRpor-laRporPY)/laRporPY*100).toFixed(1)+'%'):'—'}</td>
+      </tr>
+      <tr style="background:#f8fafc"><td style="padding:6px 9px;color:#7c3aed;font-weight:600">Valet Revenue (Pearl)</td>
+        <td style="padding:6px 8px;text-align:right;color:#7c3aed;font-weight:700">${d.vaRpor?d.vaRpor.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:#64748b">${vaRporPY?vaRporPY.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${vaRporPY&&d.vaRpor?(d.vaRpor-vaRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
+          ${vaRporPY&&d.vaRpor?((d.vaRpor-vaRporPY>=0?'+':'')+(d.vaRpor-vaRporPY).toFixed(4)):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${vaRporPY&&d.vaRpor?(d.vaRpor-vaRporPY>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
+          ${vaRporPY&&d.vaRpor?((d.vaRpor-vaRporPY>=0?'+':'')+((d.vaRpor-vaRporPY)/vaRporPY*100).toFixed(1)+'%'):'—'}</td>
+      </tr>
+      <tr style="background:#e2e8f0;font-weight:700"><td style="padding:6px 9px">TOTAL REVENUE</td>
+        <td style="padding:6px 8px;text-align:right">${d.totRpor?d.totRpor.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:#64748b">${pyTotRpor?pyTotRpor.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${pyTotRpor&&d.totRpor?(d.totRpor-pyTotRpor>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
+          ${pyTotRpor&&d.totRpor?((d.totRpor-pyTotRpor>=0?'+':'')+(d.totRpor-pyTotRpor).toFixed(4)):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;color:${pyTotRpor&&d.totRpor?(d.totRpor-pyTotRpor>=0?'#16a34a':'#dc2626'):'#94a3b8'}">
+          ${pyTotRpor&&d.totRpor?((d.totRpor-pyTotRpor>=0?'+':'')+((d.totRpor-pyTotRpor)/pyTotRpor*100).toFixed(1)+'%'):'—'}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>Four Seasons Hotel Doha · Laundry Department · Revenue Report ${y} · CONFIDENTIAL · Internal Use Only</span>
+    <span>RS BudgetPro V3.0 · Prepared by Reda Salah, Laundry Manager · ${now}</span>
+  </div>
+  <\/body><\/html>`;
+
+  const win=window.open('','_blank','width=1400,height=900');
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>{ setTimeout(()=>win.print(),600); };
+  toast(`Revenue Report ${y} PDF ready ✓`);
+}
+
+function exportRevExcel(){
+  const y=getRevExportYear();
+  if(!y)return;
+  const d=getRevExportData(y);
+  const now=new Date().toLocaleDateString('en-US');
+  const rows=[];
+  const g=v=>v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—';
+  const q=v=>v?'QAR '+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+
+  rows.push(['FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT']);
+  rows.push([`REVENUE REPORT — YEAR ${y}`]);
+  rows.push([`Prepared by: Reda Salah, Laundry Manager | Generated: ${now}`]);
+  rows.push([]);
+
+  // Summary
+  rows.push(['REVENUE SUMMARY']);
+  rows.push(['','Actual','Budget','Variance','vs Prior Year Growth']);
+  rows.push(['Laundry Revenue (Doha)',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
+    d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—']);
+  rows.push(['Valet Revenue (Pearl)',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
+    d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—']);
+  rows.push(['TOTAL REVENUE',(d.totLaA+d.totVaA).toFixed(2),(d.totLaB+d.totVaB).toFixed(2),
+    d.totVr.toFixed(2),d.totGrowthFull!==null?g(d.totGrowthFull):'—']);
+  rows.push([]);
+  rows.push(['RPOR Analysis','','','','']);
+  rows.push(['','RPOR Actual','RPOR Prior Year','Growth']);
+  rows.push(['Laundry Revenue',d.laRpor.toFixed(4),
+    d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—',
+    d.totPyLaA&&d.laRpor?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—']);
+  rows.push(['Valet Revenue (Pearl)',d.vaRpor.toFixed(4),
+    d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—',
+    d.totPyVaA&&d.vaRpor?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—']);
+  rows.push([]);
+
+  // Monthly breakdown
+  rows.push(['MONTHLY BREAKDOWN — SIDE BY SIDE']);
+  rows.push(['Month','Rooms Sold',
+    '— LAUNDRY REVENUE (DOHA) —','','','','','','',
+    '— VALET REVENUE (PEARL) —','','','','','','',
+    '— COMBINED —','','']);
+  rows.push(['','',
+    'Actual','Budget','Variance','Var%','vs LY Same Month','Growth%','RPOR',
+    'Actual','Budget','Variance','Var%','vs LY Same Month','Growth%','RPOR',
+    'Total Actual','Total Budget','Total Variance']);
+
+  d.rows.forEach(r=>{
+    rows.push([r.month,r.rooms,
+      r.laA.toFixed(2),r.laB.toFixed(2),(r.laVr).toFixed(2),
+      r.laB?g(r.laVr/r.laB*100):'—',
+      r.pyLaA?r.pyLaA.toFixed(2):'—',r.laGrowth!==null?g(r.laGrowth):'—',
+      r.laRpor?r.laRpor.toFixed(4):'—',
+      r.vaA.toFixed(2),r.vaB.toFixed(2),(r.vaVr).toFixed(2),
+      r.vaB?g(r.vaVr/r.vaB*100):'—',
+      r.pyVaA?r.pyVaA.toFixed(2):'—',r.vaGrowth!==null?g(r.vaGrowth):'—',
+      r.vaRpor?r.vaRpor.toFixed(4):'—',
+      r.totA.toFixed(2),r.totB.toFixed(2),r.totVr.toFixed(2)]);
+  });
+
+  // Year total
+  rows.push(['YEAR TOTAL',d.totRooms,
+    d.totLaA.toFixed(2),d.totLaB.toFixed(2),d.totLaVr.toFixed(2),
+    d.totLaB?g(d.totLaVr/d.totLaB*100):'—',
+    d.totPyLaA?d.totPyLaA.toFixed(2):'—',
+    d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—',
+    d.laRpor.toFixed(4),
+    d.totVaA.toFixed(2),d.totVaB.toFixed(2),d.totVaVr.toFixed(2),
+    d.totVaB?g(d.totVaVr/d.totVaB*100):'—',
+    d.totPyVaA?d.totPyVaA.toFixed(2):'—',
+    d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—',
+    d.vaRpor.toFixed(4),
+    d.totA.toFixed(2),d.totB.toFixed(2),d.totVr.toFixed(2)]);
+
+  const csv=rows.map(r=>r.map(c=>{
+    const s=String(c??'');
+    return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:s;
+  }).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`RS_RevenueReport_${y}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`Revenue ${y} exported to Excel ✓`);
+}
+
+function exportRevPDF(){
+  const y=getRevExportYear();
+  if(!y)return;
+  const d=getRevExportData(y);
+  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   const g=v=>v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—';
   const q=(v,short)=>v?(short?'QAR ':'')+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
   const gc=v=>v===null?'#64748b':v>=0?'#16a34a':'#dc2626';
