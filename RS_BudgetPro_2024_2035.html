@@ -1009,7 +1009,20 @@ function doLogin(){
 <div id="pane-overview" class="pane">
   <div class="ph">
     <div class="pt">Multi-Year Overview <span>2024 – 2035 annual summary</span></div>
-    <button class="pill pill-teal" onclick="buildOverview()">↺ Refresh</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="budget-export-year" style="background:#212d42;border:1px solid #2a3550;border-radius:6px;color:#e2e8f0;font-family:'Outfit',sans-serif;font-size:12px;padding:6px 10px">
+        <option value="">Select year...</option>
+        <option value="2025">2025</option><option value="2026">2026</option>
+        <option value="2027">2027</option><option value="2028">2028</option>
+        <option value="2029">2029</option><option value="2030">2030</option>
+        <option value="2031">2031</option><option value="2032">2032</option>
+        <option value="2033">2033</option><option value="2034">2034</option>
+        <option value="2035">2035</option>
+      </select>
+      <button onclick="exportBudgetPDF()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer" onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">🖨 Budget PDF</button>
+      <button onclick="exportBudgetExcel()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(56,189,248,.4);color:var(--sky);background:rgba(56,189,248,.1);cursor:pointer" onmouseover="this.style.background='rgba(56,189,248,.2)'" onmouseout="this.style.background='rgba(56,189,248,.1)'">📊 Budget Excel</button>
+      <button class="pill pill-teal" onclick="buildOverview()" style="border-radius:6px;padding:6px 14px;font-size:12px">↺ Refresh</button>
+    </div>
   </div>
   <div class="tw"><table><thead id="ov-h"></thead><tbody id="ov-b"></tbody></table></div>
 </div>
@@ -1681,7 +1694,8 @@ function buildYearStrip(){
     const rooms=r.roomsSold||0;
     const b=bud(activeY,m,rooms);
     rs+=rooms;kg+=(r.kg||0);la+=(r.laA||0);op+=(r.opA||0);pr+=(r.prA||0);
-    lb+=b.la;ob+=b.op;pb+=b.pr;avail+=maxRN(activeY,m);
+    lb+=b.la;ob+=b.op;pb+=b.pr;
+    if(rooms>0) avail+=maxRN(activeY,m); // only count months with data
   }
   const totA=la+op+pr,totB=lb+ob+pb,occ=avail?rs/avail*100:0;
   const cporA=rs&&totA?totA/rs:0,cporB=rs&&totB?totB/rs:0,vr=totA-totB;
@@ -2404,7 +2418,9 @@ function getYearData(y){
       totExpA:laA+opA+prA,totExpB:b.tot,
       revLaA,revVaA,revLaB,revVaB,
       totRevA:revLaA+revVaA,totRevB:revLaB+revVaB});
-    totRs+=rooms;totKg+=kgV;totAvail+=avail;
+    totRs+=rooms;totKg+=kgV;
+    // Only count availability for months that have rooms sold data
+    if(rooms>0) totAvail+=avail;
     totLaA+=laA;totLaB+=b.la;totOpA+=opA;totOpB+=b.op;totPrA+=prA;totPrB+=b.pr;
     totRevLaA+=revLaA;totRevLaB+=revLaB;totRevVaA+=revVaA;totRevVaB+=revVaB;
   }
@@ -3416,7 +3432,7 @@ function buildTrendsTab(){
       const r=DATA[y]?.[m]||{};
       const rooms=r.roomsSold||0;
       rs+=rooms;kg+=(r.kg||0);la+=(r.laA||0);op+=(r.opA||0);pr+=(r.prA||0);
-      avail+=maxRN(y,m);
+      if(rooms>0) avail+=maxRN(y,m); // only count months with data
       const b=bud(y,m,rooms);lb+=b.la;ob+=b.op;pb+=b.pr;
     }
     const totExp=la+op+pr,totBud=lb+ob+pb;
@@ -4131,6 +4147,420 @@ function loadLocal() {
 }
 
 
+
+/* ════════════════════════════════════════
+   BUDGET YEAR EXPORT — PDF & EXCEL
+   ════════════════════════════════════════ */
+
+function getBudgetExportYear(){
+  const sel = document.getElementById('budget-export-year');
+  const y = sel ? parseInt(sel.value) : 0;
+  if(!y){ toast('⚠ Please select a year to export'); return null; }
+  return y;
+}
+
+function getBudgetExportData(y){
+  const py = y - 1;
+  const months = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+  const rows = [];
+  let totRooms=0,totLaB=0,totOpB=0,totPrB=0,totActLa=0,totActOp=0,totActPr=0,totAvail=0;
+
+  // Get active price increases for this year
+  const activeIncs = INCS.filter(inc => {
+    const fromY=inc.fromY||2024, toY=inc.toY||2035;
+    return y>=fromY && y<=toY;
+  });
+
+  // Get active special items for this year
+  const activeSpec = SPEC.filter(s => {
+    const fromY=s.fromY||2024, toY=s.toY||2035;
+    return y>=fromY && y<=toY;
+  });
+
+  for(let m=0;m<12;m++){
+    const rooms = DATA[y]?.[m]?.roomsSold || PROJ[y]?.[m]?.roomsSold || 0;
+    const avail = maxRN(y,m);
+    const b = bud(y,m,rooms);
+    const occ = avail&&rooms ? rooms/avail*100 : 0;
+    const actLa = DATA[y]?.[m]?.laA || 0;
+    const actOp = DATA[y]?.[m]?.opA || 0;
+    const actPr = DATA[y]?.[m]?.prA || 0;
+
+    // Calculate multiplier for this month
+    let mult = 1;
+    INCS.forEach(inc => {
+      const fromY=inc.fromY||2024,toY=inc.toY||2035;
+      const fromM=inc.fromM||0,toM=inc.toM||11;
+      if(y>=fromY&&y<=toY){
+        if((y>fromY||(y===fromY&&m>=fromM))&&(y<toY||(y===toY&&m<=toM))){
+          mult *= 1 + (inc.pct||0)/100;
+        }
+      }
+    });
+
+    // Special items for this month
+    let specOp = 0;
+    SPEC.forEach(s => {
+      const fromY=s.fromY||2024,toY=s.toY||2035;
+      if(y>=fromY&&y<=toY && s.months.includes(m) && s.line==='op'){
+        specOp += s.amount||0;
+      }
+    });
+
+    totRooms+=rooms; totLaB+=b.la; totOpB+=b.op; totPrB+=b.pr;
+    totActLa+=actLa; totActOp+=actOp; totActPr+=actPr;
+    if(rooms>0) totAvail+=avail;
+
+    rows.push({
+      month: months[m], m, rooms, avail, occ,
+      laB: b.la, opB: b.op, prB: b.pr, totB: b.tot,
+      actLa, actOp, actPr, totAct: actLa+actOp+actPr,
+      cporB: rooms&&b.tot ? b.tot/rooms : 0,
+      mult, specOp
+    });
+  }
+
+  const totB = totLaB+totOpB+totPrB;
+  const totAct = totActLa+totActOp+totActPr;
+  const occ = totAvail&&totRooms ? totRooms/totAvail*100 : 0;
+
+  // Prior year actuals
+  let pyLa=0,pyOp=0,pyPr=0,pyRooms=0;
+  for(let m=0;m<12;m++){
+    pyLa += DATA[py]?.[m]?.laA||0;
+    pyOp += DATA[py]?.[m]?.opA||0;
+    pyPr += DATA[py]?.[m]?.prA||0;
+    pyRooms += DATA[py]?.[m]?.roomsSold||0;
+  }
+  const pyTot = pyLa+pyOp+pyPr;
+  const pyCpor = pyRooms&&pyTot ? pyTot/pyRooms : 0;
+  const priorCpor = pyCpor;
+
+  return { y, py, rows, totRooms, totLaB, totOpB, totPrB, totB,
+           totActLa, totActOp, totActPr, totAct, occ,
+           pyLa, pyOp, pyPr, pyTot, pyRooms, pyCpor, priorCpor,
+           activeIncs, activeSpec,
+           cporB: totRooms&&totB ? totB/totRooms : 0 };
+}
+
+function exportBudgetExcel(){
+  const y = getBudgetExportYear();
+  if(!y) return;
+  const d = getBudgetExportData(y);
+  const now = new Date().toLocaleDateString('en-US');
+  const rows = [];
+
+  rows.push(['FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT']);
+  rows.push([`BUDGET YEAR ${y} — EXPENSE BUDGET SUBMISSION`]);
+  rows.push([`Prepared by: Reda Salah, Laundry Manager | Generated: ${now}`]);
+  rows.push([`Base Year: ${d.py} | Prior Year CPOR: ${d.pyCpor.toFixed(4)} QAR/Room Night`]);
+  rows.push([]);
+
+  // Summary
+  rows.push(['BUDGET SUMMARY']);
+  rows.push(['Total Rooms Sold (Projected)', d.totRooms.toLocaleString()]);
+  rows.push(['Occupancy %', d.occ.toFixed(1)+'%']);
+  rows.push(['Laundry Supplies Budget', d.totLaB.toFixed(2)]);
+  rows.push(['Operating Supplies Budget', d.totOpB.toFixed(2)]);
+  rows.push(['Printing & Stationery Budget', d.totPrB.toFixed(2)]);
+  rows.push(['TOTAL BUDGET', d.totB.toFixed(2)]);
+  rows.push(['CPOR Budget', d.cporB.toFixed(4)]);
+  rows.push([]);
+
+  // Price increases
+  if(d.activeIncs.length){
+    rows.push(['PRICE INCREASES APPLIED']);
+    rows.push(['Supplier/Description','Line','Increase %','From','To']);
+    d.activeIncs.forEach(inc => {
+      const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      rows.push([
+        inc.name||'—',
+        inc.line==='la'?'Laundry Supplies':inc.line==='op'?'Operating Supplies':'Printing',
+        (inc.pct||0)+'%',
+        `${MS2[inc.fromM||0]} ${inc.fromY||y}`,
+        `${MS2[inc.toM||11]} ${inc.toY||y}`
+      ]);
+    });
+    rows.push([]);
+  }
+
+  // Special items
+  if(d.activeSpec.length){
+    rows.push(['SPECIAL / ONE-TIME ITEMS']);
+    rows.push(['Item','Line','Amount (QAR)','Months']);
+    const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    d.activeSpec.forEach(s => {
+      rows.push([s.name, s.line==='la'?'Laundry Supplies':s.line==='op'?'Operating Supplies':'Printing',
+        s.amount.toFixed(2), s.months.map(m=>MS2[m]).join(', ')]);
+    });
+    rows.push([]);
+  }
+
+  // Monthly breakdown
+  rows.push(['MONTHLY BUDGET BREAKDOWN']);
+  rows.push(['Month','Rooms Sold','Occ%','Laundry Supplies','Operating Supplies',
+             'Printing & Stationery','TOTAL BUDGET','CPOR Budget',
+             'Price Mult','Prior Year Actual','Variance vs Prior']);
+  d.rows.forEach(r => {
+    const pyRow = DATA[d.py]?.[r.m];
+    const pyTot = (pyRow?.laA||0)+(pyRow?.opA||0)+(pyRow?.prA||0);
+    const vr = r.totB - pyTot;
+    rows.push([r.month, r.rooms, r.occ?r.occ.toFixed(1)+'%':'—',
+      r.laB.toFixed(2), r.opB.toFixed(2), r.prB.toFixed(2),
+      r.totB.toFixed(2), r.cporB?r.cporB.toFixed(4):'—',
+      r.mult!==1?(((r.mult-1)*100).toFixed(1)+'%'):'—',
+      pyTot?pyTot.toFixed(2):'—', pyTot?(vr>=0?'+':'')+vr.toFixed(2):'—']);
+  });
+
+  // Totals
+  const pyTotAll = d.pyLa+d.pyOp+d.pyPr;
+  const vrTot = d.totB - pyTotAll;
+  rows.push(['YEAR TOTAL', d.totRooms, d.occ.toFixed(1)+'%',
+    d.totLaB.toFixed(2), d.totOpB.toFixed(2), d.totPrB.toFixed(2),
+    d.totB.toFixed(2), d.cporB.toFixed(4), '—',
+    pyTotAll?pyTotAll.toFixed(2):'—',
+    pyTotAll?(vrTot>=0?'+':'')+vrTot.toFixed(2):'—']);
+
+  rows.push([]);
+  rows.push(['vs Prior Year Comparison']);
+  rows.push(['','Prior Year ('+d.py+') Actual','Budget '+y,'Variance','Change %']);
+  rows.push(['Laundry Supplies', d.pyLa.toFixed(2), d.totLaB.toFixed(2),
+    (d.totLaB-d.pyLa).toFixed(2), d.pyLa?((d.totLaB-d.pyLa)/d.pyLa*100).toFixed(1)+'%':'—']);
+  rows.push(['Operating Supplies', d.pyOp.toFixed(2), d.totOpB.toFixed(2),
+    (d.totOpB-d.pyOp).toFixed(2), d.pyOp?((d.totOpB-d.pyOp)/d.pyOp*100).toFixed(1)+'%':'—']);
+  rows.push(['Printing & Stationery', d.pyPr.toFixed(2), d.totPrB.toFixed(2),
+    (d.totPrB-d.pyPr).toFixed(2), d.pyPr?((d.totPrB-d.pyPr)/d.pyPr*100).toFixed(1)+'%':'—']);
+  rows.push(['TOTAL', d.pyTot.toFixed(2), d.totB.toFixed(2),
+    (d.totB-d.pyTot).toFixed(2), d.pyTot?((d.totB-d.pyTot)/d.pyTot*100).toFixed(1)+'%':'—']);
+  rows.push(['CPOR', d.pyCpor.toFixed(4), d.cporB.toFixed(4),
+    (d.cporB-d.pyCpor).toFixed(4), d.pyCpor?((d.cporB-d.pyCpor)/d.pyCpor*100).toFixed(1)+'%':'—']);
+
+  const csv = rows.map(r=>r.map(c=>{
+    const s=String(c??'');
+    return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:s;
+  }).join(',')).join('\n');
+
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`RS_Budget_${y}_Submission_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast(`Budget ${y} exported to Excel ✓`);
+}
+
+function exportBudgetPDF(){
+  const y = getBudgetExportYear();
+  if(!y) return;
+  const d = getBudgetExportData(y);
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MF2=['January','February','March','April','May','June',
+             'July','August','September','October','November','December'];
+
+  // Monthly rows
+  let tableRows='';
+  d.rows.forEach((r,i)=>{
+    const pyRow=DATA[d.py]?.[r.m];
+    const pyTot=(pyRow?.laA||0)+(pyRow?.opA||0)+(pyRow?.prA||0);
+    const vr=r.totB-pyTot;
+    const bg=i%2===0?'#ffffff':'#f8fafc';
+    const vrCol=vr>=0?'#dc2626':'#0f5132';
+    const multTxt=r.mult!==1?`<span style="font-size:9px;color:#d97706;margin-left:4px">×${r.mult.toFixed(3)}</span>`:'';
+    tableRows+=`<tr style="background:${bg}">
+      <td style="padding:7px 10px;font-weight:600;color:#1e293b">${r.month}</td>
+      <td style="padding:7px 10px;text-align:right">${r.rooms?r.rooms.toLocaleString():'—'}</td>
+      <td style="padding:7px 10px;text-align:right">${r.occ?r.occ.toFixed(1)+'%':'—'}</td>
+      <td style="padding:7px 10px;text-align:right;color:#92400e">${r.laB?'QAR '+r.laB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}${multTxt}</td>
+      <td style="padding:7px 10px;text-align:right;color:#166534">${r.opB?'QAR '+r.opB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;color:#991b1b">${r.prB?'QAR '+r.prB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1e293b">${'QAR '+r.totB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="padding:7px 10px;text-align:right;color:#1d4ed8">${r.cporB?r.cporB.toFixed(4):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;color:${vrCol};font-weight:600">${pyTot?(vr>=0?'+':'')+vr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+    </tr>`;
+  });
+
+  // Price increases section
+  let incSection='';
+  if(d.activeIncs.length){
+    const incRows=d.activeIncs.map(inc=>`
+      <tr>
+        <td style="padding:6px 10px;color:#1e293b;font-weight:600">${inc.name||'—'}</td>
+        <td style="padding:6px 10px;color:#92400e">${inc.line==='la'?'Laundry Supplies':inc.line==='op'?'Operating Supplies':'Printing'}</td>
+        <td style="padding:6px 10px;text-align:center;color:#dc2626;font-weight:700">+${inc.pct||0}%</td>
+        <td style="padding:6px 10px;color:#475569">${MS2[inc.fromM||0]} ${inc.fromY||y} → ${MS2[inc.toM||11]} ${inc.toY||y}</td>
+        <td style="padding:6px 10px;color:#0f5132">Multiplier: ×${(1+(inc.pct||0)/100).toFixed(3)}</td>
+      </tr>`).join('');
+    incSection=`
+      <div class="section-title">Price Increases Applied to Budget ${y}</div>
+      <table class="main-table" style="margin-bottom:20px">
+        <thead><tr>
+          <th>Supplier / Description</th><th>Line</th><th>Increase</th><th>Period</th><th>Effect</th>
+        </tr></thead>
+        <tbody>${incRows}</tbody>
+      </table>`;
+  }
+
+  // Special items section
+  let specSection='';
+  if(d.activeSpec.length){
+    const specRows=d.activeSpec.map(s=>`
+      <tr>
+        <td style="padding:6px 10px;font-weight:600;color:#1e293b">${s.name}</td>
+        <td style="padding:6px 10px;color:#166534">${s.line==='la'?'Laundry Supplies':s.line==='op'?'Operating Supplies':'Printing'}</td>
+        <td style="padding:6px 10px;text-align:right;font-weight:700;color:#1e293b">QAR ${s.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td style="padding:6px 10px;color:#475569">${s.months.map(m=>MS2[m]).join(', ')}</td>
+        <td style="padding:6px 10px;color:#475569">${s.note||'—'}</td>
+      </tr>`).join('');
+    specSection=`
+      <div class="section-title">Special / One-Time Items</div>
+      <table class="main-table" style="margin-bottom:20px">
+        <thead><tr>
+          <th>Item</th><th>Line</th><th>Amount</th><th>Months</th><th>Notes</th>
+        </tr></thead>
+        <tbody>${specRows}</tbody>
+      </table>`;
+  }
+
+  // vs Prior Year comparison
+  const pyTotAll=d.pyLa+d.pyOp+d.pyPr;
+  function vsRow(label,bud,py,col){
+    const vr=bud-py, pct=py?((vr/py)*100):0;
+    const vc=vr>=0?'#dc2626':'#0f5132';
+    return`<tr>
+      <td style="padding:7px 10px;font-weight:600;color:${col}">${label}</td>
+      <td style="padding:7px 10px;text-align:right">${py?'QAR '+py.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-weight:700">${'QAR '+bud.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="padding:7px 10px;text-align:right;color:${vc};font-weight:600">${py?(vr>=0?'+':'')+vr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;color:${vc}">${py?(pct>=0?'+':'')+pct.toFixed(1)+'%':'—'}</td>
+    </tr>`;
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Budget ${y} — Four Seasons Hotel Doha Laundry</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4 landscape;margin:12mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1e293b;background:#fff}
+    .header{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:18px 24px;border-radius:6px;margin-bottom:16px}
+    .header h1{font-size:16px;font-weight:700;margin-bottom:3px}
+    .header h2{font-size:22px;font-weight:800;color:#f5c542;margin-bottom:4px}
+    .header .sub{font-size:10px;color:rgba(255,255,255,.65);margin-top:2px}
+    .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+    .kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px 12px}
+    .kpi-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:4px}
+    .kpi-v{font-size:15px;font-weight:700;color:#0f172a}
+    .kpi-s{font-size:9px;color:#64748b;margin-top:2px}
+    .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+      color:#1e3a5f;padding:8px 0 6px;border-bottom:2px solid #1e3a5f;margin-bottom:10px;margin-top:16px}
+    .main-table{width:100%;border-collapse:collapse;font-size:10px}
+    .main-table th{background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;font-weight:600;font-size:9px;letter-spacing:.3px;white-space:nowrap}
+    .main-table th:first-child{text-align:left}
+    .main-table td:first-child{text-align:left}
+    .main-table tr:last-child td{background:#f1f5f9;font-weight:700;border-top:2px solid #1e3a5f}
+    .footer{margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0;
+      font-size:9px;color:#94a3b8;display:flex;justify-content:space-between}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  <\/style>
+  <\/head><body>
+
+  <div class="header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="sub">FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT</div>
+        <h2>Budget Year ${y} — Expense Budget Submission</h2>
+        <div class="sub">Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${now}</div>
+        <div class="sub" style="margin-top:4px">Base Year: ${d.py} &nbsp;|&nbsp; Prior Year CPOR: QAR ${d.pyCpor.toFixed(4)} per Room Night</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:28px;font-weight:800;color:#f5c542">CONFIDENTIAL</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.5)">RS BudgetPro V3.0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-l">Total Rooms Sold</div><div class="kpi-v">${d.totRooms.toLocaleString()}</div><div class="kpi-s">Projected</div></div>
+    <div class="kpi"><div class="kpi-l">Occupancy %</div><div class="kpi-v">${d.occ.toFixed(1)}%</div><div class="kpi-s">Based on entered months</div></div>
+    <div class="kpi" style="border-color:#92400e"><div class="kpi-l">Laundry Supplies</div><div class="kpi-v" style="color:#92400e">QAR ${d.totLaB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+    <div class="kpi" style="border-color:#166534"><div class="kpi-l">Operating Supplies</div><div class="kpi-v" style="color:#166534">QAR ${d.totOpB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+    <div class="kpi" style="border-color:#991b1b"><div class="kpi-l">Printing & Stationery</div><div class="kpi-v" style="color:#991b1b">QAR ${d.totPrB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div></div>
+    <div class="kpi" style="border-color:#1d4ed8;background:#eff6ff"><div class="kpi-l">TOTAL BUDGET</div><div class="kpi-v" style="color:#1d4ed8">QAR ${d.totB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="kpi-s">CPOR: ${d.cporB.toFixed(4)}</div></div>
+  </div>
+
+  ${incSection}
+  ${specSection}
+
+  <div class="section-title">Monthly Budget Breakdown — ${y}</div>
+  <table class="main-table">
+    <thead><tr>
+      <th style="text-align:left">Month</th>
+      <th>Rooms Sold</th><th>Occ%</th>
+      <th style="color:#fbbf24">Laundry Supplies</th>
+      <th style="color:#86efac">Operating Supplies</th>
+      <th style="color:#fca5a5">Printing</th>
+      <th>Total Budget</th><th>CPOR</th>
+      <th>vs ${d.py} Actual</th>
+    </tr></thead>
+    <tbody>${tableRows}
+    <tr>
+      <td>YEAR TOTAL</td>
+      <td style="text-align:right">${d.totRooms.toLocaleString()}</td>
+      <td style="text-align:right">${d.occ.toFixed(1)}%</td>
+      <td style="text-align:right;color:#92400e">QAR ${d.totLaB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="text-align:right;color:#166534">QAR ${d.totOpB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="text-align:right;color:#991b1b">QAR ${d.totPrB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="text-align:right">QAR ${d.totB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="text-align:right">${d.cporB.toFixed(4)}</td>
+      <td style="text-align:right;color:${(d.totB-pyTotAll)>=0?'#dc2626':'#0f5132'};font-weight:700">
+        ${pyTotAll?(((d.totB-pyTotAll)>=0?'+':'')+((d.totB-pyTotAll)).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})):'—'}
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title" style="margin-top:16px">vs Prior Year (${d.py} Actuals)</div>
+  <table class="main-table" style="margin-bottom:16px">
+    <thead><tr>
+      <th style="text-align:left">Line</th>
+      <th>${d.py} Actual</th>
+      <th>Budget ${y}</th>
+      <th>Variance</th>
+      <th>Change %</th>
+    </tr></thead>
+    <tbody>
+      ${vsRow('Laundry Supplies',d.totLaB,d.pyLa,'#92400e')}
+      ${vsRow('Operating Supplies',d.totOpB,d.pyOp,'#166534')}
+      ${vsRow('Printing & Stationery',d.totPrB,d.pyPr,'#991b1b')}
+      ${vsRow('TOTAL EXPENSES',d.totB,pyTotAll,'#1e3a5f')}
+      <tr>
+        <td style="padding:7px 10px;font-weight:600;color:#1d4ed8">CPOR</td>
+        <td style="padding:7px 10px;text-align:right">${d.pyCpor.toFixed(4)}</td>
+        <td style="padding:7px 10px;text-align:right;font-weight:700">${d.cporB.toFixed(4)}</td>
+        <td style="padding:7px 10px;text-align:right;color:${(d.cporB-d.pyCpor)>=0?'#dc2626':'#0f5132'};font-weight:600">
+          ${d.pyCpor?((d.cporB-d.pyCpor)>=0?'+':'')+(d.cporB-d.pyCpor).toFixed(4):'—'}
+        </td>
+        <td style="padding:7px 10px;text-align:right;color:${(d.cporB-d.pyCpor)>=0?'#dc2626':'#0f5132'}">
+          ${d.pyCpor?((d.cporB-d.pyCpor)>=0?'+':'')+((d.cporB-d.pyCpor)/d.pyCpor*100).toFixed(1)+'%':'—'}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>Four Seasons Hotel Doha · Laundry Department · Budget Year ${y} · CONFIDENTIAL</span>
+    <span>RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</span>
+  </div>
+
+  <\/body><\/html>`;
+
+  const win=window.open('','_blank','width=1200,height=850');
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>{ setTimeout(()=>win.print(),600); };
+  toast(`Budget ${y} PDF ready ✓`);
+}
+
+
 /* ── INIT ── */
 load();
 document.getElementById('s-la').value=SETT.baseLa;
@@ -4439,6 +4869,8 @@ window.addEventListener('beforeunload',saveAll);
         <tr><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);color:var(--teal);font-weight:600">Variance</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-family:var(--ff-m);font-size:12px;color:var(--amber)">Actual − Budget</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-size:11px;color:var(--text3)">All tabs, Budget Report</td></tr>
         <tr style="background:rgba(255,255,255,.01)"><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);color:var(--teal);font-weight:600">Variance %</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-family:var(--ff-m);font-size:12px;color:var(--amber)">(Actual − Budget) ÷ Budget × 100</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-size:11px;color:var(--text3)">Budget Report</td></tr>
         <tr><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);color:var(--teal);font-weight:600">YTD Forecast CPOR</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-family:var(--ff-m);font-size:12px;color:var(--amber)">YTD Expenses ÷ YTD Rooms Sold</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-size:11px;color:var(--text3)">Projection Planner</td></tr>
+        <tr style="background:rgba(255,255,255,.01)"><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);color:var(--teal);font-weight:600">Price Multiplier (stacked)</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-family:var(--ff-m);font-size:12px;color:var(--amber)">Mult1 × Mult2 × ... (e.g. 1.06 × 1.04 = 1.1024)</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-size:11px;color:var(--text3)">Budget Adjustments, PDF Export</td></tr>
+        <tr><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);color:var(--teal);font-weight:600">Budget PDF Export</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-family:var(--ff-m);font-size:12px;color:var(--amber)">Prior CPOR × Rooms × Multiplier + Special Items</td><td style="padding:8px 16px;border:1px solid rgba(42,53,80,.5);font-size:11px;color:var(--text3)">Multi-Year tab</td></tr>
       </tbody>
     </table>
   </div>
@@ -4465,6 +4897,17 @@ window.addEventListener('beforeunload',saveAll);
         <div class="guide-tip" style="border-color:var(--gold)"><strong>August workflow:</strong> Check forecasted CPOR → enter next year rooms → review projected budget → submit to Finance.</div>
       </div>
     </div>
+    <div class="guide-card">
+      <div class="guide-card-hdr"><div class="guide-icon" style="background:var(--sky-bg)">📤</div><div><div class="guide-card-title" style="color:var(--sky)">Multi-Year — Budget Export</div><div class="guide-card-sub">Export a full budget year as PDF or Excel</div></div></div>
+      <div class="guide-card-body">
+        <div class="guide-step"><div class="guide-step-num" style="background:var(--sky-bg);color:var(--sky)">1</div><div class="guide-step-text">Go to <strong>Multi-Year tab</strong> → select the budget year from the dropdown (e.g. 2027)</div></div>
+        <div class="guide-step"><div class="guide-step-num" style="background:var(--sky-bg);color:var(--sky)">2</div><div class="guide-step-text">Click <strong>🖨 Budget PDF</strong> for a print-ready Finance submission document, or <strong>📊 Budget Excel</strong> for a CSV spreadsheet</div></div>
+        <div class="guide-step"><div class="guide-step-num" style="background:var(--sky-bg);color:var(--sky)">3</div><div class="guide-step-text">The document includes: <strong>Budget Summary</strong>, <strong>Monthly Breakdown</strong> (all 3 lines), <strong>Price Increases Applied</strong> with multipliers, <strong>Special Items</strong>, and <strong>vs Prior Year</strong> comparison</div></div>
+        <div class="guide-step"><div class="guide-step-num" style="background:var(--sky-bg);color:var(--sky)">4</div><div class="guide-step-text">Price increases show the <strong>exact multiplier</strong> applied each month (e.g. ×1.060 for +6% Ecolab) — Finance can verify the calculation</div></div>
+        <div class="guide-tip" style="border-color:var(--sky)"><strong>August workflow:</strong> Enter projected rooms → set price increases → export Budget PDF → submit to Finance. Everything is on one document.</div>
+      </div>
+    </div>
+
     <div class="guide-card">
       <div class="guide-card-hdr"><div class="guide-icon" style="background:var(--amber-bg)">⚙</div><div><div class="guide-card-title" style="color:var(--amber)">Budget Adjustments</div><div class="guide-card-sub">Price increases & special items</div></div></div>
       <div class="guide-card-body">
