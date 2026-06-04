@@ -607,23 +607,8 @@ select option{background:var(--bg4)}
       <line x1="130" y1="350" x2="430" y2="350" stroke="rgba(0,0,0,.1)" stroke-width=".4"/>
       <polygon points="280,160 290,184 270,184" fill="#f5c542" opacity=".28" filter="url(#gl)"/>
 
-      <!-- SPHINX (right of main pyramid) -->
-      <g transform="translate(1080,350)">
-        <ellipse cx="65" cy="55" rx="68" ry="34" fill="#2d1200"/>
-        <rect x="8" y="40" width="118" height="46" rx="10" fill="#2d1200"/>
-        <rect x="8" y="76" width="26" height="14" rx="5" fill="#3d1a00"/>
-        <rect x="100" y="76" width="26" height="14" rx="5" fill="#3d1a00"/>
-        <rect x="46" y="18" width="36" height="34" rx="5" fill="#3d1a00"/>
-        <ellipse cx="64" cy="16" rx="28" ry="25" fill="#4a2200"/>
-        <path d="M36,12 Q24,36 30,64" stroke="#5a2c00" stroke-width="4" fill="none"/>
-        <path d="M92,12 Q104,36 98,64" stroke="#5a2c00" stroke-width="4" fill="none"/>
-        <ellipse cx="56" cy="12" rx="4" ry="4.5" fill="#1a0800"/>
-        <ellipse cx="72" cy="12" rx="4" ry="4.5" fill="#1a0800"/>
-        <ellipse cx="56" cy="12" rx="2" ry="2" fill="#f5c542" opacity=".7"/>
-        <ellipse cx="72" cy="12" rx="2" ry="2" fill="#f5c542" opacity=".7"/>
-        <rect x="56" y="30" width="16" height="13" rx="3" fill="#3d1a00"/>
-      </g>
-
+      
+      <!-- Sphinx removed -->
       <!-- Sand floor -->
       <rect x="0" y="455" width="1440" height="50" fill="url(#sfg)"/>
       <ellipse cx="360" cy="456" rx="260" ry="22" fill="#6b3a0a" opacity=".6"/>
@@ -6636,13 +6621,12 @@ window.addEventListener('beforeunload',saveAll);
 <!-- TAB: USER GUIDE -->
 <div id="pane-guide" class="pane">
 
-  <!-- ══ HERO ══ -->
+  <!-- HERO -->
   <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f,#1e1b4b);border-radius:14px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden">
     <div style="position:absolute;top:-20px;right:-20px;width:200px;height:200px;border-radius:50%;background:rgba(245,197,66,.04)"></div>
-    <div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;border-radius:50%;background:rgba(0,212,184,.04)"></div>
     <div style="position:relative">
       <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(245,197,66,.6);margin-bottom:8px">RS BudgetPro V3.0 — Complete Reference</div>
-      <h1 style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#f5c542;margin-bottom:8px;line-height:1.2">User Guide & Formula Reference</h1>
+      <h1 style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#f5c542;margin-bottom:8px;line-height:1.2">User Guide &amp; Formula Reference</h1>
       <p style="font-size:13px;color:rgba(255,255,255,.55);line-height:1.7;max-width:700px;margin-bottom:16px">
         Complete documentation for RS BudgetPro — covering every tab, every formula, every calculation with worked examples.
         This system manages laundry expense budgets for Four Seasons Hotel Doha (237 rooms) across 2024–2035.
@@ -6657,227 +6641,124 @@ window.addEventListener('beforeunload',saveAll);
     </div>
   </div>
 
-  <!-- ══ TABLE OF CONTENTS ══ -->
+  <!-- TABLE OF CONTENTS -->
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:16px 20px;margin-bottom:24px">
     <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#f5c542;margin-bottom:12px;letter-spacing:.5px;text-transform:uppercase">📑 Contents</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px">
-      ${[
-        ['1','Core Formulas Explained','#00d4b8'],
-        ['2','How Budgets Are Calculated','#ffb347'],
-        ['3','Tab-by-Tab Guide','#a78bfa'],
-        ['4','Smart Insights Features','#f5c542'],
-        ['5','Revenue System','#00d4b8'],
-        ['6','Price Increases & Special Items','#ffb347'],
-        ['7','Export & Reports','#a78bfa'],
-        ['8','Firebase & Backup','#a3e635'],
-        ['9','Colour System','#38bdf8'],
-        ['10','Frequently Asked Questions','#ff6b6b'],
-      ].map(([n,t,c])=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
-        <span style="width:20px;height:20px;border-radius:50%;background:${c};color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">${n}</span>
-        <span style="font-size:11px;color:#94a3b8">${t}</span>
-      </div>`).join('')}
-    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px"><div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
+  <span style="width:20px;height:20px;border-radius:50%;background:#00d4b8;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">1</span>
+  <span style="font-size:11px;color:#94a3b8">Core Formulas Explained</span>
+</div><div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
+  <span style="width:20px;height:20px;border-radius:50%;background:#ffb347;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">2</span>
+  <span style="font-size:11px;color:#94a3b8">How Budgets Cascade Year by Year</span>
+</div><div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
+  <span style="width:20px;height:20px;border-radius:50%;background:#a78bfa;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">3</span>
+  <span style="font-size:11px;color:#94a3b8">Tab-by-Tab Guide</span>
+</div><div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
+  <span style="width:20px;height:20px;border-radius:50%;background:#f5c542;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">4</span>
+  <span style="font-size:11px;color:#94a3b8">Complete Formula Quick Reference</span>
+</div><div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
+  <span style="width:20px;height:20px;border-radius:50%;background:#38bdf8;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">5</span>
+  <span style="font-size:11px;color:#94a3b8">Colour System</span>
+</div><div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0f1a2e;border-radius:6px">
+  <span style="width:20px;height:20px;border-radius:50%;background:#ff6b6b;color:#0f172a;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0">6</span>
+  <span style="font-size:11px;color:#94a3b8">Frequently Asked Questions</span>
+</div></div>
   </div>
 
-  <!-- ══ SECTION 1: CORE FORMULAS ══ -->
   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542;
-    border-left:3px solid #f5c542;padding-left:12px;margin-bottom:16px">
-    1. Core Formulas Explained
-  </div>
-
+    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">1. Core Formulas Explained</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:24px">
-
-    <!-- CPOR -->
     <div style="background:#1a2236;border:1px solid rgba(0,212,184,.25);border-radius:12px;overflow:hidden">
-      <div style="background:rgba(0,212,184,.08);padding:12px 16px;border-bottom:1px solid rgba(0,212,184,.15)">
+      <div style="background:rgba(0,212,184,.06);padding:12px 16px;border-bottom:1px solid rgba(0,212,184,.15)">
         <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#00d4b8">CPOR — Cost Per Occupied Room</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">The most important metric in the system</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px;text-align:center">
-          <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#00d4b8">CPOR = Total Expenses ÷ Rooms Sold</div>
-          <div style="font-size:10px;color:#64748b;margin-top:4px">Calculated per year and per month</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">What it means:</strong> How much the laundry spends for every room that was occupied.<br><br>
-          <strong style="color:#e2e8f0">Example:</strong><br>
-          2025 Total Expenses = QAR 416,082<br>
-          2025 Rooms Sold = 46,536<br>
-          <span style="font-family:'DM Mono',monospace;color:#00d4b8">CPOR = 416,082 ÷ 46,536 = <strong style="color:#f5c542">8.9411</strong></span><br><br>
-          <strong style="color:#e2e8f0">Why it matters:</strong> This 8.9411 becomes the budget driver for 2026 — multiply by any month's rooms sold to get that month's budget automatically.
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="text-align:center;font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#00d4b8">CPOR = Total Expenses ÷ Rooms Sold</div><div style="font-size:10px;color:#64748b;margin-top:4px;text-align:center">Calculated per year and per month</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">What it means:</strong> How much the laundry spends for every room that was occupied.<br><br><strong style="color:#e2e8f0">Example:</strong><br>2025 Total Expenses = QAR 416,082<br>2025 Rooms Sold = 46,536<br><span style="font-family:'DM Mono',monospace;color:#00d4b8">CPOR = 416,082 ÷ 46,536 = <strong style="color:#f5c542">8.9411</strong></span><br><br><strong style="color:#e2e8f0">Why it matters:</strong> This 8.9411 becomes the budget driver for 2026 — multiply by any month's rooms sold to get that month's budget automatically.</div>
       </div>
-    </div>
-
-    <!-- Monthly Budget -->
-    <div style="background:#1a2236;border:1px solid rgba(255,179,71,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(255,179,71,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(255,179,71,.06);padding:12px 16px;border-bottom:1px solid rgba(255,179,71,.15)">
         <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ffb347">Monthly Budget Calculation</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">How each month's budget is auto-calculated</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-family:'DM Mono',monospace;font-size:13px;color:#00d4b8;margin-bottom:6px">Laundry Supplies Budget =</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#ffb347;padding-left:12px">Prior Year CPOR × Rooms Sold × Price Multiplier</div>
-          <div style="height:1px;background:#2a3550;margin:8px 0"></div>
-          <div style="font-family:'DM Mono',monospace;font-size:13px;color:#a3e635;margin-bottom:6px">Operating Supplies Budget =</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#ffb347;padding-left:12px">(Prior Year CPOR × Rooms Sold) + Special Items</div>
-          <div style="height:1px;background:#2a3550;margin:8px 0"></div>
-          <div style="font-family:'DM Mono',monospace;font-size:13px;color:#ff6b6b;margin-bottom:6px">Printing & Stationery Budget =</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#ffb347;padding-left:12px">Prior Year CPOR × Rooms Sold</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.7">
-          <strong style="color:#e2e8f0">Example (2026 January):</strong><br>
-          2025 CPOR Laundry = 7.3537<br>
-          January 2026 Rooms = 4,137<br>
-          <span style="font-family:'DM Mono',monospace;color:#ffb347">Budget = 7.3537 × 4,137 = <strong style="color:#f5c542">QAR 30,432</strong></span>
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-family:'DM Mono',monospace;font-size:12px;color:#00d4b8;margin-bottom:5px">Laundry Supplies Budget =</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:#ffb347;padding-left:12px;margin-bottom:8px">Prior Year CPOR × Rooms Sold × Price Multiplier</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:#a3e635;margin-bottom:5px">Operating Supplies Budget =</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:#ffb347;padding-left:12px;margin-bottom:8px">(Prior Year CPOR × Rooms Sold) + Special Items</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:#ff6b6b;margin-bottom:5px">Printing &amp; Stationery Budget =</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:#ffb347;padding-left:12px">Prior Year CPOR × Rooms Sold</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">Example (2026 January):</strong><br>2025 CPOR Laundry = 7.3537<br>January 2026 Rooms = 4,137<br><span style="font-family:'DM Mono',monospace;color:#ffb347">Budget = 7.3537 × 4,137 = <strong style="color:#f5c542">QAR 30,432</strong></span></div>
       </div>
-    </div>
-
-    <!-- Price Increase Multiplier -->
-    <div style="background:#1a2236;border:1px solid rgba(255,179,71,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(255,179,71,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(255,179,71,.06);padding:12px 16px;border-bottom:1px solid rgba(255,179,71,.15)">
         <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ffb347">Price Increase Multiplier</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">Applied to Laundry Supplies only</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px;text-align:center">
-          <div style="font-family:'DM Mono',monospace;font-size:15px;color:#ffb347">Multiplier = 1 + (Increase% ÷ 100)</div>
-          <div style="font-size:10px;color:#64748b;margin-top:4px">Multiple increases stack by multiplying together</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">Single increase example:</strong><br>
-          Ecolab +6% → Multiplier = 1 + (6÷100) = <span style="font-family:'DM Mono',monospace;color:#ffb347">1.060</span><br>
-          Budget = CPOR × Rooms × <span style="font-family:'DM Mono',monospace;color:#ffb347">1.060</span><br><br>
-          <strong style="color:#e2e8f0">Two stacked increases (+6% and +4%):</strong><br>
-          <span style="font-family:'DM Mono',monospace;color:#ffb347">1.060 × 1.040 = 1.1024 (+10.24% total)</span><br><br>
-          <strong style="color:#e2e8f0">Important:</strong> Only affects Laundry Supplies budget — not Operating or Printing. Actuals are never touched.
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="text-align:center;font-family:'DM Mono',monospace;font-size:14px;color:#ffb347">Multiplier = 1 + (Increase% ÷ 100)</div><div style="font-size:10px;color:#64748b;margin-top:4px;text-align:center">Multiple increases stack by multiplying</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">Single increase +6%:</strong><br>1 + (6÷100) = <span style="font-family:'DM Mono',monospace;color:#ffb347">1.060</span><br>Budget = CPOR × Rooms × 1.060<br><br><strong style="color:#e2e8f0">Two stacked (+6% and +4%):</strong><br><span style="font-family:'DM Mono',monospace;color:#ffb347">1.060 × 1.040 = 1.1024 (+10.24% total)</span><br><br><strong style="color:#e2e8f0">Important:</strong> Only affects Laundry Supplies budget — not Operating or Printing.</div>
       </div>
-    </div>
-
-    <!-- Occupancy -->
-    <div style="background:#1a2236;border:1px solid rgba(167,139,250,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(167,139,250,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(167,139,250,.06);padding:12px 16px;border-bottom:1px solid rgba(167,139,250,.15)">
         <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#a78bfa">Occupancy %</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px">Based only on months with data</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px">Based only on months with data entered</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px;text-align:center">
-          <div style="font-family:'DM Mono',monospace;font-size:14px;color:#a78bfa">Occ% = Rooms Sold ÷ (237 × Days) × 100</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">Property:</strong> Four Seasons Hotel Doha = 237 rooms<br>
-          <strong style="color:#e2e8f0">Example — January 2025:</strong><br>
-          Rooms Sold = 4,650 · Days in Jan = 31<br>
-          Max room nights = 237 × 31 = 7,347<br>
-          <span style="font-family:'DM Mono',monospace;color:#a78bfa">Occ% = 4,650 ÷ 7,347 × 100 = <strong style="color:#f5c542">63.3%</strong></span><br><br>
-          <strong style="color:#e2e8f0">Note:</strong> Annual occupancy only counts months where rooms sold > 0. Partial years show correct % for the period covered.
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="text-align:center;font-family:'DM Mono',monospace;font-size:13px;color:#a78bfa">Occ% = Rooms Sold ÷ (237 × Days in Month) × 100</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">Property:</strong> Four Seasons Hotel Doha = 237 rooms<br><strong style="color:#e2e8f0">Example — January 2025:</strong><br>Rooms Sold = 4,650 · Days = 31<br>Max = 237 × 31 = 7,347<br><span style="font-family:'DM Mono',monospace;color:#a78bfa">Occ% = 4,650 ÷ 7,347 × 100 = <strong style="color:#f5c542">63.3%</strong></span><br><br><strong style="color:#e2e8f0">Note:</strong> Annual occupancy only counts months where rooms &gt; 0.</div>
       </div>
-    </div>
-
-    <!-- KG Metrics -->
-    <div style="background:#1a2236;border:1px solid rgba(56,189,248,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(56,189,248,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(56,189,248,.06);padding:12px 16px;border-bottom:1px solid rgba(56,189,248,.15)">
         <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#38bdf8">KG Efficiency Metrics</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">Operational efficiency indicators</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#38bdf8;margin-bottom:6px">Cost per KG = Total Expenses ÷ KG Processed</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#a3e635">KG per Room Night = Total KG ÷ Rooms Sold</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">2025 Example:</strong><br>
-          Total Expenses = QAR 416,082 · Total KG = 1,925,291<br>
-          <span style="font-family:'DM Mono',monospace;color:#38bdf8">Cost/KG = 416,082 ÷ 1,925,291 = <strong>0.22</strong></span><br>
-          <span style="font-family:'DM Mono',monospace;color:#a3e635">KG/RN = 1,925,291 ÷ 46,536 = <strong>41.37</strong></span><br><br>
-          <strong style="color:#e2e8f0">Why it matters:</strong> Rising KG/RN means more linen per guest — could be quality upgrade, season change, or waste. Rising Cost/KG means chemical/labour costs are increasing.
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-family:'DM Mono',monospace;font-size:12px;color:#38bdf8;margin-bottom:6px">Cost per KG = Total Expenses ÷ KG Processed</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:#a3e635">KG per Room Night = Total KG ÷ Rooms Sold</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">2025 Example:</strong><br>Expenses = QAR 416,082 · KG = 1,925,291<br><span style="font-family:'DM Mono',monospace;color:#38bdf8">Cost/KG = 0.22</span> · <span style="font-family:'DM Mono',monospace;color:#a3e635">KG/RN = 41.37</span><br><br><strong style="color:#e2e8f0">Why it matters:</strong> Rising KG/RN = more linen per guest. Rising Cost/KG = chemical costs increasing.</div>
       </div>
-    </div>
-
-    <!-- Variance -->
-    <div style="background:#1a2236;border:1px solid rgba(255,107,107,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(255,107,107,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(255,107,107,.06);padding:12px 16px;border-bottom:1px solid rgba(255,107,107,.15)">
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ff6b6b">Variance Calculation</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px">Over or under budget</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ff6b6b">Variance — Over or Under Budget</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px">How much are you over or under plan?</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-family:'DM Mono',monospace;font-size:13px;color:#ff6b6b;margin-bottom:5px">Variance = Actual − Budget</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#94a3b8">Variance% = (Actual − Budget) ÷ Budget × 100</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">For expenses:</strong><br>
-          <span style="color:#ff6b6b">Positive (+) = Over budget</span> → spend more than planned<br>
-          <span style="color:#00d4b8">Negative (−) = Under budget</span> → good, saving money<br><br>
-          <strong style="color:#e2e8f0">Example:</strong><br>
-          April 2025: Actual = QAR 58,342, Budget = QAR 46,771<br>
-          <span style="font-family:'DM Mono',monospace;color:#ff6b6b">Variance = +11,571 (+24.7% over)</span><br><br>
-          <strong style="color:#e2e8f0">For revenue:</strong> Positive = above target (good).
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-family:'DM Mono',monospace;font-size:13px;color:#ff6b6b;margin-bottom:5px">Variance = Actual − Budget</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:#94a3b8">Variance% = (Actual − Budget) ÷ Budget × 100</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><span style="color:#ff6b6b">Positive (+) = Over budget</span> → spending more than planned<br><span style="color:#00d4b8">Negative (−) = Under budget</span> → good performance<br><br><strong style="color:#e2e8f0">Example — April 2025:</strong><br>Actual = QAR 58,342 · Budget = QAR 46,771<br><span style="font-family:'DM Mono',monospace;color:#ff6b6b">Variance = +11,571 (+24.7% over budget)</span></div>
       </div>
-    </div>
-
-    <!-- RPOR -->
-    <div style="background:#1a2236;border:1px solid rgba(0,212,184,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(0,212,184,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(0,212,184,.06);padding:12px 16px;border-bottom:1px solid rgba(0,212,184,.15)">
         <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#00d4b8">RPOR — Revenue Per Occupied Room</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">Revenue budget driver</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-family:'DM Mono',monospace;font-size:13px;color:#00d4b8;margin-bottom:5px">RPOR = Total Revenue ÷ Rooms Sold</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#ffb347">Projected Rev = RPOR × (1 + Growth%) × Rooms</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">2025 Example — Laundry Revenue:</strong><br>
-          Total Revenue = QAR 283,116 · Rooms = 10,887<br>
-          <span style="font-family:'DM Mono',monospace;color:#00d4b8">RPOR = 283,116 ÷ 10,887 = 26.0050</span><br><br>
-          <strong style="color:#e2e8f0">2026 Projection at +5% growth, 4,500 rooms/month:</strong><br>
-          <span style="font-family:'DM Mono',monospace;color:#ffb347">Rev = 26.005 × 1.05 × 4,500 = QAR 122,874</span>
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-family:'DM Mono',monospace;font-size:13px;color:#00d4b8;margin-bottom:5px">RPOR = Total Revenue ÷ Rooms Sold</div>
+    <div style="font-family:'DM Mono',monospace;font-size:12px;color:#ffb347">Projected Rev = RPOR × (1 + Growth%) × Rooms</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">2025 Example — Laundry Revenue:</strong><br>Revenue = QAR 283,116 · Rooms = 10,887<br><span style="font-family:'DM Mono',monospace;color:#00d4b8">RPOR = 26.0050</span><br><br><strong style="color:#e2e8f0">2026 Projection at +5%, 4,500 rooms:</strong><br><span style="font-family:'DM Mono',monospace;color:#ffb347">Rev = 26.005 × 1.05 × 4,500 = QAR 122,874</span></div>
       </div>
-    </div>
-
-    <!-- Full Year Forecast -->
-    <div style="background:#1a2236;border:1px solid rgba(245,197,66,.25);border-radius:12px;overflow:hidden">
+    </div><div style="background:#1a2236;border:1px solid rgba(245,197,66,.25);border-radius:12px;overflow:hidden">
       <div style="background:rgba(245,197,66,.06);padding:12px 16px;border-bottom:1px solid rgba(245,197,66,.15)">
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#f5c542">Full-Year Forecast Formula</div>
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#f5c542">Full-Year Forecast</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">How Smart Insights projects the full year</div>
       </div>
       <div style="padding:14px 16px">
-        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#f5c542;margin-bottom:5px">YTD CPOR = YTD Expenses ÷ YTD Rooms Sold</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#f5c542;margin-bottom:5px">Remaining Forecast = YTD CPOR × Projected Rooms</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:#00d4b8">Full Year Est. = YTD Actual + Remaining Forecast</div>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.8">
-          <strong style="color:#e2e8f0">Example — June 2026 (6 months in):</strong><br>
-          YTD Actual = QAR 200,000 · YTD Rooms = 22,000<br>
-          YTD CPOR = 200,000 ÷ 22,000 = 9.09<br>
-          Jul–Dec projected rooms = 24,000<br>
-          Remaining = 9.09 × 24,000 = QAR 218,160<br>
-          <span style="font-family:'DM Mono',monospace;color:#00d4b8">Full Year Est. = 200,000 + 218,160 = <strong style="color:#f5c542">QAR 418,160</strong></span>
-        </div>
+        <div style="background:#0f1a2e;border-radius:8px;padding:12px;margin-bottom:12px"><div style="font-family:'DM Mono',monospace;font-size:11px;color:#f5c542;margin-bottom:4px">YTD CPOR = YTD Expenses ÷ YTD Rooms Sold</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:#f5c542;margin-bottom:4px">Remaining = YTD CPOR × Projected Remaining Rooms</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">Full Year = YTD Actual + Remaining Forecast</div></div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.8"><strong style="color:#e2e8f0">Example — June (6 months in):</strong><br>YTD = QAR 200,000 · YTD Rooms = 22,000<br>YTD CPOR = 9.09<br>Jul–Dec projected rooms = 24,000<br>Remaining = 9.09 × 24,000 = QAR 218,160<br><span style="font-family:'DM Mono',monospace;color:#00d4b8">Full Year = 200,000 + 218,160 = <strong style="color:#f5c542">QAR 418,160</strong></span></div>
       </div>
     </div>
-
   </div>
 
-  <!-- ══ SECTION 2: HOW BUDGETS CASCADE ══ -->
   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542;
-    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">
-    2. How Budgets Cascade Year by Year
-  </div>
-
+    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">2. How Budgets Cascade Year by Year</div>
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:18px 20px;margin-bottom:24px">
     <div style="font-size:12px;color:#94a3b8;line-height:1.8;margin-bottom:16px">
       The system uses a <strong style="color:#e2e8f0">cascading CPOR model</strong> — each year's actual CPOR becomes the budget driver for the next year.
-      The only exception is 2025, which uses the manually entered 2024 base values in Assumptions.
+      The only exception is 2025, which uses the manually entered 2024 base values in the Assumptions tab.
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px">
@@ -6889,90 +6770,234 @@ window.addEventListener('beforeunload',saveAll);
             <th style="background:#212d42;padding:8px 12px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8">Notes</th>
           </tr>
         </thead>
-        <tbody>
-          ${[
-            ['2025','Assumptions tab (2024 base actuals)','2024 Expenses ÷ 2024 Rooms Sold','Base year — manually entered in Assumptions'],
-            ['2026','2025 actual CPOR (from Monthly Entry)','2025 Total Actual ÷ 2025 Rooms Sold','Auto once 2025 data is fully entered'],
-            ['2027','2026 actual CPOR (from Monthly Entry)','2026 Total Actual ÷ 2026 Rooms Sold','Auto once 2026 data is fully entered'],
-            ['2028+','Prior year actual CPOR','Prior Year Total ÷ Prior Year Rooms','Cascades automatically every year'],
-          ].map(([y,src,formula,note],i)=>`
-            <tr style="background:${i%2===0?'transparent':'rgba(255,255,255,.02)'}">
-              <td style="padding:8px 12px;font-family:'Syne',sans-serif;font-weight:700;color:#f5c542">${y}</td>
-              <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">${src}</td>
-              <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">${formula}</td>
-              <td style="padding:8px 12px;font-size:11px;color:#64748b">${note}</td>
-            </tr>`).join('')}
-        </tbody>
+        <tbody><tr style="background:transparent">
+      <td style="padding:8px 12px;font-family:'Syne',sans-serif;font-weight:700;color:#f5c542">2025</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">Assumptions tab (2024 base actuals)</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">2024 Expenses ÷ 2024 Rooms Sold</td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748b">Base year — manually entered in Assumptions</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 12px;font-family:'Syne',sans-serif;font-weight:700;color:#f5c542">2026</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">2025 actual CPOR (from Monthly Entry)</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">2025 Total Actual ÷ 2025 Rooms Sold</td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748b">Auto once 2025 data is fully entered</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 12px;font-family:'Syne',sans-serif;font-weight:700;color:#f5c542">2027</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">2026 actual CPOR (from Monthly Entry)</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">2026 Total Actual ÷ 2026 Rooms Sold</td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748b">Auto once 2026 data is fully entered</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 12px;font-family:'Syne',sans-serif;font-weight:700;color:#f5c542">2028+</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">Prior year actual CPOR</td>
+      <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Prior Year Total ÷ Prior Year Rooms</td>
+      <td style="padding:8px 12px;font-size:11px;color:#64748b">Cascades automatically every year</td>
+    </tr></tbody>
       </table>
     </div>
     <div style="margin-top:12px;background:#0f1a2e;border-radius:8px;padding:10px 14px;font-size:11px;color:#64748b;line-height:1.6">
-      💡 <strong style="color:#94a3b8">Key insight:</strong> This means the more accurately you enter 2025 actuals, the more accurate your 2026 budget will be automatically. The system builds intelligence over time.
+      💡 <strong style="color:#94a3b8">Key insight:</strong> The more accurately you enter actuals each year, the more accurate next year's budget becomes automatically. The system builds intelligence over time.
     </div>
   </div>
 
-  <!-- ══ SECTION 3: TAB GUIDE ══ -->
   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542;
-    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">
-    3. Tab-by-Tab Guide
-  </div>
-
+    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">3. Tab-by-Tab Guide</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-bottom:24px">
-
-    ${[
-      {icon:'📋',title:'Monthly Entry',col:'#00d4b8',colRgb:'0,212,184',sub:'Main data entry — enter actuals every month',
-       steps:['Select the year using the year pills at the top','Enter <strong style="color:#a78bfa">Rooms Sold</strong> → Occupancy % auto-calculates','Enter <strong>Total KG Processed</strong> for efficiency tracking','Enter actuals for <span style="color:#ffb347">Laundry Supplies</span>, <span style="color:#a3e635">Operating</span>, <span style="color:#ff6b6b">Printing</span>','Budget columns auto-fill from prior year CPOR × rooms','Add a note in the text box at the bottom of each card'],
-       tip:'Tab between fields to move fast. The card refreshes when you leave a field (not while typing) — this is by design.'},
-      {icon:'🔮',title:'Projection Planner',col:'#f5c542',colRgb:'245,197,66',sub:'Future year rooms + budget forecasting',
-       steps:['The top section shows YTD CPOR and full-year forecast for the current year','In the grid below, enter expected <strong>Rooms Sold per month</strong> for future years','Budget columns auto-calculate as you type using prior year CPOR','<strong>Budget Season Forecaster</strong> (Aug workflow): reads actuals + estimates remaining months = full year CPOR for next year's budget'],
-       tip:'August workflow: Check the YTD CPOR → it becomes next year's budget driver. Enter next year rooms → review totals → export from Multi-Year tab.'},
-      {icon:'📊',title:'Multi-Year Overview',col:'#a78bfa',colRgb:'167,139,250',sub:'All years side by side at a glance',
-       steps:['Shows all 12 years in one table: Rooms, Occ%, Laundry/Operating/Printing actual & budget','Select a year → click <strong>🖨 Budget PDF</strong> or <strong>📊 Budget Excel</strong> to export','The PDF is the formal Finance submission document with all 4 sections'],
-       tip:'Use this tab in August meetings — shows the Finance team exactly what you're budgeting and why.'},
-      {icon:'⚙️',title:'Budget Adjustments',col:'#ffb347',colRgb:'255,179,71',sub:'Price increases & special one-time items',
-       steps:['<strong>Price Increases:</strong> Add supplier increases with exact date range and %. Only affects Laundry Supplies budget. A ▲ tag shows on affected month cards.','<strong>Special Items:</strong> Flat QAR amounts added to specific months (e.g. Flat Iron Padding QAR 17,000 in April & October). Added on top of Operating Supplies budget.'],
-       tip:'Example: Ecolab +6% from Jan 2027 → add it here. The system automatically applies 1.06 multiplier to Laundry Supplies budget for every affected month.'},
-      {icon:'💰',title:'Revenue',col:'#00d4b8',colRgb:'0,212,184',sub:'Laundry Revenue (FS Doha) + Pearl Valet (FS Pearl)',
-       steps:['Enter monthly <strong>budget and actual</strong> for Laundry Revenue and Pearl Valet Revenue','Arc gauges show achievement % live — red/amber/green','Use the <strong>Revenue Budget Projection Tool</strong> (4-step process) to set next year's revenue budget','Step 1: Select years · Step 2: Set growth % · Step 3: Generate · Step 4: Apply as Budget','Export Revenue PDF or Excel from the year selector at the top'],
-       tip:'The two revenue lines are separate: Laundry Revenue = laundry services income at FS Doha. Pearl Valet Revenue = valet/laundry services at FS The Pearl property.'},
-      {icon:'🎯',title:'Dashboard',col:'#ff6b6b',colRgb:'255,107,107',sub:'Visual overview of the selected year',
-       steps:['KPI strip: Rooms Sold, Total Actual/Budget, Variance, CPOR, KG','6 SVG bar charts: Expenses vs Budget, CPOR vs Budget, Laundry/Operating/Printing, KG, Occupancy','Monthly Detail Table: all 12 months × all metrics in one place','Click 🖨 Print Dashboard for a PDF-ready document'],
-       tip:'Use Dashboard when your GM asks "how are we doing this year?" — everything is on one screen.'},
-      {icon:'📄',title:'Budget Report',col:'#a78bfa',colRgb:'167,139,250',sub:'Full P&L format · Actual vs Budget vs Prior Year',
-       steps:['Select a year using the pills at the top','Shows all 12 months as columns with rows for each expense line','Actual · Budget · Variance · Prior Year side by side for each month','Export to Excel (CSV) or Print as PDF'],
-       tip:'This is the formal monthly report for Finance. Shows exactly where you are vs budget for every line every month.'},
-      {icon:'🧠',title:'Smart Insights',col:'#f5c542',colRgb:'245,197,66',sub:'AI-powered budget intelligence',
-       steps:['<strong>Performance Alerts:</strong> over/under budget, missing data, budget season reminder','<strong>Full-Year Forecast:</strong> projects how year will end based on current pace','<strong>Budget Season Assistant:</strong> recommends next year budget with CPOR analysis','<strong>Occupancy-Based Analysis:</strong> flags months where spending was high relative to occupancy','<strong>Price Increase Impact:</strong> shows QAR impact of each active supplier increase','<strong>Missing Data Reminders:</strong> lists months that need actuals entered'],
-       tip:'Open this tab at the start of each month after entering actuals. The startup alert banner also shows the most critical items automatically.'},
-    ].map(tab=>`
-      <div style="background:#1a2236;border:1px solid rgba(${tab.colRgb},.2);border-radius:12px;overflow:hidden">
-        <div style="background:rgba(${tab.colRgb},.06);padding:12px 16px;border-bottom:1px solid rgba(${tab.colRgb},.15);display:flex;align-items:center;gap:10px">
-          <div style="width:32px;height:32px;border-radius:8px;background:rgba(${tab.colRgb},.15);border:1px solid rgba(${tab.colRgb},.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${tab.icon}</div>
-          <div>
-            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:${tab.col}">${tab.title}</div>
-            <div style="font-size:10px;color:#64748b;margin-top:1px">${tab.sub}</div>
-          </div>
+    <div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(0,212,184,.06);padding:12px 16px;border-bottom:1px solid rgba(0,212,184,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,212,184,.15);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📋</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#00d4b8">Monthly Entry</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Main data entry — enter actuals every month</div>
         </div>
-        <div style="padding:14px 16px">
-          <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
-            ${tab.steps.map((s,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5">
-              <div style="width:18px;height:18px;border-radius:50%;background:rgba(${tab.colRgb},.2);border:1px solid rgba(${tab.colRgb},.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${tab.col};flex-shrink:0;margin-top:1px">${i+1}</div>
-              <div>${s}</div>
-            </div>`).join('')}
-          </div>
-          <div style="background:rgba(${tab.colRgb},.06);border-left:2px solid rgba(${tab.colRgb},.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5">
-            💡 <strong style="color:#94a3b8">Tip:</strong> ${tab.tip}
-          </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">1</div>
+      <div>Select the year using the year pills at the top</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">2</div>
+      <div>Enter <strong style="color:#a78bfa">Rooms Sold</strong> → Occupancy % auto-calculates</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">3</div>
+      <div>Enter <strong>Total KG Processed</strong> for efficiency tracking</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">4</div>
+      <div>Enter actuals for <span style="color:#ffb347">Laundry Supplies</span>, <span style="color:#a3e635">Operating</span>, <span style="color:#ff6b6b">Printing</span></div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">5</div>
+      <div>Budget columns auto-fill from prior year CPOR × rooms sold</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">6</div>
+      <div>Add a note in the text box at the bottom of each month card</div></div>
+        <div style="background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Tab between fields to move fast. The card visuals refresh when you leave a field (not while typing) — this is by design to prevent cursor jumping.
         </div>
-      </div>`).join('')}
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(245,197,66,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(245,197,66,.06);padding:12px 16px;border-bottom:1px solid rgba(245,197,66,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔮</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#f5c542">Projection Planner</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Future year rooms + budget forecasting</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">1</div>
+      <div>Top section shows YTD CPOR and full-year forecast for the current year</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">2</div>
+      <div>In the grid, enter expected <strong>Rooms Sold per month</strong> for future years</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">3</div>
+      <div>Budget columns auto-calculate using prior year CPOR as you type</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">4</div>
+      <div><strong>August workflow:</strong> YTD CPOR from actuals → becomes next year budget driver → enter next year rooms → budgets appear</div></div>
+        <div style="background:rgba(245,197,66,.06);border-left:2px solid rgba(245,197,66,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> August workflow: Check the YTD CPOR shown at the top → it becomes next year's budget driver. Enter next year rooms → review totals → export Budget PDF from Multi-Year tab.
+        </div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(167,139,250,.06);padding:12px 16px;border-bottom:1px solid rgba(167,139,250,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📊</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#a78bfa">Multi-Year Overview</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">All 12 years side by side at a glance</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">1</div>
+      <div>Shows all years: Rooms, Occ%, Laundry/Operating/Printing actual &amp; budget</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">2</div>
+      <div>Select a year from the dropdown → click <strong>🖨 Budget PDF</strong> or <strong>📊 Budget Excel</strong></div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">3</div>
+      <div>Budget PDF is the formal Finance submission document with 5 sections</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">4</div>
+      <div>Refresh button recalculates all years if data has changed</div></div>
+        <div style="background:rgba(167,139,250,.06);border-left:2px solid rgba(167,139,250,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Use this tab in August Finance meetings — shows exactly what you're budgeting and why, with all 3 expense lines and prior year comparison.
+        </div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(255,179,71,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(255,179,71,.06);padding:12px 16px;border-bottom:1px solid rgba(255,179,71,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,179,71,.15);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">⚙️</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ffb347">Budget Adjustments</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Price increases &amp; special one-time items</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,179,71,.2);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ffb347;flex-shrink:0;margin-top:1px">1</div>
+      <div><strong>Price Increases:</strong> Add supplier increases with date range and %. Only affects Laundry Supplies budget.</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,179,71,.2);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ffb347;flex-shrink:0;margin-top:1px">2</div>
+      <div>A <strong style="color:#ffb347">▲ tag</strong> appears on affected month cards showing the multiplier applied</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,179,71,.2);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ffb347;flex-shrink:0;margin-top:1px">3</div>
+      <div><strong>Special Items:</strong> Flat QAR amounts added to specific months — added on top of Operating Supplies budget</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,179,71,.2);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ffb347;flex-shrink:0;margin-top:1px">4</div>
+      <div>Example: Flat Iron Padding QAR 17,000 in April &amp; October</div></div>
+        <div style="background:rgba(255,179,71,.06);border-left:2px solid rgba(255,179,71,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Ecolab +6% from Jan 2027 → add it here. The system applies 1.060 multiplier to Laundry Supplies for every affected month automatically. The Budget PDF shows all increases in Section 3.
+        </div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(0,212,184,.06);padding:12px 16px;border-bottom:1px solid rgba(0,212,184,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,212,184,.15);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💰</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#00d4b8">Revenue</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Laundry Revenue (FS Doha) + Pearl Valet (FS Pearl)</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">1</div>
+      <div>Enter monthly budget and actual for both revenue lines</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">2</div>
+      <div>Use the <strong>Revenue Budget Projection Tool</strong> (4 steps): Select Years → Set Growth% → Generate → Apply</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">3</div>
+      <div>Export Revenue PDF or Excel from the year dropdown at top</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(0,212,184,.2);border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#00d4b8;flex-shrink:0;margin-top:1px">4</div>
+      <div>Revenue Report shows all 12 months side by side with growth% vs prior year</div></div>
+        <div style="background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Two revenue lines are separate: Laundry Revenue = services at FS Doha (237 rooms). Pearl Valet Revenue = services at FS The Pearl (separate property). Different RPOR rates.
+        </div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(255,107,107,.06);padding:12px 16px;border-bottom:1px solid rgba(255,107,107,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🎯</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#ff6b6b">Dashboard</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Visual overview of the selected year</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,107,107,.2);border:1px solid rgba(255,107,107,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ff6b6b;flex-shrink:0;margin-top:1px">1</div>
+      <div>7 KPI cards: Rooms, Total Actual/Budget, Variance, CPOR, KG, Line Breakdown</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,107,107,.2);border:1px solid rgba(255,107,107,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ff6b6b;flex-shrink:0;margin-top:1px">2</div>
+      <div>5 SVG charts with value labels: Expenses vs Budget, CPOR vs Budget, 3 line charts, KG, Occupancy</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,107,107,.2);border:1px solid rgba(255,107,107,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ff6b6b;flex-shrink:0;margin-top:1px">3</div>
+      <div>Monthly Detail Table: all 12 months × all metrics in one scrollable table</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(255,107,107,.2);border:1px solid rgba(255,107,107,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#ff6b6b;flex-shrink:0;margin-top:1px">4</div>
+      <div>Click <strong>🖨 Print Dashboard</strong> for a PDF-ready document</div></div>
+        <div style="background:rgba(255,107,107,.06);border-left:2px solid rgba(255,107,107,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Use Dashboard when your GM asks "how are we doing this year?" — everything is on one screen with charts and numbers.
+        </div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(167,139,250,.06);padding:12px 16px;border-bottom:1px solid rgba(167,139,250,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📄</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#a78bfa">Budget Report</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">Full P&amp;L format · Actual vs Budget vs Prior Year</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">1</div>
+      <div>Select a year using the pills at top</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">2</div>
+      <div>All 12 months as columns with rows for each expense line</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">3</div>
+      <div>Actual · Budget · Variance · Prior Year side by side for each month</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#a78bfa;flex-shrink:0;margin-top:1px">4</div>
+      <div>Export to Excel (CSV) or Print as PDF — formal Finance submission format</div></div>
+        <div style="background:rgba(167,139,250,.06);border-left:2px solid rgba(167,139,250,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> This is the formal monthly report for Finance. Shows exactly where you are vs budget for every line every month in P&L format.
+        </div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid rgba(245,197,66,.2);border-radius:12px;overflow:hidden">
+      <div style="background:rgba(245,197,66,.06);padding:12px 16px;border-bottom:1px solid rgba(245,197,66,.15);display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🧠</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#f5c542">Smart Insights</div>
+          <div style="font-size:10px;color:#64748b;margin-top:1px">AI-powered budget intelligence &amp; forecasting</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">1</div>
+      <div><strong>Performance Alerts:</strong> over/under budget, missing data, budget season reminder</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">2</div>
+      <div><strong>Full-Year Forecast:</strong> projects how the year will end at current pace with progress bars</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">3</div>
+      <div><strong>Budget Season Assistant:</strong> recommends next year budget with CPOR analysis and direct action buttons</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">4</div>
+      <div><strong>Occupancy-Based Analysis:</strong> flags months where spending was high relative to occupancy</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">5</div>
+      <div><strong>Price Increase Impact:</strong> shows QAR impact of each active supplier increase</div></div><div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:7px">
+      <div style="width:18px;height:18px;border-radius:50%;background:rgba(245,197,66,.2);border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#f5c542;flex-shrink:0;margin-top:1px">6</div>
+      <div><strong>Missing Data Reminders:</strong> lists months with no actuals — button links to Monthly Entry</div></div>
+        <div style="background:rgba(245,197,66,.06);border-left:2px solid rgba(245,197,66,.4);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:#64748b;line-height:1.5;margin-top:4px">
+          💡 <strong style="color:#94a3b8">Tip:</strong> Open this tab at the start of each month after entering actuals. A startup alert banner also shows the most critical items automatically 2 seconds after login.
+        </div>
+      </div>
+    </div>
 
   </div>
 
-  <!-- ══ SECTION 4: FORMULA QUICK REFERENCE ══ -->
   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542;
-    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">
-    4. Complete Formula Quick Reference
-  </div>
-
+    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">4. Complete Formula Quick Reference</div>
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden;margin-bottom:24px">
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
@@ -6980,122 +7005,316 @@ window.addEventListener('beforeunload',saveAll);
           <tr>
             <th style="background:#212d42;padding:9px 14px;text-align:left;font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#00d4b8">Metric</th>
             <th style="background:#212d42;padding:9px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#ffb347">Formula</th>
-            <th style="background:#212d42;padding:9px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#94a3b8">Example</th>
+            <th style="background:#212d42;padding:9px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#94a3b8">Worked Example</th>
             <th style="background:#212d42;padding:9px 14px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#64748b">Used In</th>
           </tr>
         </thead>
-        <tbody>
-          ${[
-            ['CPOR Actual','Total Expenses ÷ Rooms Sold','416,082 ÷ 46,536 = 8.9411','All tabs'],
-            ['CPOR Budget','Prior Year CPOR × (no division)','= 8.9411 (used as is)','Monthly Entry, Projection'],
-            ['Laundry Budget','Prior CPOR × Rooms × Multiplier','8.9411 × 4,137 × 1.06 = QAR 39,224','Monthly Entry'],
-            ['Operating Budget','(Prior CPOR × Rooms) + Special','1.0257 × 4,137 + 0 = QAR 4,243','Monthly Entry'],
-            ['Printing Budget','Prior CPOR × Rooms','0.3988 × 4,137 = QAR 1,650','Monthly Entry'],
-            ['Price Multiplier','1 + (Increase% ÷ 100)','1 + (6÷100) = 1.060','Budget Adjustments'],
-            ['Stacked Multiplier','Mult1 × Mult2 × ...','1.06 × 1.04 = 1.1024','Budget Adjustments'],
-            ['Occupancy%','Rooms Sold ÷ (237 × Days) × 100','4,650 ÷ 7,347 × 100 = 63.3%','All tabs'],
-            ['Cost per KG','Total Expenses ÷ KG Processed','416,082 ÷ 1,925,291 = 0.22','Monthly Entry, Dashboard'],
-            ['KG per Room Night','KG Processed ÷ Rooms Sold','1,925,291 ÷ 46,536 = 41.37','Monthly Entry, Dashboard'],
-            ['Variance (Amount)','Actual − Budget','58,342 − 46,771 = +11,571','All tabs'],
-            ['Variance%','(Actual − Budget) ÷ Budget × 100','(11,571 ÷ 46,771) × 100 = +24.7%','Budget Report'],
-            ['RPOR','Total Revenue ÷ Rooms Sold','283,116 ÷ 10,887 = 26.005','Revenue tab'],
-            ['Projected Revenue','RPOR × (1+Growth%) × Rooms','26.005 × 1.05 × 4,500 = 122,874','Revenue Projection'],
-            ['YTD Forecast CPOR','YTD Expenses ÷ YTD Rooms Sold','200,000 ÷ 22,000 = 9.09','Projection Planner'],
-            ['Full Year Estimate','YTD Actual + (YTD CPOR × Rem. Rooms)','200,000 + (9.09 × 24,000) = 418,160','Smart Insights'],
-          ].map(([metric,formula,example,used],i)=>`
-            <tr style="background:${i%2===0?'transparent':'rgba(255,255,255,.02)'}">
-              <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">${metric}</td>
-              <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">${formula}</td>
-              <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">${example}</td>
-              <td style="padding:8px 14px;font-size:11px;color:#64748b">${used}</td>
-            </tr>`).join('')}
-        </tbody>
+        <tbody><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">CPOR Actual</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Total Expenses ÷ Rooms Sold</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">416,082 ÷ 46,536 = 8.9411</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">All tabs</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">CPOR Budget</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">cporForYear(y) = prior year total ÷ prior year rooms</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">8.9411 used directly</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Monthly Entry, Projection</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Laundry Budget</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Prior CPOR × Rooms × Multiplier</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">8.9411 × 4,137 × 1.06 = QAR 39,224</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Monthly Entry</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Operating Budget</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">(Prior CPOR × Rooms) + Special Items</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">1.0257 × 4,137 + 0 = QAR 4,243</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Monthly Entry</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Printing Budget</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Prior CPOR × Rooms</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">0.3988 × 4,137 = QAR 1,650</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Monthly Entry</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Price Multiplier</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">1 + (Increase% ÷ 100)</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">1 + (6÷100) = 1.060</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Budget Adjustments</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Stacked Multiplier</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Mult1 × Mult2 × ...</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">1.06 × 1.04 = 1.1024</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Budget Adjustments</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Occupancy%</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Rooms Sold ÷ (237 × Days) × 100</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">4,650 ÷ 7,347 × 100 = 63.3%</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">All tabs</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Cost per KG</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Total Expenses ÷ KG Processed</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">416,082 ÷ 1,925,291 = 0.22</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Dashboard</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">KG per Room Night</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">KG Processed ÷ Rooms Sold</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">1,925,291 ÷ 46,536 = 41.37</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Dashboard</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Variance (Amount)</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Actual − Budget</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">58,342 − 46,771 = +11,571</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">All tabs</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Variance%</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">(Actual − Budget) ÷ Budget × 100</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">(11,571 ÷ 46,771) × 100 = +24.7%</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Budget Report</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">RPOR</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">Total Revenue ÷ Rooms Sold</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">283,116 ÷ 10,887 = 26.005</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Revenue tab</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Projected Revenue</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">RPOR × (1+Growth%) × Rooms</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">26.005 × 1.05 × 4,500 = 122,874</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Revenue Projection</td>
+    </tr><tr style="background:transparent">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">YTD Forecast CPOR</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">YTD Expenses ÷ YTD Rooms Sold</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">200,000 ÷ 22,000 = 9.09</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Projection Planner</td>
+    </tr><tr style="background:rgba(255,255,255,.02)">
+      <td style="padding:8px 14px;font-family:'Syne',sans-serif;font-weight:700;color:#e2e8f0">Full Year Estimate</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">YTD Actual + (YTD CPOR × Rem. Rooms)</td>
+      <td style="padding:8px 14px;font-family:'DM Mono',monospace;font-size:11px;color:#00d4b8">200,000 + (9.09 × 24,000) = 418,160</td>
+      <td style="padding:8px 14px;font-size:11px;color:#64748b">Smart Insights</td>
+    </tr></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ══ SECTION 5: COLOUR SYSTEM ══ -->
   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542;
-    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">
-    5. Colour System — What Each Colour Means
-  </div>
-
+    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">5. Colour System — What Each Colour Means</div>
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:16px 20px;margin-bottom:24px">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
-      ${[
-        ['#a78bfa','Violet','Rooms Sold · CPOR · Occupancy %','Used wherever room-night data appears'],
-        ['#38bdf8','Sky Blue','Total KG · Cost per KG · KG/RN','All KG and efficiency metrics'],
-        ['#ffb347','Amber','Laundry Supplies · Budget values','The largest expense line and all budget figures'],
-        ['#a3e635','Lime','Operating Supplies · Special Items','Second expense line and special budget items'],
-        ['#ff6b6b','Coral','Printing & Stationery · Over budget','Third expense line and any over-budget indicators'],
-        ['#00d4b8','Teal','Actuals · Under budget · Revenue','Actual figures and positive performance'],
-        ['#f5c542','Gold','Forecast · Projections · Future years','Any forward-looking calculated values'],
-        ['#94a3b8','Grey','Budget figures (secondary)','Budget comparison columns in tables'],
-      ].map(([col,name,uses,detail])=>`
-        <div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
-          <div style="width:14px;height:14px;border-radius:3px;background:${col};margin-top:2px;flex-shrink:0;box-shadow:0 0 8px ${col}55"></div>
-          <div>
-            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:${col};margin-bottom:3px">${name}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">${uses}</div>
-            <div style="font-size:10px;color:#4a5568;line-height:1.4">${detail}</div>
-          </div>
-        </div>`).join('')}
-    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px"><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#a78bfa;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #a78bfa55"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:3px">Violet</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Rooms Sold · CPOR · Occupancy %</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">Used wherever room-night data appears</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#38bdf8;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #38bdf855"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#38bdf8;margin-bottom:3px">Sky Blue</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Total KG · Cost per KG · KG/RN</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">All KG and efficiency metrics</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#ffb347;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #ffb34755"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#ffb347;margin-bottom:3px">Amber</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Laundry Supplies · Budget values</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">The largest expense line and all budget figures</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#a3e635;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #a3e63555"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#a3e635;margin-bottom:3px">Lime</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Operating Supplies · Special Items</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">Second expense line and special budget items</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#ff6b6b;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #ff6b6b55"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#ff6b6b;margin-bottom:3px">Coral</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Printing &amp; Stationery · Over budget</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">Third expense line and any over-budget indicators</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#00d4b8;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #00d4b855"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#00d4b8;margin-bottom:3px">Teal</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Actuals · Under budget · Revenue</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">Actual figures and positive performance</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#f5c542;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #f5c54255"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#f5c542;margin-bottom:3px">Gold</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Forecast · Projections · Future years</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">Any forward-looking calculated values</div>
+      </div>
+    </div><div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;display:flex;align-items:flex-start;gap:10px">
+      <div style="width:14px;height:14px;border-radius:3px;background:#94a3b8;margin-top:2px;flex-shrink:0;box-shadow:0 0 8px #94a3b855"></div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:3px">Grey</div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">Budget figures (secondary)</div>
+        <div style="font-size:10px;color:#4a5568;line-height:1.4">Budget comparison columns in tables</div>
+      </div>
+    </div></div>
   </div>
 
-  <!-- ══ SECTION 6: FAQ ══ -->
   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542;
-    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">
-    6. Frequently Asked Questions
-  </div>
+    border-left:3px solid #f5c542;padding-left:12px;margin:24px 0 16px">6. Frequently Asked Questions</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px"><div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">1</span>
+          Why does the budget show zero for a future year?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Budget = Prior Year CPOR × Rooms Sold. If rooms sold is zero (not entered), budget is zero. Go to Monthly Entry or Projection Planner and enter rooms sold for that year first.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">2</span>
+          Why is my 2025 CPOR different from the 2024 base CPOR?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Correct — they should be different. 2024 CPOR comes from Assumptions (manually entered base values). 2025 CPOR is calculated from your actual 2025 data in Monthly Entry. As you enter more months, the 2025 CPOR refines itself automatically.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">3</span>
+          How do I plan the budget in August for next year?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Open Smart Insights → Budget Season Assistant. It shows your YTD CPOR, projects the full year, and recommends next year's budget. Then go to Projection Planner → enter next year rooms → Multi-Year → Export Budget PDF.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">4</span>
+          A supplier increased prices — how do I reflect this?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Budget Adjustments → Price Increases → Add the increase with date range and %. Laundry Supplies budget automatically applies the multiplier for all affected months. A ▲ tag appears on those month cards. The Budget PDF also shows the increase in Section 3.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">5</span>
+          Why does occupancy show a lower % when only a few months are entered?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">By design — occupancy only counts months where rooms sold &gt; 0. So 3 months entered = occupancy based on those 3 months only, giving the correct % for the actual period covered, not a misleadingly low full-year %.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">6</span>
+          My data disappeared after opening in a different browser.
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Your data is in Firebase cloud. Make sure you open from the GitHub Pages URL and you are online. The badge should show 🔥 LIVE. If it shows ⚡ OFFLINE, check your internet. Data is never in a single browser.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">7</span>
+          What is the difference between Laundry Revenue and Pearl Valet Revenue?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Laundry Revenue = revenue from laundry services at Four Seasons Hotel Doha (237 rooms). Pearl Valet Revenue = revenue from valet and laundry services at Four Seasons The Pearl (separate property). Both have different RPOR rates.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">8</span>
+          How do I update the system when there is a new version from Claude?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Download the new HTML file from Claude → Go to github.com/redasalah1980-pixel/rs-budgetpro → Click the HTML file → Click pencil icon → Upload new file. Your data is in Firebase — it loads automatically after the update.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">9</span>
+          The card does not update while I am typing — is that a bug?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">No — by design. Card visuals refresh when you leave the field (Tab or click away), not on every keystroke. This prevents the cursor jumping mid-number. Your value is saved to memory instantly as you type.</div>
+      </div>
+    </div>
+<div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
+      <div onclick="var b=this.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';this.querySelector('.fa').textContent=b.style.display==='block'?'▲':'▼'"
+        style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;user-select:none"
+        onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <span style="display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">
+          <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
+            display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">10</span>
+          Can I use this system on my phone or tablet?
+        </span>
+        <span class="fa" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
+      </div>
+      <div style="display:none;padding:0 16px 13px 48px;border-top:1px solid #2a3550">
+        <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7">Yes — open the GitHub Pages URL on any browser including mobile Safari and Chrome. All features work on mobile including Save, Firebase sync, and exports. Landscape mode recommended on phones for the wide tables.</div>
+      </div>
+    </div></div>
 
-  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
-    ${[
-      ['Why does the budget show zero for a future year?',
-       'Budget = Prior Year CPOR × Rooms Sold. If rooms sold is zero (not entered), budget is zero. Go to Monthly Entry or Projection Planner and enter rooms sold for that year first.'],
-      ['Why is my 2025 CPOR different from my 2024 base CPOR?',
-       'Correct — they should be different. 2024 CPOR comes from Assumptions (your manually entered base values). 2025 CPOR is calculated from your actual 2025 data entered in Monthly Entry. As you enter more months, the 2025 CPOR refines itself.'],
-      ['How do I plan the budget in August for next year?',
-       'Open Smart Insights → Budget Season Assistant. It shows your YTD CPOR, projects the full year, and recommends next year's budget. Then go to Projection Planner → enter next year rooms → go to Multi-Year → Export Budget PDF.'],
-      ['A supplier increased prices. How do I reflect this in the budget?',
-       'Go to Budget Adjustments → Price Increases → Add the increase with exact date range and percentage. The Laundry Supplies budget automatically applies the multiplier for all affected months. A ▲ tag appears on those month cards. The Budget PDF also shows the increase in Section 3.'],
-      ['Why does occupancy show a low % when I only entered 3 months?',
-       'Fixed in the current version — occupancy now only counts months where rooms sold > 0. So 3 months entered = occupancy based on those 3 months only, giving the correct % for that period.'],
-      ['My data disappeared after opening in a different browser.',
-       'Your data is in Firebase cloud, not the browser. Make sure you are opening from the GitHub Pages URL (https://redasalah1980-pixel.github.io/...) and you are connected to the internet. The badge should show 🔥 LIVE. If it shows ⚡ OFFLINE, check your internet connection.'],
-      ['What's the difference between Laundry Revenue and Pearl Valet Revenue?',
-       'Laundry Revenue = revenue earned from laundry services at Four Seasons Hotel Doha (the main 237-room property). Pearl Valet Revenue = revenue from valet/laundry services at Four Seasons The Pearl (separate property). Both are tracked separately because they have different RPOR rates.'],
-      ['How do I update the system when there's a new version?',
-       'Download the new HTML file from Claude → Go to github.com/redasalah1980-pixel/rs-budgetpro → Click the HTML file → Click the pencil icon to edit → Upload the new file. Your data is safe in Firebase — it loads automatically after the update.'],
-      ['The card does not update while I'm typing — is that a bug?',
-       'No — by design. The card visuals refresh when you leave the field (Tab or click away), not on every keystroke. This prevents the cursor jumping. Your value is saved to memory instantly as you type — you'll see it update when you move to the next field.'],
-      ['Can I use this system on my phone?',
-       'Yes — open the GitHub Pages URL on any browser including mobile. The system is responsive. For best experience use landscape mode on phones. All features including Save, Firebase sync, and exports work on mobile.'],
-    ].map(([q,a],i)=>`
-      <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;overflow:hidden">
-        <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block';this.querySelector('.faq-arrow').textContent=this.nextElementSibling.style.display==='block'?'▲':'▼'"
-          style="padding:13px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;
-            font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0;user-select:none"
-          onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
-          <span style="display:flex;align-items:center;gap:10px">
-            <span style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,66,.15);border:1px solid rgba(245,197,66,.3);
-              display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5c542;flex-shrink:0">${i+1}</span>
-            ${q}
-          </span>
-          <span class="faq-arrow" style="color:#64748b;font-size:11px;flex-shrink:0">▼</span>
-        </div>
-        <div style="display:none;padding:0 16px 13px 16px;border-top:1px solid #2a3550">
-          <div style="padding-top:12px;font-size:12px;color:#94a3b8;line-height:1.7;padding-left:32px">${a}</div>
-        </div>
-      </div>`).join('')}
-  </div>
-
-  <!-- ══ FOOTER ══ -->
+  <!-- FOOTER -->
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:16px 20px;text-align:center">
     <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px">RS BudgetPro V3.0</div>
     <div style="font-size:11px;color:#64748b;margin-bottom:6px">Four Seasons Hotel Doha · Laundry Department · 2024–2035</div>
     <div style="font-size:11px;color:#4a5568">Built and maintained by <strong style="color:#94a3b8">Reda Salah</strong> · Laundry Manager</div>
-    <div style="margin-top:10px;font-size:10px;color:#374151">Firebase: rs-budgetpro · Singapore · GitHub: redasalah1980-pixel/rs-budgetpro</div>
+    <div style="margin-top:10px;font-size:10px;color:#374151">Firebase: rs-budgetpro · Singapore (asia-southeast1) · GitHub: redasalah1980-pixel/rs-budgetpro</div>
   </div>
 
 </div>
