@@ -9228,6 +9228,7 @@ function rsModal({icon='❓', iconBg='rgba(245,197,66,.15)', iconBorder='rgba(24
     }
 
     const overlay = document.getElementById('rs-modal-overlay');
+    overlay.style.display = 'flex';
     overlay.classList.add('active');
     // Close on overlay click
     overlay.onclick = e => { if(e.target===overlay) rsModalClose(false); };
@@ -9237,7 +9238,9 @@ function rsModal({icon='❓', iconBg='rgba(245,197,66,.15)', iconBorder='rgba(24
 }
 
 function rsModalClose(result){
-  document.getElementById('rs-modal-overlay').classList.remove('active');
+  const overlay = document.getElementById('rs-modal-overlay');
+  overlay.style.display = 'none';
+  overlay.classList.remove('active');
   document.onkeydown = null;
   if(_modalResolve){ _modalResolve(result); _modalResolve=null; }
 }
