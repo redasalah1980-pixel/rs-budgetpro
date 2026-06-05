@@ -2827,6 +2827,8 @@ function buildYearStrip(){
   }
   const totA=la+op+pr,totB=lb+ob+pb,occ=avail?rs/avail*100:0;
   const cporA=rs&&totA?totA/rs:0,cporB=rs&&totB?totB/rs:0,vr=totA-totB;
+  const _ysEl=document.getElementById('ys-strip');
+  if(_ysEl) _ysEl.style.display='block';
   document.getElementById('ys-strip').innerHTML=`
     <div class="ys">
       <div class="ys-title">${activeY} — Year Summary</div>
