@@ -5231,8 +5231,9 @@ async function signOut(){
     document.getElementById('login-pass').value='';
     document.getElementById('login-error').style.display='none';
     document.getElementById('caps-warning').style.display='none';
-    document.getElementById('login-btn').textContent='Enter the System →';
-    document.getElementById('login-btn').style.background='linear-gradient(135deg,#c9a84c,#f5c542,#c9a84c)';
+    document.getElementById('login-btn').innerHTML='𓂀 &nbsp; Enter the Kingdom &nbsp; 𓂀';
+    document.getElementById('login-btn').style.background='linear-gradient(135deg,#7a4400,#c9a84c,#f5c542,#c9a84c,#7a4400)';
+    document.getElementById('login-btn').style.backgroundSize='250% auto';
     document.getElementById('login-btn').style.color='#0d0118';
     setTimeout(()=>ls.style.opacity='1',10);
   }
@@ -7859,6 +7860,10 @@ async function clearProjYear(){
   const ok = await modalClearYear(y);
   if(!ok) return;
   delete PROJ[y];
+  // Table uses data-py; forecast panel uses data-fy — clear both
+  document.querySelectorAll(`[data-py="${y}"]`).forEach(el=>{
+    el.value=''; el.classList.remove('filled'); el.style.color='var(--text1)';
+  });
   document.querySelectorAll(`[data-fy="${y}"]`).forEach(el=>{
     el.value=''; el.classList.remove('filled');
   });
@@ -7886,8 +7891,11 @@ async function clearProjMonth(){
     if(Object.keys(PROJ[y]||{}).length===0) delete PROJ[y];
   }
   // Clear the input field visually
-  const inp = document.querySelector(`[data-fy="${y}"][data-fm="${m}"]`);
-  if(inp){ inp.value=''; inp.classList.remove('filled'); }
+  // Table uses data-py/data-pm; forecast panel uses data-fy/data-fm
+  const inp = document.querySelector(`[data-py="${y}"][data-pm="${m}"]`);
+  if(inp){ inp.value=''; inp.classList.remove('filled'); inp.style.color='var(--text1)'; }
+  const inp2 = document.querySelector(`[data-fy="${y}"][data-fm="${m}"]`);
+  if(inp2){ inp2.value=''; inp2.classList.remove('filled'); }
   selY.value=''; selM.value='';
   saveAll();
   buildProject();
