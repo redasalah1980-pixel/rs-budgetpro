@@ -1128,8 +1128,18 @@ function doLogin(){
     <div class="brand-text"><h1>RS BudgetPro</h1><p>Four Seasons Hotel Doha · Laundry · 2024–2035</p></div>
   </div>
   <div class="hdr-r">
-    <button class="pill pill-teal" onclick="saveAll()">💾 Save</button>
-    <button class="pill pill-sky"  onclick="exportCSV()">⬇ CSV</button>
+    <button class="pill pill-teal" onclick="saveAll();toast('✓ Saved to cloud')" title="Save all data to browser + Firebase cloud"
+      style="display:flex;align-items:center;gap:5px">
+      <span style="font-size:13px">☁️</span>
+      <span style="font-size:11px">💾</span>
+      <span>Save</span>
+    </button>
+    <button class="pill pill-sky" onclick="exportCSV()" title="Export full master data report — all years, all metrics"
+      style="display:flex;align-items:center;gap:5px">
+      <span style="font-size:13px">📊</span>
+      <span style="font-size:11px">✨</span>
+      <span>Full Export</span>
+    </button>
     <span style="font-family:var(--ff-m);font-size:11px;color:var(--text3)">V3.0</span>
     <div id="fb-conn" onclick="toggleFbPopup()" style="display:flex;align-items:center;gap:6px;padding:4px 10px;
       border-radius:20px;border:1px solid rgba(0,212,184,.3);background:rgba(0,212,184,.06);
@@ -3003,23 +3013,261 @@ function printDashboard(){
 
 /* ── EXPORT ── */
 function exportCSV(){
-  let csv='Year,Month,Rooms Sold,Occ%,KG,Laundry Actual,Laundry Budget,Ops Actual,Ops Budget,Print Actual,Print Budget,Total Actual,Total Budget,Variance,CPOR Actual,CPOR Budget,Cost/KG,KG/RN\n';
+  const now = new Date();
+  const nowStr = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const dateFile = now.toISOString().slice(0,10);
+
+  // ── Build a beautifully structured HTML report that prints like Excel ──
+  const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MF2=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Gather all data
+  const allRows=[];
   YEARS.forEach(y=>{
     for(let m=0;m<12;m++){
       const r=DATA[y]?.[m]||{};
-      const rs=r.roomsSold||PROJ[y]?.[m]?.roomsSold||0;
+      const rs=r.roomsSold||0;
       const av=maxRN(y,m);
-      const occ=av?rs/av*100:0;
+      const occ=av&&rs?rs/av*100:0;
       const b=bud(y,m,rs);
       const la=r.laA||0,op=r.opA||0,pr=r.prA||0,kg=r.kg||0;
       const totA=la+op+pr,totB=b.tot;
-      csv+=`${y},${MS[m]},${rs},${occ.toFixed(2)},${kg},${la.toFixed(2)},${b.la.toFixed(2)},${op.toFixed(2)},${b.op.toFixed(2)},${pr.toFixed(2)},${b.pr.toFixed(2)},${totA.toFixed(2)},${totB.toFixed(2)},${(totA-totB).toFixed(2)},${rs&&totA?(totA/rs).toFixed(4):0},${rs&&totB?(totB/rs).toFixed(4):0},${kg&&totA?(totA/kg).toFixed(2):0},${rs&&kg?(kg/rs).toFixed(2):0}\n`;
+      const vr=totA-totB;
+      const cporA=rs&&totA?totA/rs:0;
+      const cporB=rs&&totB?totB/rs:0;
+      const costKg=kg&&totA?totA/kg:0;
+      const kgRn=rs&&kg?kg/rs:0;
+      if(rs>0||totA>0||totB>0) allRows.push({y,m,rs,occ,kg,la,op,pr,totA,
+        laB:b.la,opB:b.op,prB:b.pr,totB,vr,cporA,cporB,costKg,kgRn});
     }
   });
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=`RS_BudgetPro_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+
+  // Year summaries
+  const yearSums={};
+  YEARS.forEach(y=>{
+    let rs=0,kg=0,la=0,op=0,pr=0,laB=0,opB=0,prB=0,avail=0;
+    for(let m=0;m<12;m++){
+      const r=DATA[y]?.[m]||{};
+      const rooms=r.roomsSold||0;
+      const b=bud(y,m,rooms);
+      rs+=rooms; kg+=(r.kg||0);
+      la+=(r.laA||0); op+=(r.opA||0); pr+=(r.prA||0);
+      laB+=b.la; opB+=b.op; prB+=b.pr;
+      if(rooms>0) avail+=maxRN(y,m);
+    }
+    const totA=la+op+pr,totB=laB+opB+prB;
+    if(rs>0||totA>0) yearSums[y]={rs,kg,la,op,pr,totA,laB,opB,prB,totB,
+      occ:avail?rs/avail*100:0,
+      cporA:rs&&totA?totA/rs:0,
+      cporB:rs&&totB?totB/rs:0,
+      vr:totA-totB};
+  });
+
+  const q=(v,d=2)=>v?v.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+  const pct=v=>v?v.toFixed(1)+'%':'—';
+  const vc=v=>v===0?'#64748b':v>0?'#dc2626':'#16a34a';
+
+  // Build monthly rows grouped by year
+  let yearBlocks='';
+  YEARS.forEach(y=>{
+    const rows=allRows.filter(r=>r.y===y);
+    if(!rows.length) return;
+    const s=yearSums[y]||{};
+
+    const monthRows=rows.map((r,i)=>{
+      const bg=i%2===0?'#ffffff':'#f8fafc';
+      const vrCol=vc(r.vr);
+      return`<tr style="background:${bg}">
+        <td style="padding:5px 10px;color:#475569;font-size:11px">${MF2[r.m]}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#7c3aed;font-size:11px">${r.rs?r.rs.toLocaleString():'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;font-size:11px;color:${r.occ>60?'#16a34a':r.occ>40?'#d97706':'#dc2626'}">${pct(r.occ)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#0369a1;font-size:11px">${q(r.la)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(r.laB)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#16a34a;font-size:11px">${q(r.op)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(r.opB)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#dc2626;font-size:11px">${q(r.pr)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(r.prB)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#0f172a;font-size:11px">${q(r.totA)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(r.totB)}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:600;color:${vrCol};font-size:11px">${r.totB?(r.vr>0?'+':'')+q(r.vr):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#7c3aed;font-size:10px">${r.cporA?r.cporA.toFixed(4):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#0369a1;font-size:10px">${r.kg?r.kg.toLocaleString():'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${r.costKg?r.costKg.toFixed(2):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${r.kgRn?r.kgRn.toFixed(2):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    // Year total row
+    const vrCol=vc(s.vr||0);
+    yearBlocks+=`
+      <!-- Year ${y} -->
+      <tr>
+        <td colspan="16" style="padding:0">
+          <div style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);padding:8px 14px;
+            display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-family:'Segoe UI',Arial,sans-serif;font-size:15px;font-weight:800;color:#f5c542">${y}</span>
+              <span style="font-size:10px;color:rgba(255,255,255,.5);font-style:italic">Four Seasons Hotel Doha · Laundry Department</span>
+            </div>
+            <div style="display:flex;gap:16px">
+              <span style="font-size:10px;color:rgba(255,255,255,.6)">Rooms: <strong style="color:#a78bfa">${(s.rs||0).toLocaleString()}</strong></span>
+              <span style="font-size:10px;color:rgba(255,255,255,.6)">Occ: <strong style="color:#a78bfa">${pct(s.occ)}</strong></span>
+              <span style="font-size:10px;color:rgba(255,255,255,.6)">Total Actual: <strong style="color:#00d4b8">QAR ${q(s.totA)}</strong></span>
+              <span style="font-size:10px;color:rgba(255,255,255,.6)">CPOR: <strong style="color:#a78bfa">${s.cporA?s.cporA.toFixed(4):'—'}</strong></span>
+              <span style="font-size:10px;color:rgba(255,255,255,.6)">Variance: <strong style="color:${vrCol}">${s.totB&&s.vr!==undefined?(s.vr>0?'+':'')+q(s.vr):'—'}</strong></span>
+            </div>
+          </div>
+        </td>
+      </tr>
+      ${monthRows}
+      <tr style="background:#e2e8f0;border-top:2px solid #1e3a5f">
+        <td style="padding:6px 10px;font-weight:700;color:#1e293b;font-size:11px">YEAR TOTAL</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#7c3aed;font-size:11px">${(s.rs||0).toLocaleString()}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-size:11px;color:${(s.occ||0)>60?'#16a34a':(s.occ||0)>40?'#d97706':'#dc2626'}">${pct(s.occ)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#0369a1;font-size:11px">${q(s.la)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(s.laB)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#16a34a;font-size:11px">${q(s.op)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(s.opB)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#dc2626;font-size:11px">${q(s.pr)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(s.prB)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:800;color:#0f172a;font-size:12px">${q(s.totA)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${q(s.totB)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:${vrCol};font-size:11px">${s.totB&&s.vr!==undefined?(s.vr>0?'+':'')+q(s.vr):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#7c3aed;font-size:10px">${s.cporA?s.cporA.toFixed(4):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;font-weight:700;color:#0369a1;font-size:10px">${(s.kg||0).toLocaleString()}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${s.totA&&s.kg?((s.totA/s.kg)).toFixed(2):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'Courier New',monospace;color:#64748b;font-size:10px">${s.rs&&s.kg?(s.kg/s.rs).toFixed(2):'—'}</td>
+      </tr>
+      <tr><td colspan="16" style="padding:4px 0"></td></tr>`;
+  });
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Full Data Export — Four Seasons Hotel Doha Laundry ${dateFile}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A3 landscape;margin:8mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1e293b;background:#f8fafc}
+    .hdr{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e1b4b 100%);
+      color:#fff;padding:18px 24px;margin-bottom:14px;border-radius:0 0 8px 8px;
+      display:flex;justify-content:space-between;align-items:center}
+    .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:0 0 14px 0}
+    .kpi{background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px}
+    .kpi-l{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:3px}
+    .kpi-v{font-size:14px;font-weight:700}
+    .kpi-s{font-size:9px;color:#94a3b8;margin-top:2px}
+    .section{background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:14px}
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th{padding:7px 10px;text-align:right;font-size:9px;font-weight:700;
+      letter-spacing:.3px;text-transform:uppercase;white-space:nowrap;color:#fff}
+    .tbl th:first-child{text-align:left}
+    .col-la{background:#1e40af}
+    .col-op{background:#166534}
+    .col-pr{background:#991b1b}
+    .col-tot{background:#1e293b}
+    .col-meta{background:#374151}
+    .legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 14px;background:#f1f5f9;
+      border-top:1px solid #e2e8f0;font-size:9px}
+    .leg{display:flex;align-items:center;gap:4px;color:#475569}
+    .leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+    .footer{padding:10px 14px;font-size:9px;color:#94a3b8;text-align:center;
+      border-top:1px solid #e2e8f0;background:#fff;margin-top:14px;border-radius:8px}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}}
+  <\/style><\/head><body>
+
+  <div class="hdr">
+    <div>
+      <div style="font-size:9px;color:rgba(255,255,255,.5);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">
+        Four Seasons Hotel Doha — Laundry Department
+      </div>
+      <div style="font-size:20px;font-weight:800;color:#f5c542;margin-bottom:4px">
+        Master Data Export — All Years 2024–2035
+      </div>
+      <div style="font-size:9px;color:rgba(255,255,255,.5)">
+        Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${nowStr} &nbsp;|&nbsp; RS BudgetPro V3.0
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:rgba(255,255,255,.4)">Total records: ${allRows.length} months</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.4)">Years with data: ${Object.keys(yearSums).join(', ')}</div>
+      <div style="font-size:20px;font-weight:800;color:#f5c542;margin-top:4px">CONFIDENTIAL</div>
+    </div>
+  </div>
+
+  <!-- Grand Summary KPIs -->
+  <div class="kpi-grid">
+    ${(()=>{
+      let totRs=0,totKg=0,totA=0,totB=0,totVr=0,years=0;
+      Object.values(yearSums).forEach(s=>{totRs+=s.rs||0;totKg+=s.kg||0;totA+=s.totA||0;totB+=s.totB||0;years++;});
+      totVr=totA-totB;
+      return`
+      <div class="kpi"><div class="kpi-l">Total Rooms (All Years)</div>
+        <div class="kpi-v" style="color:#7c3aed">${totRs.toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-l">Total KG Processed</div>
+        <div class="kpi-v" style="color:#0369a1">${totKg.toLocaleString()}</div></div>
+      <div class="kpi"><div class="kpi-l">Total Actual Expenses</div>
+        <div class="kpi-v" style="color:#0f172a">QAR ${q(totA)}</div></div>
+      <div class="kpi"><div class="kpi-l">Total Budget</div>
+        <div class="kpi-v" style="color:#d97706">QAR ${q(totB)}</div></div>
+      <div class="kpi"><div class="kpi-l">Total Variance</div>
+        <div class="kpi-v" style="color:${vc(totVr)}">${totVr>0?'+':''}QAR ${q(Math.abs(totVr))}</div>
+        <div class="kpi-s">${totVr>0?'Over budget':'Under budget'}</div></div>
+      <div class="kpi"><div class="kpi-l">Years Covered</div>
+        <div class="kpi-v" style="color:#1e3a5f">${years} Year${years>1?'s':''}</div>
+        <div class="kpi-s">2024–2035</div></div>`;
+    })()}
+  </div>
+
+  <!-- Main Data Table -->
+  <div class="section">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="background:#1e293b;text-align:left;padding:8px 10px">Month</th>
+          <th style="background:#374151">Rooms</th>
+          <th style="background:#374151">Occ%</th>
+          <th class="col-la">Laundry Act</th>
+          <th class="col-la" style="opacity:.75">Bud</th>
+          <th class="col-op">Operating Act</th>
+          <th class="col-op" style="opacity:.75">Bud</th>
+          <th class="col-pr">Printing Act</th>
+          <th class="col-pr" style="opacity:.75">Bud</th>
+          <th class="col-tot">Total Actual</th>
+          <th class="col-tot" style="opacity:.75">Budget</th>
+          <th class="col-tot">Variance</th>
+          <th style="background:#4c1d95">CPOR</th>
+          <th style="background:#0369a1">KG</th>
+          <th style="background:#374151">Cost/KG</th>
+          <th style="background:#374151">KG/RN</th>
+        </tr>
+      </thead>
+      <tbody>${yearBlocks}</tbody>
+    </table>
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:#1e40af"></div>Laundry Supplies</div>
+      <div class="leg"><div class="leg-dot" style="background:#166534"></div>Operating Supplies</div>
+      <div class="leg"><div class="leg-dot" style="background:#991b1b"></div>Printing &amp; Stationery</div>
+      <div class="leg"><div class="leg-dot" style="background:#16a34a"></div>Under budget (good)</div>
+      <div class="leg"><div class="leg-dot" style="background:#dc2626"></div>Over budget</div>
+      <div class="leg"><div class="leg-dot" style="background:#7c3aed"></div>CPOR / Rooms</div>
+      <div style="margin-left:auto;color:#94a3b8;font-style:italic">Act = Actual · Bud = Budget · Occ = Occupancy · CPOR = Cost per Occupied Room · KG/RN = KG per Room Night</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Four Seasons Hotel Doha · Laundry Department · Master Data Export · CONFIDENTIAL &nbsp;|&nbsp;
+    RS BudgetPro V3.0 · Prepared by Reda Salah, Laundry Manager · ${nowStr}
+  </div>
+
+  <\/body><\/html>`;
+
+  const win=window.open('','_blank','width=1400,height=900');
+  if(!win){toast('⚠ Allow popups to view the export'); return;}
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>{ setTimeout(()=>win.print(),700); };
+  toast('Full Export ready — Print or Save as PDF ✓');
 }
+
 
 /* ── UTILS ── */
 function fN(n){if(!n&&n!==0)return'—';return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -4952,13 +5200,19 @@ function toggleArabic(){
 }
 
 function buildNavTabs(){
-  // Rebuild nav tabs with original English text (called on toggle back)
+  // Rebuild nav tabs with correct current English names
   const tabs=[
-    ['entry','📋 Monthly Entry'],['project','🔮 Projection Planner'],
-    ['overview','📊 Multi-Year'],['increases','⚙ Budget Adjustments'],
-    ['settings','⚙️ Assumptions'],['revenue','💰 Revenue'],
-    ['dashboard','🎯 Dashboard'],['report','📄 Budget Report'],
-    ['trends','📉 CPOR Trends'],['backup','🗄 Backup & Restore'],
+    ['entry','📋 Monthly Entry'],
+    ['project','🔮 Projection Planner'],
+    ['overview','📊 Multi-Year Overview'],
+    ['increases','⚙ Budget Adjustments'],
+    ['settings','⚙️ Settings & Base Data'],
+    ['revenue','💰 Revenue'],
+    ['dashboard','🎯 Dashboard'],
+    ['report','📄 Budget Report'],
+    ['trends','📈 Trends & Efficiency'],
+    ['smart','🧠 Smart Insights'],
+    ['backup','🗄 Backup & Restore'],
     ['guide','📖 User Guide']
   ];
   const nav=document.querySelector('.nav');
