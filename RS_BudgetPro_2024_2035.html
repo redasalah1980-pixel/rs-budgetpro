@@ -833,10 +833,7 @@ select option{background:var(--bg4)}
     <div style="position:absolute;bottom:112px;left:calc(50% - 186px);font-size:26px;z-index:10;animation:flicker 1.5s ease-in-out infinite;filter:drop-shadow(0 0 8px rgba(255,120,0,.9))">🔥</div>
     <div style="position:absolute;bottom:112px;left:calc(50% + 158px);font-size:26px;z-index:10;animation:flicker 1.9s ease-in-out infinite .4s;filter:drop-shadow(0 0 8px rgba(255,120,0,.9))">🔥</div>
 
-    <!-- Scarab flying -->
-    <div id="scarab" style="position:absolute;top:220px;left:-50px;font-size:30px;z-index:10;
-      animation:flyAcross 14s ease-in-out infinite 4s;opacity:.75;
-      filter:drop-shadow(0 0 10px rgba(201,168,76,.7))">𓆣</div>
+
 
     <!-- Sand particles -->
     <div id="sand-particles" style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:4"></div>
@@ -987,61 +984,7 @@ select option{background:var(--bg4)}
 
 <style>
 @keyframes rotateSlow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-@keyframes flyAcross{0%{left:-50px;top:200px;opacity:0}5%{opacity:.75}50%{top:240px}95%{opacity:.75}100%{left:100vw;top:180px;opacity:0}}
-@keyframes flicker{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.18) translateY(-3px);opacity:1}}
-@keyframes pulse{0%,100%{opacity:.8}50%{opacity:1}}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-@keyframes shimmerBtn{0%{background-position:0% center}100%{background-position:250% center}}
-@keyframes sandDrift{0%{transform:translateX(0) translateY(0);opacity:0}10%{opacity:.5}90%{opacity:.2}100%{transform:translateX(100px) translateY(15px);opacity:0}}
 
-/* ── Revenue Projection Steps ── */
-.rp-step{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:80px}
-.rp-step-num{width:28px;height:28px;border-radius:50%;background:#2a3550;color:#64748b;
-  display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;
-  font-size:12px;font-weight:800;transition:all .3s;border:2px solid #2a3550}
-.rp-step-txt{font-size:9px;font-weight:700;color:#4a5568;letter-spacing:.5px;text-transform:uppercase;
-  text-align:center;white-space:nowrap;transition:all .3s}
-.rp-step.active .rp-step-num{background:#f5c542;color:#0f172a;border-color:#f5c542;
-  box-shadow:0 0 12px rgba(245,197,66,.4)}
-.rp-step.active .rp-step-txt{color:#f5c542}
-.rp-step.done .rp-step-num{background:#00d4b8;color:#0f172a;border-color:#00d4b8}
-.rp-step.done .rp-step-txt{color:#00d4b8}
-.rp-step-line{flex:1;height:2px;background:#2a3550;min-width:30px;margin-bottom:13px}
-
-
-/* ── Smart Insights ── */
-.si-section{background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden;margin-bottom:16px}
-.si-hdr{padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px}
-.si-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.si-body{padding:16px 18px}
-.si-alert{border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:10px;font-size:12px;line-height:1.6}
-.si-alert .si-ai{font-size:18px;flex-shrink:0;margin-top:1px}
-.si-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(42,53,80,.4);font-size:12px}
-.si-row:last-child{border:none}
-.si-metric{background:#0f1a2e;border-radius:8px;padding:12px 14px;margin-bottom:8px}
-.si-grid-4{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:12px}
-.si-card{background:#0f1a2e;border-radius:8px;padding:12px 14px;border-left:3px solid}
-.si-progress{height:6px;border-radius:3px;background:#2a3550;margin-top:6px;overflow:hidden}
-.si-progress-bar{height:100%;border-radius:3px;transition:width .6s ease}
-/* Alert banner on page load */
-#smart-alert-banner{display:none;position:fixed;top:54px;left:0;right:0;z-index:100;
-  background:linear-gradient(135deg,#1a0a2e,#0a1a2e);border-bottom:1px solid rgba(255,179,71,.3);
-  padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-
-
-/* ── Month Lock ── */
-.mc-locked{border-color:rgba(245,197,66,.25)!important}
-.mc-locked .mc-hdr{background:rgba(245,197,66,.04)}
-.mc-locked input[disabled]{opacity:.4!important;cursor:not-allowed!important;background:rgba(42,53,80,.5)!important}
-.mc-locked::after{content:'🔒';position:absolute;top:6px;right:8px;font-size:16px;opacity:.3;pointer-events:none}
-
-
-/* ── Custom Modal System ── */
-#rs-modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
-  z-index:9999;display:none;align-items:center;justify-content:center;
-  animation:modalFadeIn .2s ease;
-}
 #rs-modal-overlay.active{display:flex}
 @keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
 #rs-modal-box{
@@ -7532,7 +7475,7 @@ function buildSmartTab(){
         box-shadow:0 0 8px rgba(${rgb},.5);transition:width .5s ease"></div>
     </div>`;
 
-  const jumpBtn=(label,tab)=>`<button onclick="navToEntry(${m})""
+  const jumpBtn=(label,tab)=>`<button onclick="navToTab('${tab}')"
     style="padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;
     cursor:pointer;border:1px solid rgba(0,212,184,.4);color:#00d4b8;background:rgba(0,212,184,.1)"
     onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">
@@ -7789,7 +7732,7 @@ function buildSmartTab(){
     ${secHdr('📈','Price Increase Impact','#ffb347','255,179,71','How supplier increases affect your budget')}
     ${activeIncs.length===0?`<div style="background:rgba(100,116,139,.06);border:1px solid rgba(100,116,139,.2);border-radius:8px;padding:12px 14px;font-size:11px;color:#64748b">
       No price increases configured for ${smartY}. Go to Budget Adjustments to add supplier increases.
-      <button onclick="navToEntry(${m})""
+      <button onclick="navToTab('increases')"
         style="margin-left:10px;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
           border:1px solid rgba(255,179,71,.4);color:#ffb347;background:rgba(255,179,71,.1)">→ Budget Adjustments</button>
     </div>`:activeIncs.map(inc=>{
@@ -7826,7 +7769,7 @@ function buildSmartTab(){
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${missingMonths.map(m=>`<button
-          onclick="navToEntry(${m})""
+          onclick="navToEntry(${m})"
           style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
             border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1)"
           onmouseover="this.style.background='rgba(245,197,66,.2)'"
