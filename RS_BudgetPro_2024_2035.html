@@ -1035,6 +1035,24 @@ select option{background:var(--bg4)}
 .mc-locked input[disabled]{opacity:.4!important;cursor:not-allowed!important;background:rgba(42,53,80,.5)!important}
 .mc-locked::after{content:'🔒';position:absolute;top:6px;right:8px;font-size:16px;opacity:.3;pointer-events:none}
 
+
+/* ── Custom Modal System ── */
+#rs-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  z-index:9999;display:none;align-items:center;justify-content:center;
+  animation:modalFadeIn .2s ease;
+}
+#rs-modal-overlay.active{display:flex}
+@keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
+#rs-modal-box{
+  background:linear-gradient(135deg,#0f1a2e,#1a2236);
+  border:1px solid rgba(245,197,66,.3);border-radius:16px;
+  padding:0;max-width:420px;width:calc(100% - 40px);
+  box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 40px rgba(245,197,66,.08);
+  animation:modalSlideIn .25s ease;overflow:hidden;
+}
+@keyframes modalSlideIn{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+
 </style>
 
 <script>
@@ -1196,6 +1214,26 @@ function doLogin(){
   <div class="ntab" onclick="goTab(this,'backup')">🗄 Backup & Restore</div>
   <div class="ntab" onclick="goTab(this,'guide')">📖 User Guide</div>
 </nav>
+
+<!-- ══ CUSTOM MODAL ══ -->
+<div id="rs-modal-overlay">
+  <div id="rs-modal-box">
+    <!-- Header -->
+    <div id="rs-modal-header" style="padding:20px 24px 16px;border-bottom:1px solid rgba(245,197,66,.15)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="rs-modal-icon" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0"></div>
+        <div>
+          <div id="rs-modal-title" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#e2e8f0"></div>
+          <div id="rs-modal-sub" style="font-size:11px;color:#64748b;margin-top:2px"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Body -->
+    <div id="rs-modal-body" style="padding:16px 24px;font-size:12px;color:#94a3b8;line-height:1.7"></div>
+    <!-- Buttons -->
+    <div id="rs-modal-btns" style="padding:0 24px 20px;display:flex;gap:10px;justify-content:flex-end"></div>
+  </div>
+</div>
 
 <div class="main">
 
@@ -2794,7 +2832,7 @@ function hCard(el,y,m){
   markUnsaved();
   autoSave();
 }
-function hCardBlur(el,y,m){
+async function hCardBlur(el,y,m){
   // If rooms field — check for forecast confirmation
   if(el.dataset.f==='roomsSold'){
     const v = parseFloat(el.value)||0;
@@ -2808,13 +2846,7 @@ function hCardBlur(el,y,m){
                 'July','August','September','October','November','December'];
       const diff = v - projRs;
       const sign = diff>0?'+':'';
-      const confirmed = confirm(
-        `Confirm actual rooms for ${MF[m]} ${y}?\n\n` +
-        `Actual entered:  ${v.toLocaleString()} rooms\n` +
-        `Forecast was:    ${projRs.toLocaleString()} rooms\n` +
-        `Variance:        ${sign}${diff.toLocaleString()} rooms\n\n` +
-        `Click OK to confirm. Forecast archived as reference.`
-      );
+      const confirmed = await modalConfirmActual(y, m, v, projRs);
       if(!confirmed){
         // Revert the input
         el.value = '';
@@ -5221,23 +5253,23 @@ function exportRevProjPDF(){
 
 
 
-function signOut(){
-  if(confirm('Sign out of RS BudgetPro?')){
-    saveAll();
-    auth.signOut().catch(()=>{});
-    const ls = document.getElementById('login-screen');
-    if(ls){
-      ls.style.display='flex';
-      ls.style.opacity='0';
-      ls.style.transition='opacity .5s';
-      document.getElementById('login-pass').value='';
-      document.getElementById('login-error').style.display='none';
-      document.getElementById('caps-warning').style.display='none';
-      document.getElementById('login-btn').textContent='Enter the System →';
-      document.getElementById('login-btn').style.background='linear-gradient(135deg,#c9a84c,#f5c542,#c9a84c)';
-      document.getElementById('login-btn').style.color='#0d0118';
-      setTimeout(()=>ls.style.opacity='1',10);
-    }
+async function signOut(){
+  const ok = await modalSignOut();
+  if(!ok) return;
+  saveAll();
+  auth.signOut().catch(()=>{});
+  const ls = document.getElementById('login-screen');
+  if(ls){
+    ls.style.display='flex';
+    ls.style.opacity='0';
+    ls.style.transition='opacity .5s';
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-error').style.display='none';
+    document.getElementById('caps-warning').style.display='none';
+    document.getElementById('login-btn').textContent='Enter the System →';
+    document.getElementById('login-btn').style.background='linear-gradient(135deg,#c9a84c,#f5c542,#c9a84c)';
+    document.getElementById('login-btn').style.color='#0d0118';
+    setTimeout(()=>ls.style.opacity='1',10);
   }
 }
 
@@ -7375,357 +7407,438 @@ function getSmartData(y){
 }
 
 function buildSmartTab(){
-  const el=document.getElementById('smart-body');
-  if(!el)return;
+  const el = document.getElementById('smart-body');
+  if(!el) return;
 
-  // Use active year (most recent year with data)
-  let smartY=activeY;
-  // Find most recent year with actual data
+  // Determine year to analyse
+  let smartY = window._smartY || activeY;
   for(let y=2035;y>=2024;y--){
-    let hasData=false;
-    for(let m=0;m<12;m++){if(DATA[y]?.[m]?.laA||DATA[y]?.[m]?.roomsSold){hasData=true;break;}}
-    if(hasData){smartY=y;break;}
+    let has=false;
+    for(let m=0;m<12;m++){if(DATA[y]?.[m]?.laA||DATA[y]?.[m]?.roomsSold){has=true;break;}}
+    if(has){smartY=y;break;}
+  }
+  if(window._smartY) smartY=window._smartY;
+
+  const now = new Date();
+  const curM = now.getMonth(); // 0-based current month
+  const MF=['January','February','March','April','May','June',
+            'July','August','September','October','November','December'];
+  const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // ── Gather year data ──
+  let totRs=0,totLaA=0,totOpA=0,totPrA=0,totKg=0;
+  let totLaB=0,totOpB=0,totPrB=0;
+  let monthsWithData=0,lastM=-1;
+  const monthData=[];
+  for(let m=0;m<12;m++){
+    const r=DATA[smartY]?.[m]||{};
+    const rs=r.roomsSold||0;
+    const b=bud(smartY,m,rs);
+    const laA=r.laA||0,opA=r.opA||0,prA=r.prA||0,kg=r.kg||0;
+    const totA=laA+opA+prA,totB=b.la+b.op+b.pr;
+    const occ=rs&&maxRN(smartY,m)?rs/maxRN(smartY,m)*100:0;
+    const cporA=rs&&totA?totA/rs:0;
+    const cporB=rs&&totB?totB/rs:0;
+    if(rs||laA||opA||prA){monthsWithData++;lastM=m;}
+    totRs+=rs;totLaA+=laA;totOpA+=opA;totPrA+=prA;totKg+=kg;
+    totLaB+=b.la;totOpB+=b.op;totPrB+=b.pr;
+    monthData.push({m,rs,laA,opA,prA,kg,totA,totB,b,occ,cporA,cporB,hasData:!!(rs||laA)});
+  }
+  const grandA=totLaA+totOpA+totPrA;
+  const grandB=totLaB+totOpB+totPrB;
+  const ytdCporA=totRs?grandA/totRs:0;
+  const ytdCporB=totRs?grandB/totRs:0;
+  const baseCpor=baseCPOR();
+  const overBudget=grandA>grandB;
+  const vrAmt=grandA-grandB;
+  const vrPct=grandB?vrAmt/grandB*100:0;
+
+  // ── Full-year forecast ──
+  let fcastRs=totRs,fcastA=grandA,fcastB=grandB;
+  for(let m=lastM+1;m<12;m++){
+    const projRs=PROJ[smartY]?.[m]?.roomsSold||DATA[smartY-1]?.[m]?.roomsSold||0;
+    const b=bud(smartY,m,projRs);
+    fcastRs+=projRs;
+    fcastA+=ytdCporA*projRs;
+    fcastB+=b.la+b.op+b.pr;
+  }
+  const fcastCpor=fcastRs?fcastA/fcastRs:0;
+
+  // ── Missing months ──
+  const missingMonths=[];
+  for(let m=0;m<=Math.min(curM,11);m++){
+    if(smartY<now.getFullYear()) {
+      if(!monthData[m].hasData) missingMonths.push(m);
+    } else if(smartY===now.getFullYear()&&m<curM){
+      if(!monthData[m].hasData) missingMonths.push(m);
+    }
   }
 
-  const d=getSmartData(smartY);
-  const py=getSmartData(smartY-1);
-  const now=new Date();
-  const isBudgetSeason=now.getMonth()>=7&&now.getMonth()<=11; // Aug-Dec
+  // ── Budget season ──
+  const isBudgetSeason = curM>=7 && curM<=9;
+  const nextY = smartY+1;
 
-  function sectionHdr(icon,title,col,subtitle){
-    return`<div class="si-hdr" style="background:linear-gradient(135deg,rgba(${col},0.08),rgba(${col},0.04))">
-      <div class="si-icon" style="background:rgba(${col},.15);border:1px solid rgba(${col},.3)">${icon}</div>
-      <div>
-        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgb(${col})">${title}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:1px">${subtitle}</div>
+  // ── Price increases ──
+  const activeIncs = (INCS||[]).filter(inc=>{
+    const s=new Date(inc.start),e=inc.end?new Date(inc.end):null;
+    return s.getFullYear()<=smartY&&(!e||e.getFullYear()>=smartY);
+  });
+
+  const q2=v=>v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+  const q0=v=>v?v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}):'—';
+  const pct=v=>v?v.toFixed(1)+'%':'0%';
+
+  // ── UI helpers ──
+  const badge=(txt,bg,col)=>`<span style="background:${bg};color:${col};font-size:9px;font-weight:700;
+    border-radius:10px;padding:2px 8px;letter-spacing:.3px;white-space:nowrap">${txt}</span>`;
+
+  const kpiCard=(icon,label,val,sub,col,rgb,extra='')=>`
+    <div style="background:#0f1a2e;border:1px solid rgba(${rgb},.2);border-radius:10px;padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:28px;height:28px;border-radius:7px;background:rgba(${rgb},.15);
+          display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${icon}</div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b">${label}</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:800;color:${col};margin-bottom:3px">${val}</div>
+      <div style="font-size:10px;color:#64748b">${sub}</div>
+      ${extra}
+    </div>`;
+
+  const alertRow=(icon,col,rgb,title,msg,action='')=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(${rgb},.06);
+      border:1px solid rgba(${rgb},.2);border-left:3px solid ${col};border-radius:8px;padding:12px 14px;margin-bottom:8px">
+      <div style="font-size:16px;flex-shrink:0;margin-top:1px">${icon}</div>
+      <div style="flex:1">
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:${col};margin-bottom:3px">${title}</div>
+        <div style="font-size:11px;color:#94a3b8;line-height:1.6">${msg}</div>
+        ${action?`<div style="margin-top:8px">${action}</div>`:''}
       </div>
     </div>`;
-  }
 
-  function alertBox(type,icon,msg){
-    const styles={
-      danger:  {bg:'rgba(255,107,107,.08)',border:'rgba(255,107,107,.25)',col:'#ff6b6b'},
-      warning: {bg:'rgba(255,179,71,.08)', border:'rgba(255,179,71,.25)', col:'#ffb347'},
-      good:    {bg:'rgba(0,212,184,.06)',  border:'rgba(0,212,184,.2)',   col:'#00d4b8'},
-      info:    {bg:'rgba(167,139,250,.06)',border:'rgba(167,139,250,.2)', col:'#a78bfa'},
-    };
-    const s=styles[type]||styles.info;
-    return`<div class="si-alert" style="background:${s.bg};border:1px solid ${s.border}">
-      <div class="si-ai">${icon}</div>
-      <div style="color:${s.col}">${msg}</div>
+  const secHdr=(icon,title,col,rgb,sub)=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;
+      border-bottom:1px solid rgba(${rgb},.2)">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(${rgb},.15);
+        border:1px solid rgba(${rgb},.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${icon}</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:${col}">${title}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:1px">${sub}</div>
+      </div>
     </div>`;
-  }
 
-  function progressBar(val,max,col){
-    const pct=Math.min(100,max?val/max*100:0);
-    return`<div class="si-progress">
-      <div class="si-progress-bar" style="width:${pct}%;background:${col}"></div>
+  const progBar=(pct,col,rgb)=>`
+    <div style="background:#1a2236;border-radius:4px;height:6px;overflow:hidden;margin-top:6px">
+      <div style="width:${Math.min(pct,100)}%;height:100%;background:${col};border-radius:4px;
+        box-shadow:0 0 8px rgba(${rgb},.5);transition:width .5s ease"></div>
     </div>`;
-  }
 
-  // ════════════════════════════════
-  // FEATURE 3: ALERTS SUMMARY
-  // ════════════════════════════════
-  const alerts=[];
-  const vr=d.totA-d.totB;
-  const vrPct=d.totB?vr/d.totB*100:0;
-  if(d.totA>0&&vr>0) alerts.push({type:'danger',icon:'🔴',msg:`<strong>Over budget by QAR ${fN(vr)}</strong> (${vrPct.toFixed(1)}%) for ${d.y}. YTD actual: ${fN(d.totA)} vs budget: ${fN(d.totB)}.`});
-  if(d.totA>0&&vr<=0&&d.totB>0) alerts.push({type:'good',icon:'🟢',msg:`<strong>Under budget by QAR ${fN(Math.abs(vr))}</strong> for ${d.y}. Well managed — ${Math.abs(vrPct).toFixed(1)}% below target.`});
-  if(d.missingMonths.length>0) alerts.push({type:'warning',icon:'⚠️',msg:`<strong>Missing data:</strong> ${d.missingMonths.join(', ')} have no actuals entered yet. Forecasts may be inaccurate.`});
-  if(isBudgetSeason) alerts.push({type:'info',icon:'📋',msg:`<strong>Budget Season Alert:</strong> It's budget submission time. Use the Budget Season Assistant below to generate your ${d.y+1} budget.`});
-  if(d.ytdCpor>0&&d.ytdCpor>d.months[0]?.cporB*1.1) alerts.push({type:'warning',icon:'📈',msg:`<strong>CPOR trending high:</strong> YTD CPOR is ${d.ytdCpor.toFixed(4)} vs base budget ${(d.months[0]?.cporB||0).toFixed(4)}. Investigate Laundry Supplies spend.`});
+  const jumpBtn=(label,tab)=>`<button onclick="goTab(document.querySelector('[onclick*=\\'${tab}\\']'),\\'${tab}\\')"
+    style="padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;
+    cursor:pointer;border:1px solid rgba(0,212,184,.4);color:#00d4b8;background:rgba(0,212,184,.1)"
+    onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">
+    → Go to ${label}</button>`;
 
-  // ════════════════════════════════
-  // FEATURE 1: FULL-YEAR FORECAST
-  // ════════════════════════════════
-  const forecastVsBud=d.forecastTotal-d.totB;
-  const forecastVsPY=d.forecastTotal-d.pyTotA;
-  const remainingMonths=11-d.lastEnteredMonth;
+  // ── Monthly detail rows ──
+  const monthRows = monthData.filter(r=>r.hasData).map((r,i)=>{
+    const vr=r.totA-r.totB;
+    const vrCol=vr>0?'#ff6b6b':vr<0?'#00d4b8':'#64748b';
+    const occCol=r.occ>60?'#00d4b8':r.occ>40?'#f5c542':'#ff6b6b';
+    return `<tr style="background:${i%2===0?'transparent':'rgba(255,255,255,.02)'}">
+      <td style="padding:7px 12px;font-size:11px;font-weight:600;color:#e2e8f0">${MF[r.m]}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#a78bfa">${r.rs?r.rs.toLocaleString():'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:${occCol}">${r.occ?r.occ.toFixed(1)+'%':'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">${q2(r.laA)}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#a3e635">${q2(r.opA)}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#ff6b6b">${q2(r.prA)}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#00d4b8">${q2(r.totA)}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#64748b">${q2(r.totB)}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:${vrCol}">${vr>0?'+'+q2(vr):q2(vr)}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#a78bfa">${r.cporA?r.cporA.toFixed(4):'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:10px;color:#64748b">${r.kg?r.kg.toLocaleString():'—'}</td>
+    </tr>`;
+  }).join('');
 
-  // ════════════════════════════════
-  // FEATURE 5: OCCUPANCY CPOR ANALYSIS
-  // ════════════════════════════════
-  const highCporMonths=d.months.filter(m=>m.cporA>0&&m.cporB>0&&m.cporA>m.cporB*1.1);
-  const lowOccHighCpor=d.months.filter(m=>m.occ>0&&m.occ<40&&m.cporA>0&&m.cporA>d.ytdCpor);
-
-  // ════════════════════════════════
-  // FEATURE 4: PRICE INCREASE IMPACT
-  // ════════════════════════════════
-  const activeIncs=INCS.filter(inc=>{
-    const fromY=inc.fromY||2024,toY=inc.toY||2035;
-    return d.y>=fromY&&d.y<=toY;
-  });
-  let totalIncImpact=0;
-  activeIncs.forEach(inc=>{
-    const base=d.totLaA||d.pyLa||0;
-    totalIncImpact+=base*(inc.pct||0)/100;
-  });
-
-  // BUILD THE HTML
   el.innerHTML=`
 
-    <!-- Year selector -->
-    <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:12px 18px;margin-bottom:16px;
-      display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#e2e8f0">Analysing Year:</div>
-      <select onchange="window._smartY=parseInt(this.value);buildSmartTab()"
-        style="background:#0f1a2e;border:1px solid rgba(245,197,66,.3);border-radius:6px;color:#f5c542;
-          font-family:'DM Mono',monospace;font-size:13px;font-weight:600;padding:6px 10px">
-        ${[2025,2026,2027,2028].map(y=>`<option value="${y}" ${y===smartY?'selected':''}>${y}</option>`).join('')}
-      </select>
-      <div style="font-size:11px;color:#64748b">${d.monthsWithData} months of data entered · Last entry: ${d.lastEnteredMonth>=0?d.MF2[d.lastEnteredMonth]:'None yet'}</div>
-      <div style="margin-left:auto;font-size:10px;color:#4a5568">${now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+  <!-- ══ YEAR SELECTOR + STATUS ══ -->
+  <div style="background:linear-gradient(135deg,#1a2236,#1e1b4b);border:1px solid #2a3550;border-radius:12px;
+    padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:4px">Analysing Year</div>
+        <select onchange="window._smartY=parseInt(this.value);buildSmartTab()"
+          style="background:#0f1a2e;border:1px solid rgba(245,197,66,.4);border-radius:8px;color:#f5c542;
+            font-family:'DM Mono',monospace;font-size:15px;font-weight:700;padding:6px 12px;outline:none">
+          ${YEARS.map(y=>`<option value="${y}" ${y===smartY?'selected':''}>${y}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${kpiCard('📋','Months Entered',monthsWithData+' / 12','out of 12 months','#a78bfa','167,139,250')}
+        ${kpiCard('📅','Last Entry',lastM>=0?MF[lastM]:'None','most recent actual','#00d4b8','0,212,184')}
+        ${kpiCard('💰','YTD Actual','QAR '+q2(grandA),monthsWithData+' months','#00d4b8','0,212,184')}
+        ${kpiCard('📊','YTD CPOR',ytdCporA?ytdCporA.toFixed(4):'—','vs budget '+ytdCporB.toFixed(4),
+          ytdCporA>ytdCporB?'#ff6b6b':'#00d4b8',ytdCporA>ytdCporB?'255,107,107':'0,212,184')}
+        ${kpiCard('⚖️','Budget Status',overBudget?'OVER':'ON TRACK',
+          (vrAmt>0?'+':'')+q2(vrAmt)+' ('+vrPct.toFixed(1)+'%)',
+          overBudget?'#ff6b6b':'#00d4b8',overBudget?'255,107,107':'0,212,184')}
+      </div>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#4a5568">
+      ${now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+    </div>
+  </div>
+
+  <!-- ══ SECTION 1: PERFORMANCE ALERTS ══ -->
+  <div style="background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    ${secHdr('🚨','Performance Alerts','#ff6b6b','255,107,107','Critical items requiring immediate attention')}
+    ${overBudget?alertRow('🔴','#ff6b6b','255,107,107',
+      `Over Budget — QAR ${q2(Math.abs(vrAmt))} (${Math.abs(vrPct).toFixed(1)}%)`,
+      `YTD actual QAR ${q2(grandA)} vs budget QAR ${q2(grandB)}. Review Laundry Supplies — highest contributor to overrun.`,
+      jumpBtn('Monthly Entry','entry')):''}
+    ${ytdCporA>ytdCporB*1.1?alertRow('📈','#ff6b6b','255,107,107',
+      `CPOR Trending High — ${ytdCporA.toFixed(4)} vs budget ${ytdCporB.toFixed(4)}`,
+      `Cost per occupied room is ${((ytdCporA-ytdCporB)/ytdCporB*100).toFixed(1)}% above budget. Check Laundry Supplies spend — it is the main driver.`,
+      jumpBtn('Trends & Efficiency','trends')):''}
+    ${missingMonths.length>0?alertRow('⚠️','#f5c542','245,197,66',
+      `Missing Data — ${missingMonths.length} month${missingMonths.length>1?'s':''} not entered`,
+      `${missingMonths.map(m=>MF[m]).join(', ')} ${missingMonths.length>1?'have':'has'} no actuals entered. Missing months make forecasts inaccurate.`,
+      `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${missingMonths.map(m=>`
+        <button onclick="goTab(document.querySelector('[onclick*=entry]'),\\'entry\\');setTimeout(()=>{document.querySelector('[data-m=\\'${m}\\']')?.scrollIntoView({behavior:\\'smooth\\'})},200)"
+          style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
+            border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1)">
+          📋 ${MS[m]}</button>`).join('')}</div>`):''}
+    ${isBudgetSeason?alertRow('📅','#a78bfa','167,139,250',
+      `Budget Season — Time to Plan ${nextY}`,
+      `It is ${MF[curM]}. Standard budget planning starts now. Enter projected rooms for remaining ${smartY} months in Projection Planner, then export ${nextY} Budget PDF from Multi-Year Overview.`,
+      jumpBtn('Projection Planner','project')):''}
+    ${!overBudget&&!missingMonths.length&&ytdCporA<=ytdCporB*1.1&&monthsWithData>0?
+      `<div style="display:flex;align-items:center;gap:10px;background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.2);border-radius:8px;padding:12px 14px">
+        <span style="font-size:20px">✅</span>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#00d4b8">All Good</div>
+          <div style="font-size:11px;color:#64748b">No critical alerts for ${smartY}. CPOR on track, data complete.</div>
+        </div>
+      </div>`:''}
+    ${monthsWithData===0?alertRow('ℹ️','#64748b','100,116,139','No Data Yet',`No actuals entered for ${smartY}. Go to Monthly Entry to start entering data.`,jumpBtn('Monthly Entry','entry')):''}
+  </div>
+
+  <!-- ══ SECTION 2: FULL-YEAR FORECAST ══ -->
+  ${monthsWithData>0?`
+  <div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    ${secHdr('🔮','Full-Year Forecast','#00d4b8','0,212,184',`Where will ${smartY} end up at current pace?`)}
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+      ${kpiCard('🏠','Projected Rooms',q0(fcastRs),'full year estimate','#a78bfa','167,139,250')}
+      ${kpiCard('💰','Projected Total Expenses','QAR '+q2(fcastA),'actuals + forecast','#00d4b8','0,212,184')}
+      ${kpiCard('📊','Projected CPOR',fcastCpor?fcastCpor.toFixed(4):'—','full year estimate',
+        fcastCpor>ytdCporB?'#ff6b6b':'#00d4b4',fcastCpor>ytdCporB?'255,107,107':'0,212,184')}
+      ${kpiCard('📅','Months Remaining',12-monthsWithData+' months','to end of year','#f5c542','245,197,66')}
     </div>
 
-    <!-- ══ ALERTS ══ -->
-    ${alerts.length?`<div class="si-section">
-      ${sectionHdr('🚨','Performance Alerts','255,107,107','Immediate attention items for '+smartY)}
-      <div class="si-body">${alerts.map(a=>alertBox(a.type,a.icon,a.msg)).join('')}</div>
-    </div>`:''}
-
-    <!-- ══ FEATURE 1: FULL-YEAR FORECAST ══ -->
-    <div class="si-section">
-      ${sectionHdr('🔮','Full-Year Forecast','0,212,184','Where will you end up by Dec '+smartY+' at current pace?')}
-      <div class="si-body">
-        ${d.monthsWithData===0?alertBox('info','ℹ️','No data entered yet for '+smartY+'. Enter actuals in Monthly Entry to see forecasts.'):''}
-        ${d.monthsWithData>0?`
-        <div style="background:linear-gradient(135deg,rgba(0,212,184,.08),rgba(167,139,250,.06));
-          border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:16px;margin-bottom:14px">
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
-            <div>
-              <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">YTD Actual (${d.monthsWithData} months)</div>
-              <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#00d4b8">QAR ${fN(d.totA)}</div>
-            </div>
-            <div>
-              <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Projected Full Year</div>
-              <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#f5c542">QAR ${fN(d.forecastTotal)}</div>
-              <div style="font-size:9px;color:#64748b;margin-top:2px">Based on YTD CPOR ${d.ytdCpor.toFixed(4)} × remaining rooms</div>
-            </div>
-            <div>
-              <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Annual Budget</div>
-              <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#ffb347">QAR ${fN(d.totB)}</div>
-            </div>
-            <div>
-              <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">Forecast vs Budget</div>
-              <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:${forecastVsBud>0?'#ff6b6b':'#00d4b8'}">
-                ${forecastVsBud>0?'+':''}${fN(forecastVsBud)}
-              </div>
-              <div style="font-size:9px;color:${forecastVsBud>0?'#ff6b6b':'#00d4b8'};margin-top:2px">
-                ${d.totB?((forecastVsBud>0?'▲ Tracking ':'✓ Tracking ')+(Math.abs(forecastVsBud/d.totB*100)).toFixed(1)+'% '+(forecastVsBud>0?'over':'under')+' budget'):'—'}
-              </div>
-            </div>
+    <!-- Line breakdown progress -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      ${[
+        ['🟡 Laundry Supplies',totLaA,totLaB,'255,179,71','#ffb347'],
+        ['🟢 Operating Supplies',totOpA,totOpB,'163,230,53','#a3e635'],
+        ['🔴 Printing & Stationery',totPrA,totPrB,'255,107,107','#ff6b6b'],
+      ].map(([lbl,act,bud,rgb,col])=>{
+        const p=bud?Math.min(act/bud*100,120):0;
+        const over=act>bud;
+        return `<div style="background:#0f1a2e;border:1px solid rgba(${rgb},.2);border-radius:8px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:700;color:${col};margin-bottom:8px">${lbl}</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="font-size:10px;color:#64748b">Actual YTD</span>
+            <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${col}">${q2(act)}</span>
           </div>
-          ${progressBar(d.totA,d.forecastTotal,'#00d4b8')}
-          <div style="font-size:10px;color:#64748b;margin-top:6px">${d.monthsWithData} of 12 months entered · ${remainingMonths} months remaining</div>
-        </div>
-
-        <!-- Line breakdown forecast -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-          ${[
-            ['🧴 Laundry Supplies',d.totLaA,d.totLaB,'#00d4b8',d.totLaA&&d.monthsWithData?(d.totLaA/d.monthsWithData*12):0],
-            ['⚙️ Operating Supplies',d.totOpA,d.totOpB,'#a3e635',d.totOpA&&d.monthsWithData?(d.totOpA/d.monthsWithData*12):0],
-            ['🖨️ Printing',d.totPrA,d.totPrB,'#ff6b6b',d.totPrA&&d.monthsWithData?(d.totPrA/d.monthsWithData*12):0],
-          ].map(([label,act,bud,col,proj])=>`
-            <div class="si-card" style="border-color:${col}">
-              <div style="font-size:10px;font-weight:700;color:${col};margin-bottom:6px">${label}</div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-                <span style="font-size:9px;color:#64748b">YTD Actual</span>
-                <span style="font-family:'DM Mono',monospace;font-size:11px;color:${col}">${fN(act)}</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-                <span style="font-size:9px;color:#64748b">Projected FY</span>
-                <span style="font-family:'DM Mono',monospace;font-size:11px;color:#f5c542">${fN(proj)}</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-                <span style="font-size:9px;color:#64748b">Budget</span>
-                <span style="font-family:'DM Mono',monospace;font-size:11px;color:#ffb347">${fN(bud)}</span>
-              </div>
-              ${progressBar(act,bud,col)}
-              <div style="font-size:9px;color:${proj>bud?'#ff6b6b':'#00d4b8'};margin-top:4px">
-                ${bud?(proj>bud?'▲ On track to exceed':'✓ On track'):'—'}
-              </div>
-            </div>`).join('')}
-        </div>
-
-        ${alertBox(forecastVsBud>d.totB*0.1?'danger':forecastVsBud>0?'warning':'good',
-          forecastVsBud>d.totB*0.1?'🔴':forecastVsBud>0?'⚠️':'✅',
-          forecastVsBud>d.totB*0.1?
-            `<strong>High Risk:</strong> At current pace, full-year expenses will exceed budget by <strong>QAR ${fN(forecastVsBud)}</strong>. Immediate cost control needed on Laundry Supplies.`:
-          forecastVsBud>0?
-            `<strong>Moderate Risk:</strong> Tracking slightly over budget. Monitor monthly — especially Laundry Supplies CPOR.`:
-            `<strong>On Track:</strong> Current spending pace suggests you will finish the year <strong>QAR ${fN(Math.abs(forecastVsBud))}</strong> under budget. Good performance.`
-        )}
-        `:''}
-      </div>
-    </div>
-
-    <!-- ══ FEATURE 2: BUDGET SEASON ASSISTANT ══ -->
-    <div class="si-section">
-      ${sectionHdr('📋','Budget Season Assistant','245,197,66',isBudgetSeason?'🟡 Budget season is now — Aug to Dec':'Next year budget planning tool')}
-      <div class="si-body">
-        ${isBudgetSeason?alertBox('warning','📋','Budget season is active. Use this tool to build your '+(smartY+1)+' budget submission.'):''}
-        <div style="background:#0f1a2e;border-radius:8px;padding:14px;margin-bottom:14px">
-          <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#f5c542;margin-bottom:10px">
-            Recommended ${smartY+1} Budget based on ${d.ytdCpor>0?smartY+' YTD CPOR':'base CPOR'}
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:10px;color:#64748b">Budget YTD</span>
+            <span style="font-family:'DM Mono',monospace;font-size:10px;color:#64748b">${q2(bud)}</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:12px">
-            ${(()=>{
-              const nextY=smartY+1;
-              const driveCpor=d.ytdCpor>0?d.ytdCpor:(d.pyCpor||0);
-              const cpor=cporForYear(nextY);
-              // Estimate rooms for next year (use prior year rooms)
-              let nextRooms=0;
-              for(let m=0;m<12;m++) nextRooms+=(DATA[smartY]?.[m]?.roomsSold||DATA[smartY-1]?.[m]?.roomsSold||0);
-              const recBudget=driveCpor*nextRooms;
-              const trendAdj=d.pyCpor&&d.ytdCpor?((d.ytdCpor-d.pyCpor)/d.pyCpor*100):0;
-              return`
-                <div class="si-card" style="border-color:#f5c542">
-                  <div style="font-size:9px;color:#64748b;margin-bottom:4px">CPOR Driver (${smartY})</div>
-                  <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#f5c542">${driveCpor.toFixed(4)}</div>
-                  <div style="font-size:9px;color:#64748b;margin-top:3px">Used to calculate next year budget</div>
-                </div>
-                <div class="si-card" style="border-color:#a78bfa">
-                  <div style="font-size:9px;color:#64748b;margin-bottom:4px">Projected Rooms ${nextY}</div>
-                  <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#a78bfa">${nextRooms.toLocaleString()}</div>
-                  <div style="font-size:9px;color:#64748b;margin-top:3px">Based on ${smartY} rooms (adjust in Projection Planner)</div>
-                </div>
-                <div class="si-card" style="border-color:#00d4b8">
-                  <div style="font-size:9px;color:#64748b;margin-bottom:4px">Recommended Budget ${nextY}</div>
-                  <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#00d4b8">QAR ${fN(recBudget)}</div>
-                  <div style="font-size:9px;color:#64748b;margin-top:3px">CPOR ${driveCpor.toFixed(4)} × ${nextRooms.toLocaleString()} rooms</div>
-                </div>
-                <div class="si-card" style="border-color:${trendAdj>5?'#ff6b6b':trendAdj>0?'#ffb347':'#00d4b8'}">
-                  <div style="font-size:9px;color:#64748b;margin-bottom:4px">CPOR Trend</div>
-                  <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${trendAdj>0?'#ff6b6b':'#00d4b8'}">${trendAdj>0?'+':''}${trendAdj.toFixed(1)}%</div>
-                  <div style="font-size:9px;color:#64748b;margin-top:3px">vs prior year CPOR</div>
-                </div>`;
-            })()}
+          <div style="background:#1a2236;border-radius:4px;height:6px;overflow:hidden;margin:6px 0">
+            <div style="width:${p}%;height:100%;background:${over?'#ff6b6b':col};border-radius:4px;max-width:100%"></div>
           </div>
-          <div style="font-size:11px;color:#64748b;line-height:1.6;margin-bottom:12px">
-            💡 <strong style="color:#94a3b8">Next Steps:</strong>
-            1. Go to <strong style="color:#a78bfa">Projection Planner</strong> → enter expected rooms for ${smartY+1}
-            2. Go to <strong style="color:#ffb347">Budget Adjustments</strong> → add any supplier price increases
-            3. Go to <strong style="color:#f5c542">Multi-Year</strong> → click Export Budget PDF
+          <div style="font-size:9px;color:${over?'#ff6b6b':'#64748b'}">${p.toFixed(0)}% of budget used${over?' — OVER':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`:``}
+
+  <!-- ══ SECTION 3: MONTHLY DETAIL TABLE ══ -->
+  ${monthsWithData>0?`
+  <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px;overflow:hidden">
+    ${secHdr('📋','Monthly Breakdown','#a78bfa','167,139,250',`All entered months for ${smartY} — actuals vs budget`)}
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:800px">
+        <thead>
+          <tr style="background:#0f1a2e">
+            <th style="padding:8px 12px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b">Month</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Rooms</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Occ%</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#ffb347;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Laundry</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#a3e635;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Operating</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#ff6b6b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Printing</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#00d4b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total Act</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Budget</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#f5c542;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Variance</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.5px">CPOR</th>
+            <th style="padding:8px 8px;text-align:right;font-size:9px;color:#38bdf8;font-weight:700;text-transform:uppercase;letter-spacing:.5px">KG</th>
+          </tr>
+        </thead>
+        <tbody>${monthRows}</tbody>
+        <tfoot>
+          <tr style="background:#0f1a2e;border-top:2px solid #2a3550">
+            <td style="padding:8px 12px;font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:#f5c542">YEAR TOTAL</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#a78bfa">${totRs?totRs.toLocaleString():'—'}</td>
+            <td style="padding:8px;text-align:right;font-size:10px;color:#a78bfa">${totRs&&SETT.roomsAvail?((totRs/(SETT.roomsAvail*365))*100).toFixed(1)+'%':'—'}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#ffb347">${q2(totLaA)}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#a3e635">${q2(totOpA)}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#ff6b6b">${q2(totPrA)}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:800;color:#00d4b8">${q2(grandA)}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#64748b">${q2(grandB)}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${vrAmt>0?'#ff6b6b':'#00d4b8'}">${vrAmt>0?'+'+q2(vrAmt):q2(vrAmt)}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#a78bfa">${ytdCporA?ytdCporA.toFixed(4):'—'}</td>
+            <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#38bdf8">${totKg?totKg.toLocaleString():'—'}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>`:``}
+
+  <!-- ══ SECTION 4: OCCUPANCY ANALYSIS ══ -->
+  ${monthsWithData>0?`
+  <div style="background:#1a2236;border:1px solid rgba(56,189,248,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    ${secHdr('🏨','Occupancy vs CPOR Analysis','#38bdf8','56,189,248','Months where cost per room is high relative to occupancy')}
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:600px">
+        <thead><tr style="background:#0f1a2e">
+          <th style="padding:7px 12px;text-align:left;font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Month</th>
+          <th style="padding:7px 8px;text-align:right;font-size:9px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Rooms</th>
+          <th style="padding:7px 8px;text-align:right;font-size:9px;color:#38bdf8;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Occupancy</th>
+          <th style="padding:7px 8px;text-align:right;font-size:9px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:.5px">CPOR Actual</th>
+          <th style="padding:7px 8px;text-align:right;font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">CPOR Budget</th>
+          <th style="padding:7px 8px;text-align:right;font-size:9px;color:#f5c542;font-weight:700;text-transform:uppercase;letter-spacing:.5px">vs Budget</th>
+          <th style="padding:7px 8px;text-align:left;font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Status</th>
+        </tr></thead>
+        <tbody>${monthData.filter(r=>r.hasData).map((r,i)=>{
+          const cporVr=r.cporA-r.cporB;
+          const cporCol=cporVr>0?'#ff6b6b':cporVr<0?'#00d4b8':'#64748b';
+          const occStatus=r.occ>60?{col:'#00d4b8',txt:'Good Occ'}:r.occ>40?{col:'#f5c542',txt:'Mid Occ'}:{col:'#ff6b6b',txt:'Low Occ'};
+          const cpStatus=r.cporA>r.cporB*1.1?{col:'#ff6b6b',txt:'High CPOR'}:r.cporA<r.cporB?{col:'#00d4b8',txt:'Under Budget'}:{col:'#f5c542',txt:'On Track'};
+          const flag=r.occ<40&&r.cporA>r.cporB?`<span style="font-size:9px;background:rgba(255,107,107,.15);color:#ff6b6b;padding:2px 7px;border-radius:8px;margin-left:4px">⚠ Low Occ + High CPOR</span>`:'';
+          return`<tr style="background:${i%2===0?'transparent':'rgba(255,255,255,.02)'}">
+            <td style="padding:7px 12px;font-size:11px;font-weight:600;color:#e2e8f0">${MF[r.m]}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#a78bfa">${r.rs?r.rs.toLocaleString():'—'}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:${occStatus.col}">${r.occ?r.occ.toFixed(1)+'%':'—'} <span style="font-size:9px">${occStatus.txt}</span></td>
+            <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:${cpStatus.col}">${r.cporA?r.cporA.toFixed(4):'—'}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:#64748b">${r.cporB?r.cporB.toFixed(4):'—'}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:${cporCol}">${cporVr?(cporVr>0?'+':'')+cporVr.toFixed(4):'—'}</td>
+            <td style="padding:7px 8px;font-size:10px;color:${cpStatus.col}">${cpStatus.txt}${flag}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  </div>`:``}
+
+  <!-- ══ SECTION 5: BUDGET SEASON ASSISTANT ══ -->
+  <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    ${secHdr('📋','Budget Season Assistant','#a78bfa','167,139,250',`Prepare ${nextY} budget — step by step`)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px">Current ${smartY} Base</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:11px;color:#94a3b8">YTD CPOR Actual</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${ytdCporA>ytdCporB?'#ff6b6b':'#00d4b8'}">${ytdCporA?ytdCporA.toFixed(4):'—'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:11px;color:#94a3b8">YTD CPOR Budget</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#64748b">${ytdCporB?ytdCporB.toFixed(4):'—'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:11px;color:#94a3b8">Months Confirmed</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#a78bfa">${monthsWithData} of 12</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="font-size:11px;color:#94a3b8">Remaining Months</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:#f5c542">${12-monthsWithData} months</span>
+        </div>
+      </div>
+      <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px">${nextY} Budget Readiness</div>
+        ${[
+          [PROJ[nextY]&&Object.keys(PROJ[nextY]).length>=6,'Projected rooms for '+nextY+' entered'],
+          [monthsWithData>=6,'At least 6 months of '+smartY+' actuals available'],
+          [monthsWithData===12,'Full '+smartY+' actuals complete'],
+          [activeIncs.length>0,'Price increases configured for '+nextY],
+        ].map(([done,lbl])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:13px">${done?'✅':'⬜'}</span>
+          <span style="font-size:11px;color:${done?'#94a3b8':'#4a5568'}">${lbl}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${[
+        ['🔮 Projection Planner','project','a78bfa','167,139,250'],
+        ['📊 Multi-Year Overview','overview','00d4b8','0,212,184'],
+        ['⚙ Budget Adjustments','increases','ffb347','255,179,71'],
+      ].map(([lbl,tab,col,rgb])=>`<button onclick="goTab(document.querySelector('[onclick*=\\'${tab}\\']'),\\'${tab}\\')"
+        style="padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
+          border:1px solid rgba(${rgb},.4);color:#${col};background:rgba(${rgb},.08)"
+        onmouseover="this.style.background='rgba(${rgb},.18)'"
+        onmouseout="this.style.background='rgba(${rgb},.08)'">${lbl}</button>`).join('')}
+    </div>
+  </div>
+
+  <!-- ══ SECTION 6: PRICE INCREASE IMPACT ══ -->
+  <div style="background:#1a2236;border:1px solid rgba(255,179,71,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
+    ${secHdr('📈','Price Increase Impact','#ffb347','255,179,71','How supplier increases affect your budget')}
+    ${activeIncs.length===0?`<div style="background:rgba(100,116,139,.06);border:1px solid rgba(100,116,139,.2);border-radius:8px;padding:12px 14px;font-size:11px;color:#64748b">
+      No price increases configured for ${smartY}. Go to Budget Adjustments to add supplier increases.
+      <button onclick="goTab(document.querySelector('[onclick*=\\'increases\\']'),\\'increases\\')"
+        style="margin-left:10px;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
+          border:1px solid rgba(255,179,71,.4);color:#ffb347;background:rgba(255,179,71,.1)">→ Budget Adjustments</button>
+    </div>`:activeIncs.map(inc=>{
+      const impact=totLaB*(inc.pct/100);
+      return `<div style="background:rgba(255,179,71,.06);border:1px solid rgba(255,179,71,.2);border-radius:8px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#ffb347">${inc.supplier||'Supplier'} — +${inc.pct}%</div>
+            <div style="font-size:10px;color:#64748b;margin-top:2px">Laundry Supplies · From ${inc.start}</div>
           </div>
-          <button onclick="goTab(document.querySelectorAll('.ntab')[1],'project')"
-            style="padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;
-              border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1);cursor:pointer;
-              transition:all .2s;margin-right:8px"
-            onmouseover="this.style.background='rgba(245,197,66,.2)'" onmouseout="this.style.background='rgba(245,197,66,.1)'">
-            → Go to Projection Planner
-          </button>
-          <button onclick="goTab(document.querySelectorAll('.ntab')[3],'increases')"
-            style="padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;
-              border:1px solid rgba(255,179,71,.4);color:#ffb347;background:rgba(255,179,71,.1);cursor:pointer;transition:all .2s"
-            onmouseover="this.style.background='rgba(255,179,71,.2)'" onmouseout="this.style.background='rgba(255,179,71,.1)'">
-            → Budget Adjustments
-          </button>
+          <div style="text-align:right">
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:#ffb347">+QAR ${q2(impact)}</div>
+            <div style="font-size:9px;color:#64748b">estimated annual impact</div>
+          </div>
         </div>
-      </div>
-    </div>
+      </div>`;
+    }).join('')}
+  </div>
 
-    <!-- ══ FEATURE 5: OCCUPANCY-BASED CPOR ANALYSIS ══ -->
-    <div class="si-section">
-      ${sectionHdr('🏨','Occupancy-Based CPOR Analysis','167,139,250','Is spending appropriate for the occupancy level?')}
-      <div class="si-body">
-        ${d.monthsWithData===0?alertBox('info','ℹ️','No data yet for this year.'):`
-        <div style="font-size:11px;color:#64748b;margin-bottom:12px;background:#0f1a2e;border-radius:8px;padding:10px 12px;line-height:1.6">
-          💡 A high CPOR in a <strong style="color:#94a3b8">low occupancy month</strong> means you're spending more per guest than usual — this is worth investigating.
-          Normal expectation: CPOR should stay relatively stable regardless of occupancy.
-        </div>
-        <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:600px;margin-bottom:12px">
-          <thead>
-            <tr>
-              <th style="background:#212d42;padding:7px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#64748b">Month</th>
-              <th style="background:#212d42;padding:7px 10px;text-align:right;font-size:9px;font-weight:700;color:#a78bfa">Rooms</th>
-              <th style="background:#212d42;padding:7px 10px;text-align:right;font-size:9px;font-weight:700;color:#a78bfa">Occ%</th>
-              <th style="background:#212d42;padding:7px 10px;text-align:right;font-size:9px;font-weight:700;color:#a78bfa">CPOR Actual</th>
-              <th style="background:#212d42;padding:7px 10px;text-align:right;font-size:9px;font-weight:700;color:#ffb347">CPOR Budget</th>
-              <th style="background:#212d42;padding:7px 10px;text-align:right;font-size:9px;font-weight:700;color:#94a3b8">Variance</th>
-              <th style="background:#212d42;padding:7px 10px;text-align:right;font-size:9px;font-weight:700;color:#94a3b8">Analysis</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${d.months.filter(m=>m.totA>0||m.rooms>0).map((m,i)=>{
-              const vr=m.cporA-m.cporB;
-              const isHigh=m.cporA>m.cporB*1.1&&m.cporB>0;
-              const isLow=m.occ<40&&m.occ>0;
-              const flag=isHigh&&isLow?'🔴 High CPOR + Low Occ':isHigh?'⚠️ Above budget':m.cporA>0?'✅ Normal':'—';
-              const flagCol=isHigh&&isLow?'#ff6b6b':isHigh?'#ffb347':'#00d4b8';
-              const bg=i%2===0?'transparent':'rgba(255,255,255,.02)';
-              return`<tr style="background:${bg}">
-                <td style="padding:7px 10px;font-family:'Syne',sans-serif;font-weight:600;color:#e2e8f0">${d.MF2[m.m]}</td>
-                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;color:#a78bfa">${m.rooms?m.rooms.toLocaleString():'—'}</td>
-                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;color:${m.occ>60?'#00d4b8':m.occ>40?'#ffb347':'#ff6b6b'}">${m.occ?m.occ.toFixed(1)+'%':'—'}</td>
-                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:#a78bfa">${m.cporA?m.cporA.toFixed(4):'—'}</td>
-                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;color:#ffb347">${m.cporB?m.cporB.toFixed(4):'—'}</td>
-                <td style="padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;color:${vr>0?'#ff6b6b':'#00d4b8'}">${m.cporA&&m.cporB?(vr>0?'+':'')+vr.toFixed(4):'—'}</td>
-                <td style="padding:7px 10px;text-align:right;color:${flagCol};font-size:10px;font-weight:600">${flag}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-        </div>
-        ${highCporMonths.length>0?alertBox('warning','⚠️',`<strong>${highCporMonths.length} month${highCporMonths.length>1?'s':''} over CPOR budget:</strong> ${highCporMonths.map(m=>d.MF2[m.m]).join(', ')}. Review expenses for these months — especially Laundry Supplies.`):''}
-        ${lowOccHighCpor.length>0?alertBox('danger','🔴',`<strong>Low occupancy + high CPOR:</strong> ${lowOccHighCpor.map(m=>d.MF2[m.m]).join(', ')} — occupancy below 40% but CPOR above average. Fixed costs may be too high relative to revenue-generating nights.`):''}
-        `}
+  <!-- ══ SECTION 7: DATA ENTRY REMINDERS ══ -->
+  <div style="background:#1a2236;border:1px solid rgba(245,197,66,.2);border-radius:12px;padding:18px 20px">
+    ${secHdr('📝','Data Entry Reminders','#f5c542','245,197,66','Past months missing actuals — enter data to improve accuracy')}
+    ${missingMonths.length===0?`<div style="display:flex;align-items:center;gap:10px;background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.2);border-radius:8px;padding:12px 14px">
+      <span style="font-size:20px">✅</span>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#00d4b8">All months up to date</div>
+        <div style="font-size:11px;color:#64748b">All past months have actuals entered. Great work!</div>
       </div>
-    </div>
-
-    <!-- ══ FEATURE 4: PRICE INCREASE IMPACT ══ -->
-    <div class="si-section">
-      ${sectionHdr('📈','Price Increase Impact','255,179,71','How supplier increases affect your budget')}
-      <div class="si-body">
-        ${activeIncs.length===0?alertBox('info','ℹ️','No price increases configured for '+smartY+'. Go to Budget Adjustments to add supplier increases.'):`
-        <div style="margin-bottom:12px">
-          ${activeIncs.map(inc=>{
-            const base=d.totLaA||d.pyLa||0;
-            const impact=base*(inc.pct||0)/100;
-            const MS2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            return`<div class="si-metric" style="margin-bottom:10px">
-              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                <div>
-                  <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#ffb347">${inc.name||'Price Increase'}</div>
-                  <div style="font-size:10px;color:#64748b;margin-top:2px">
-                    ${(inc.pct||0) >= 0 ? '+' : ''}${inc.pct||0}% on Laundry Supplies ·
-                    ${MS2[inc.fromM||0]} ${inc.fromY||d.y} → ${MS2[inc.toM||11]} ${inc.toY||d.y}
-                  </div>
-                </div>
-                <div style="text-align:right">
-                  <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#ff6b6b">+QAR ${fN(impact)}</div>
-                  <div style="font-size:9px;color:#64748b">Estimated annual impact</div>
-                </div>
-              </div>
-              ${progressBar(impact,base,'#ffb347')}
-              <div style="font-size:9px;color:#64748b;margin-top:4px">Impact as % of base Laundry Supplies: ${base?(impact/base*100).toFixed(1)+'%':'—'}</div>
-            </div>`;
-          }).join('')}
-          ${alertBox('warning','💰',`<strong>Total price increase impact:</strong> QAR ${fN(totalIncImpact)} additional Laundry Supplies cost in ${d.y}. This has been factored into your budget calculations automatically.`)}
-        </div>
-        `}
+    </div>`:`
+    <div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">
+        <strong style="color:#f5c542">${missingMonths.length} month${missingMonths.length>1?'s':''}</strong> missing data:
+        <span style="color:#94a3b8">${missingMonths.map(m=>MF[m]).join(', ')}</span>
       </div>
-    </div>
-
-    <!-- ══ FEATURE 6: MISSING DATA ══ -->
-    ${d.missingMonths.length>0?`<div class="si-section">
-      ${sectionHdr('📝','Data Entry Reminders','255,107,107','Past months with no actuals entered')}
-      <div class="si-body">
-        ${alertBox('warning','⚠️',`<strong>${d.missingMonths.length} month${d.missingMonths.length>1?'s are':' is'} missing data:</strong> ${d.missingMonths.join(' · ')}. Missing data makes forecasts inaccurate.`)}
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
-          ${d.missingMonths.map(m=>`<div style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);
-            border-radius:6px;padding:6px 12px;font-size:11px;color:#ff6b6b;font-weight:600">${m}</div>`).join('')}
-        </div>
-        <button onclick="goTab(document.querySelectorAll('.ntab')[0],'entry')"
-          style="margin-top:12px;padding:9px 18px;border-radius:7px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
-            border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.1);cursor:pointer;transition:all .2s"
-          onmouseover="this.style.background='rgba(255,107,107,.2)'" onmouseout="this.style.background='rgba(255,107,107,.1)'">
-          → Enter Missing Data in Monthly Entry
-        </button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${missingMonths.map(m=>`<button
+          onclick="goTab(document.querySelector('[onclick*=\\'entry\\']'),\\'entry\\');setTimeout(()=>document.querySelector('[data-m=\\'${m}\\']')?.scrollIntoView({behavior:'smooth'}),300)"
+          style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
+            border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1)"
+          onmouseover="this.style.background='rgba(245,197,66,.2)'"
+          onmouseout="this.style.background='rgba(245,197,66,.1)'">
+          📋 Enter ${MF[m]} Data</button>`).join('')}
       </div>
-    </div>`:''}
-
-  `;
+    </div>`}
+  </div>`;
 }
 
 // ── STARTUP ALERT (runs on load) ──
@@ -7778,11 +7891,12 @@ function checkStartupAlerts(){
 
 
 
-function clearProjYear(){
+async function clearProjYear(){
   const sel = document.getElementById('clear-proj-year');
   const y = parseInt(sel.value);
   if(!y){ toast('⚠ Select a year to clear first'); return; }
-  if(!confirm(`Clear ALL 12 months of projection rooms for ${y}?\nThis cannot be undone.`)) return;
+  const ok = await modalClearYear(y);
+  if(!ok) return;
   delete PROJ[y];
   document.querySelectorAll(`[data-fy="${y}"]`).forEach(el=>{
     el.value=''; el.classList.remove('filled');
@@ -7793,7 +7907,7 @@ function clearProjYear(){
   toast(`✓ All ${y} projections cleared & synced to Firebase`);
 }
 
-function clearProjMonth(){
+async function clearProjMonth(){
   const selY = document.getElementById('clear-proj-month-year');
   const selM = document.getElementById('clear-proj-month');
   const y = parseInt(selY.value);
@@ -7802,7 +7916,8 @@ function clearProjMonth(){
             'July','August','September','October','November','December'];
   if(!y){ toast('⚠ Select a year first'); return; }
   if(isNaN(m)||selM.value===''){ toast('⚠ Select a month first'); return; }
-  if(!confirm(`Clear projection rooms for ${MS[m]} ${y}?`)) return;
+  const ok2 = await modalClearMonth(y, m);
+  if(!ok2) return;
   // Delete just this month's projection entry
   if(PROJ[y]&&PROJ[y][m]){
     delete PROJ[y][m].roomsSold;
@@ -7932,12 +8047,13 @@ function updateLineColour(idx, val){
   buildLinesTable(); // refresh swatches
 }
 
-function deleteLine(idx){
+async function deleteLine(idx){
   const lines = getLines();
   const line = lines[idx];
   if(!line || line.locked){ toast('⚠ Cannot delete core lines'); return; }
   if(lineHasData(line.key)){ toast('⚠ Cannot delete — this line has data entered'); return; }
-  if(!confirm(`Delete "${line.name}"? This cannot be undone.`)) return;
+  const dlok = await modalDeleteLine(line.name);
+  if(!dlok) return;
   lines.splice(idx, 1);
   SETT.lines = lines;
   buildLinesTable();
@@ -8093,19 +8209,19 @@ function isLocked(y,m){
   return !!(LOCKS[y]&&LOCKS[y][m]);
 }
 
-function toggleLock(y,m){
+async function toggleLock(y,m){
   const locked = isLocked(y,m);
   const MF2=['January','February','March','April','May','June',
              'July','August','September','October','November','December'];
   if(!locked){
-    // Locking
-    if(!confirm(`Lock ${MF2[m]} ${y}?\n\nLocked months cannot be edited until unlocked.\nUse this after submitting to Finance.`)) return;
+    const lok = await modalLockMonth(y, m);
+    if(!lok) return;
     if(!LOCKS[y]) LOCKS[y]={};
     LOCKS[y][m]={lockedAt:new Date().toISOString(),lockedBy:'Reda Salah'};
     toast(`🔒 ${MF2[m]} ${y} locked`);
   } else {
-    // Unlocking
-    if(!confirm(`Unlock ${MF2[m]} ${y}?\n\nThis will allow editing again.`)) return;
+    const ulok = await modalUnlockMonth(y, m);
+    if(!ulok) return;
     delete LOCKS[y][m];
     if(Object.keys(LOCKS[y]).length===0) delete LOCKS[y];
     toast(`🔓 ${MF2[m]} ${y} unlocked`);
@@ -8129,8 +8245,9 @@ function lockFullYear(y){
   toast(`🔒 Locked ${months.length} months in ${y}`);
 }
 
-function unlockFullYear(y){
-  if(!confirm(`Unlock all months in ${y}?`)) return;
+async function unlockFullYear(y){
+  const ok = await modalUnlockYear(y);
+  if(!ok) return;
   delete LOCKS[y];
   saveAll();
   buildEntry();
@@ -9095,6 +9212,219 @@ Click OK to confirm actual. The forecast is archived as reference.`)){
     return true;
   }
   return false;
+}
+
+
+/* ════════════════════════════════════════
+   CUSTOM MODAL SYSTEM
+   ════════════════════════════════════════ */
+
+let _modalResolve = null;
+
+function rsModal({icon='❓', iconBg='rgba(245,197,66,.15)', iconBorder='rgba(245,197,66,.3)',
+  title='Confirm', sub='', body='', confirmText='Confirm', cancelText='Cancel',
+  confirmCol='#00d4b8', confirmRgb='0,212,184',
+  cancelCol='#64748b', type='confirm', dangerConfirm=false}){
+
+  return new Promise(resolve => {
+    _modalResolve = resolve;
+
+    document.getElementById('rs-modal-icon').textContent = icon;
+    document.getElementById('rs-modal-icon').style.background = iconBg;
+    document.getElementById('rs-modal-icon').style.border = '1px solid '+iconBorder;
+    document.getElementById('rs-modal-title').textContent = title;
+    document.getElementById('rs-modal-sub').textContent = sub;
+    document.getElementById('rs-modal-body').innerHTML = body;
+
+    const btns = document.getElementById('rs-modal-btns');
+    if(type==='confirm'){
+      btns.innerHTML=`
+        <button onclick="rsModalClose(false)"
+          style="padding:9px 20px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+            cursor:pointer;border:1px solid rgba(100,116,139,.3);color:${cancelCol};background:transparent"
+          onmouseover="this.style.background='rgba(100,116,139,.1)'"
+          onmouseout="this.style.background='transparent'">${cancelText}</button>
+        <button onclick="rsModalClose(true)"
+          style="padding:9px 22px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+            cursor:pointer;border:1px solid rgba(${confirmRgb},.4);color:${confirmCol};
+            background:rgba(${confirmRgb},.12)"
+          onmouseover="this.style.background='rgba(${confirmRgb},.25)'"
+          onmouseout="this.style.background='rgba(${confirmRgb},.12)'">${confirmText}</button>`;
+    } else {
+      btns.innerHTML=`
+        <button onclick="rsModalClose(true)"
+          style="padding:9px 22px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+            cursor:pointer;border:1px solid rgba(${confirmRgb},.4);color:${confirmCol};
+            background:rgba(${confirmRgb},.12)"
+          onmouseover="this.style.background='rgba(${confirmRgb},.25)'"
+          onmouseout="this.style.background='rgba(${confirmRgb},.12)'">${confirmText}</button>`;
+    }
+
+    const overlay = document.getElementById('rs-modal-overlay');
+    overlay.classList.add('active');
+    // Close on overlay click
+    overlay.onclick = e => { if(e.target===overlay) rsModalClose(false); };
+    // Close on Escape
+    document.onkeydown = e => { if(e.key==='Escape') rsModalClose(false); };
+  });
+}
+
+function rsModalClose(result){
+  document.getElementById('rs-modal-overlay').classList.remove('active');
+  document.onkeydown = null;
+  if(_modalResolve){ _modalResolve(result); _modalResolve=null; }
+}
+
+// Preset modals
+function modalSignOut(){
+  return rsModal({
+    icon:'🚪', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    title:'Sign Out', sub:'RS BudgetPro · Four Seasons Hotel Doha',
+    body:`<div style="background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.15);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:#00d4b8">
+      ✓ All changes are saved to Firebase cloud automatically.
+    </div>
+    <div style="font-size:12px;color:#94a3b8">You will be returned to the login screen. Your data will be waiting when you sign back in.</div>`,
+    confirmText:'Sign Out', cancelText:'Stay',
+    confirmCol:'#ff6b6b', confirmRgb:'255,107,107'
+  });
+}
+
+function modalClearYear(y){
+  return rsModal({
+    icon:'🗑', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    title:`Clear ${y} Projections`,
+    sub:'This cannot be undone',
+    body:`<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#ff6b6b">
+      ⚠ You are about to delete all 12 months of projected rooms for <strong>${y}</strong>.
+      This will update Firebase immediately.
+    </div>`,
+    confirmText:'Clear All', cancelText:'Cancel',
+    confirmCol:'#ff6b6b', confirmRgb:'255,107,107'
+  });
+}
+
+function modalClearMonth(y, m){
+  const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return rsModal({
+    icon:'🗑', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    title:`Clear ${MF[m]} ${y}`,
+    sub:'Remove projection for this month only',
+    body:`<div style="font-size:12px;color:#94a3b8">The projected rooms for <strong style="color:#f5c542">${MF[m]} ${y}</strong> will be removed. Actual data in Monthly Entry is not affected.</div>`,
+    confirmText:'Clear Month', cancelText:'Cancel',
+    confirmCol:'#ff6b6b', confirmRgb:'255,107,107'
+  });
+}
+
+function modalLockMonth(y, m){
+  const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return rsModal({
+    icon:'🔒', iconBg:'rgba(245,197,66,.1)', iconBorder:'rgba(245,197,66,.3)',
+    title:`Lock ${MF[m]} ${y}`,
+    sub:'Submit to Finance',
+    body:`<div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#f5c542">
+      Locked months cannot be edited until unlocked. Data still shows in all reports.
+    </div>`,
+    confirmText:'🔒 Lock Month', cancelText:'Cancel',
+    confirmCol:'#f5c542', confirmRgb:'245,197,66'
+  });
+}
+
+function modalUnlockMonth(y, m){
+  const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return rsModal({
+    icon:'🔓', iconBg:'rgba(100,116,139,.1)', iconBorder:'rgba(100,116,139,.3)',
+    title:`Unlock ${MF[m]} ${y}`,
+    sub:'Allow editing again',
+    body:`<div style="font-size:12px;color:#94a3b8"><strong style="color:#e2e8f0">${MF[m]} ${y}</strong> will be unlocked. You can edit actuals again.</div>`,
+    confirmText:'🔓 Unlock', cancelText:'Cancel',
+    confirmCol:'#64748b', confirmRgb:'100,116,139'
+  });
+}
+
+function modalUnlockYear(y){
+  return rsModal({
+    icon:'🔓', iconBg:'rgba(100,116,139,.1)', iconBorder:'rgba(100,116,139,.3)',
+    title:`Unlock All ${y}`,
+    sub:'Remove all locks for this year',
+    body:`<div style="font-size:12px;color:#94a3b8">All locked months in <strong style="color:#e2e8f0">${y}</strong> will be unlocked for editing.</div>`,
+    confirmText:'🔓 Unlock Year', cancelText:'Cancel',
+    confirmCol:'#64748b', confirmRgb:'100,116,139'
+  });
+}
+
+function modalDeleteLine(name){
+  return rsModal({
+    icon:'⚡', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    title:`Delete "${name}"`,
+    sub:'Expense Line Manager',
+    body:`<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#ff6b6b">
+      ⚠ This cannot be undone. The line <strong>${name}</strong> will be permanently removed from all reports and exports.
+    </div>`,
+    confirmText:'Delete Line', cancelText:'Cancel',
+    confirmCol:'#ff6b6b', confirmRgb:'255,107,107'
+  });
+}
+
+function modalConfirmActual(y, m, actual, forecast){
+  const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const diff = actual - forecast;
+  const diffCol = diff > 0 ? '#00d4b8' : '#ff6b6b';
+  const sign = diff > 0 ? '+' : '';
+  return rsModal({
+    icon:'✅', iconBg:'rgba(0,212,184,.1)', iconBorder:'rgba(0,212,184,.3)',
+    title:`Confirm Actual Rooms — ${MF[m]} ${y}`,
+    sub:'Replacing forecast with confirmed actual',
+    body:`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#0f1a2e;border-radius:7px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Actual Entered</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:#00d4b8">${actual.toLocaleString()}</div>
+        <div style="font-size:9px;color:#64748b">rooms</div>
+      </div>
+      <div style="background:#0f1a2e;border-radius:7px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Forecast Was</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:#f5c542">${forecast.toLocaleString()}</div>
+        <div style="font-size:9px;color:#64748b">rooms</div>
+      </div>
+      <div style="background:#0f1a2e;border-radius:7px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Variance</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:800;color:${diffCol}">${sign}${diff.toLocaleString()}</div>
+        <div style="font-size:9px;color:#64748b">rooms</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#64748b;background:#0f1a2e;border-radius:7px;padding:9px 12px">
+      💡 Clicking <strong style="color:#00d4b8">Confirm Actual</strong> saves ${actual.toLocaleString()} rooms as the confirmed actual. The forecast is archived as reference. All reports update instantly.
+    </div>`,
+    confirmText:'✓ Confirm Actual', cancelText:'Keep Forecast',
+    confirmCol:'#00d4b8', confirmRgb:'0,212,184'
+  });
+}
+
+function modalRestoreBackup(date){
+  return rsModal({
+    icon:'📂', iconBg:'rgba(255,179,71,.1)', iconBorder:'rgba(255,179,71,.3)',
+    title:'Restore Backup',
+    sub:`From ${date}`,
+    body:`<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#ff6b6b;margin-bottom:10px">
+      ⚠ This will replace ALL current data with the backup. This cannot be undone.
+    </div>
+    <div style="font-size:11px;color:#64748b">Export a current backup first if you want to keep recent changes.</div>`,
+    confirmText:'Restore Data', cancelText:'Cancel',
+    confirmCol:'#ffb347', confirmRgb:'255,179,71'
+  });
+}
+
+function modalDeleteAll(){
+  return rsModal({
+    icon:'💥', iconBg:'rgba(255,107,107,.15)', iconBorder:'rgba(255,107,107,.4)',
+    title:'Delete ALL Data',
+    sub:'This is permanent and cannot be undone',
+    body:`<div style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:12px;font-size:12px;color:#ff6b6b;margin-bottom:10px">
+      ⚠ <strong>DANGER:</strong> You are about to permanently delete ALL data including Monthly Entry, Projections, Revenue, Settings and all historical data.
+    </div>
+    <div style="font-size:11px;color:#64748b">This action cannot be reversed. Export a backup first.</div>`,
+    confirmText:'DELETE EVERYTHING', cancelText:'Cancel — Keep Data',
+    confirmCol:'#ff6b6b', confirmRgb:'255,107,107'
+  });
 }
 
 /* ── INIT ── */
