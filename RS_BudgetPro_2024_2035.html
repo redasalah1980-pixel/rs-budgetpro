@@ -1300,6 +1300,24 @@ function doLogin(){
   <div class="notice amber" style="margin-bottom:14px">
     <strong>How to use:</strong> Enter expected Rooms Sold per month for each future year. Budget columns auto-calculate from the prior year's CPOR. Leave cells blank to use the prior year's monthly rooms sold as default.
   </div>
+  <!-- Actual vs Forecast Legend -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap;padding:0 2px">
+    <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Legend:</div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--teal)"></div>
+      <span style="font-size:10px;color:var(--teal);font-weight:700">Actual</span>
+      <span style="font-size:10px;color:#4a5568">— from Monthly Entry (read-only)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#f5c542"></div>
+      <span style="font-size:10px;color:#f5c542;font-weight:700">Forecast</span>
+      <span style="font-size:10px;color:#4a5568">— your projection (editable)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#2a3550;border:1px solid #374151"></div>
+      <span style="font-size:10px;color:#4a5568">Empty — not entered yet</span>
+    </div>
+  </div>
   <div class="proj-wrap">
     <table class="proj-table" id="proj-table"></table>
   </div>
@@ -2811,18 +2829,47 @@ function buildProjTable(){
   for(let m=0;m<12;m++){
     html+=`<tr><td class="month-td">${MF[m]}</td>`;
     futureYears.forEach(y=>{
-      const existingRs=DATA[y]?.[m]?.roomsSold;
-      const projRs=PROJ[y]?.[m]?.roomsSold;
-      const displayRs=existingRs||projRs||'';
-      const rooms=existingRs||projRs||0;
-      const b=bud(y,m,rooms);
-      const isActual=!!existingRs;
-      html+=`<td style="background:${isActual?'rgba(0,212,184,.04)':''}">
-        <input type="number" class="proj-inp ${displayRs?'filled':''}" value="${displayRs}"
-          data-py="${y}" data-pm="${m}" placeholder="Rooms"
-          oninput="hProjTable(this)" ${isActual?'readonly style="color:var(--teal);opacity:.8" title="Actual entered"':''}
+      const existingRs = DATA[y]?.[m]?.roomsSold;  // actual from Monthly Entry
+      const projRs     = PROJ[y]?.[m]?.roomsSold;  // typed in Projection Planner
+      const displayRs  = existingRs || projRs || '';
+      const rooms      = existingRs || projRs || 0;
+      const b          = bud(y,m,rooms);
+
+      const isActual   = !!existingRs;          // has Monthly Entry data
+      const isForecast = !isActual && !!projRs; // typed projection, no actual yet
+
+      // Cell background
+      const cellBg = isActual   ? 'rgba(0,212,184,.05)'  :
+                     isForecast ? 'rgba(245,197,66,.04)'  : '';
+
+      // Input styling
+      const inputColor = isActual   ? 'var(--teal)'   :
+                         isForecast ? '#f5c542'         : 'var(--text1)';
+
+      // Badge below input
+      const badge = isActual
+        ? `<div style="display:flex;align-items:center;gap:3px;margin-top:2px">
+             <div style="width:5px;height:5px;border-radius:50%;background:var(--teal);flex-shrink:0"></div>
+             <span style="font-size:8px;color:var(--teal);font-weight:700;letter-spacing:.3px">actual</span>
+           </div>`
+        : isForecast
+        ? `<div style="display:flex;align-items:center;gap:3px;margin-top:2px">
+             <div style="width:5px;height:5px;border-radius:50%;background:#f5c542;flex-shrink:0"></div>
+             <span style="font-size:8px;color:#f5c542;font-weight:700;letter-spacing:.3px">forecast</span>
+           </div>`
+        : '';
+
+      html+=`<td style="background:${cellBg};border-left:${isActual?'2px solid rgba(0,212,184,.2)':isForecast?'2px solid rgba(245,197,66,.2)':'1px solid transparent'}">
+        <input type="number" class="proj-inp ${displayRs?'filled':''}"
+          value="${displayRs}"
+          data-py="${y}" data-pm="${m}"
+          placeholder="Rooms"
+          oninput="hProjTable(this)"
+          ${isActual?`readonly title="Actual rooms from Monthly Entry — lock Monthly Entry to edit"
+            style="color:var(--teal);opacity:.9;cursor:default"`:''}
+          style="color:${inputColor}"
           tabindex="${m*futureYears.length+futureYears.indexOf(y)+1}">
-        ${isActual?'<div style="font-size:8px;color:var(--teal);text-align:right;margin-top:1px">actual</div>':''}
+        ${badge}
       </td>
       <td class="proj-bud">${b.tot?fN(b.tot):'—'}
         <div class="proj-cpor">${rooms&&b.tot?'CPOR:'+(b.tot/rooms).toFixed(2):''}</div>
@@ -2831,15 +2878,24 @@ function buildProjTable(){
     html+='</tr>';
   }
 
-  // Totals row
+  // Totals row with counts
   html+=`<tr class="proj-total-row"><td class="month-td" style="font-weight:700;color:var(--teal)">YEAR TOTAL</td>`;
   futureYears.forEach(y=>{
-    let totRs=0,totBud=0;
+    let totRs=0,totBud=0,actCount=0,fcCount=0;
     for(let m=0;m<12;m++){
-      const rooms=DATA[y]?.[m]?.roomsSold||PROJ[y]?.[m]?.roomsSold||0;
-      totRs+=rooms;totBud+=bud(y,m,rooms).tot;
+      const rs=DATA[y]?.[m]?.roomsSold||PROJ[y]?.[m]?.roomsSold||0;
+      totRs+=rs; totBud+=bud(y,m,rs).tot;
+      if(DATA[y]?.[m]?.roomsSold) actCount++;
+      else if(PROJ[y]?.[m]?.roomsSold) fcCount++;
     }
-    html+=`<td style="color:var(--violet);font-family:var(--ff-m)">${totRs?totRs.toLocaleString():'—'}</td>
+    html+=`<td style="color:var(--violet);font-family:var(--ff-m)">
+             ${totRs?totRs.toLocaleString():'—'}
+             ${actCount||fcCount?`<div style="font-size:8px;font-weight:400;margin-top:2px;line-height:1.4">
+               ${actCount?`<span style="color:var(--teal)">${actCount} actual</span>`:''}
+               ${actCount&&fcCount?` · `:''}
+               ${fcCount?`<span style="color:#f5c542">${fcCount} forecast</span>`:''}
+             </div>`:''}
+           </td>
            <td style="color:var(--amber);font-family:var(--ff-m)">${totBud?fN(totBud):'—'}</td>`;
   });
   html+='</tr></tbody>';
