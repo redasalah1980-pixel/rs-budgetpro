@@ -1303,11 +1303,11 @@ function doLogin(){
   </div>
 
   <!-- Projection Table -->
-  <div class="notice amber" style="margin-bottom:14px">
+  <div class="notice amber" id="proj-howto" style="margin-bottom:14px;display:none">
     <strong>How to use:</strong> Enter expected Rooms Sold per month for each future year. Budget columns auto-calculate from the prior year's CPOR. Leave cells blank to use the prior year's monthly rooms sold as default.
   </div>
   <!-- Actual vs Forecast Legend -->
-  <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap;padding:0 2px">
+  <div id="proj-legend" style="display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap;padding:0 2px;display:none">
     <div style="font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Legend:</div>
     <div style="display:flex;align-items:center;gap:5px">
       <div style="width:8px;height:8px;border-radius:50%;background:var(--teal)"></div>
@@ -1324,7 +1324,7 @@ function doLogin(){
       <span style="font-size:10px;color:#4a5568">Empty — not entered yet</span>
     </div>
   </div>
-  <div class="proj-wrap">
+  <div class="proj-wrap" id="proj-wrap-div" style="display:none">
     <table class="proj-table" id="proj-table"></table>
   </div>
 </div>
@@ -2965,6 +2965,13 @@ function pushProjection(){
 function buildProjTable(){
   const futureYears=YEARS.filter(y=>y>=2025);
   const tbl=document.getElementById('proj-table');
+  // Show projection elements
+  ['proj-howto','proj-wrap-div'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='';
+  });
+  const legend=document.getElementById('proj-legend');
+  if(legend) legend.style.display='flex';
 
   // Build header
   let html=`<thead><tr>
