@@ -5222,7 +5222,7 @@ async function signOut(){
   const ok = await modalSignOut();
   if(!ok) return;
   saveAll();
-  auth.signOut().catch(()=>{});
+  // Note: system uses simple auth, not Firebase Auth users - no need to call auth.signOut()
   const ls = document.getElementById('login-screen');
   if(ls){
     ls.style.display='flex';
