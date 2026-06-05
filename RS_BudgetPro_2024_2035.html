@@ -1206,7 +1206,7 @@ function doLogin(){
   <div class="mgrid" id="mgrid"></div>
 
   <!-- ══ EXPENSES P&L SCHEDULE ══ -->
-  <div id="entry-pl-section" style="margin-top:28px">
+  <div id="entry-pl-section" style="margin-top:28px;display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
       <div>
         <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f5c542">📊 Expenses P&amp;L Schedule</div>
@@ -2594,7 +2594,13 @@ function buildEntry(){
   grid.innerHTML='';
   if(!DATA[activeY])DATA[activeY]={};
   for(let m=0;m<12;m++) grid.appendChild(makeCard(activeY,m));
-  setTimeout(buildEntryPL,100);
+  // Only build P&L if year has data
+  const hasData=Object.values(DATA[activeY]||{}).some(m=>m.roomsSold||m.laA||m.opA||m.prA);
+  if(hasData) setTimeout(buildEntryPL,150);
+  else {
+    const s=document.getElementById('entry-pl-section');
+    if(s) s.style.display='none';
+  }
 }
 
 function makeCard(y,m){
@@ -8717,6 +8723,9 @@ function exportRevPLExcel(){
 function buildEntryPL(){
   const el = document.getElementById('entry-pl-table');
   if(!el) return;
+  // Show the section now that we have data
+  const section = document.getElementById('entry-pl-section');
+  if(section) section.style.display = 'block';
   const y = activeY;
   const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const MF = ['January','February','March','April','May','June',
