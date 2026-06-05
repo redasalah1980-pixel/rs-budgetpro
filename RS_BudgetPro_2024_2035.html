@@ -7532,7 +7532,7 @@ function buildSmartTab(){
         box-shadow:0 0 8px rgba(${rgb},.5);transition:width .5s ease"></div>
     </div>`;
 
-  const jumpBtn=(label,tab)=>`<button onclick="goTab(document.querySelector('[onclick*=\\'${tab}\\']'),\\'${tab}\\')"
+  const jumpBtn=(label,tab)=>`<button onclick="navToEntry(${m})""
     style="padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;
     cursor:pointer;border:1px solid rgba(0,212,184,.4);color:#00d4b8;background:rgba(0,212,184,.1)"
     onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">
@@ -7601,12 +7601,8 @@ function buildSmartTab(){
       jumpBtn('Trends & Efficiency','trends')):''}
     ${missingMonths.length>0?alertRow('⚠️','#f5c542','245,197,66',
       `Missing Data — ${missingMonths.length} month${missingMonths.length>1?'s':''} not entered`,
-      `${missingMonths.map(m=>MF[m]).join(', ')} ${missingMonths.length>1?'have':'has'} no actuals entered. Missing months make forecasts inaccurate.`,
-      `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${missingMonths.map(m=>`
-        <button onclick="goTab(document.querySelector('[onclick*=entry]'),\\'entry\\');setTimeout(()=>{document.querySelector('[data-m=\\'${m}\\']')?.scrollIntoView({behavior:\\'smooth\\'})},200)"
-          style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
-            border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1)">
-          📋 ${MS[m]}</button>`).join('')}</div>`):''}
+      `${missingMonths.map(m=>MF[m]).join(', ')} ${missingMonths.length>1?'have':'has'} no actuals entered. Use the <strong style="color:#f5c542">Data Entry Reminders</strong> section below to jump directly.`,
+      ''):''}
     ${isBudgetSeason?alertRow('📅','#a78bfa','167,139,250',
       `Budget Season — Time to Plan ${nextY}`,
       `It is ${MF[curM]}. Standard budget planning starts now. Enter projected rooms for remaining ${smartY} months in Projection Planner, then export ${nextY} Budget PDF from Multi-Year Overview.`,
@@ -7780,7 +7776,7 @@ function buildSmartTab(){
         ['🔮 Projection Planner','project','a78bfa','167,139,250'],
         ['📊 Multi-Year Overview','overview','00d4b8','0,212,184'],
         ['⚙ Budget Adjustments','increases','ffb347','255,179,71'],
-      ].map(([lbl,tab,col,rgb])=>`<button onclick="goTab(document.querySelector('[onclick*=\\'${tab}\\']'),\\'${tab}\\')"
+      ].map(([lbl,tab,col,rgb])=>`<button onclick="navToTab('${tab}')""
         style="padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
           border:1px solid rgba(${rgb},.4);color:#${col};background:rgba(${rgb},.08)"
         onmouseover="this.style.background='rgba(${rgb},.18)'"
@@ -7793,7 +7789,7 @@ function buildSmartTab(){
     ${secHdr('📈','Price Increase Impact','#ffb347','255,179,71','How supplier increases affect your budget')}
     ${activeIncs.length===0?`<div style="background:rgba(100,116,139,.06);border:1px solid rgba(100,116,139,.2);border-radius:8px;padding:12px 14px;font-size:11px;color:#64748b">
       No price increases configured for ${smartY}. Go to Budget Adjustments to add supplier increases.
-      <button onclick="goTab(document.querySelector('[onclick*=\\'increases\\']'),\\'increases\\')"
+      <button onclick="navToEntry(${m})""
         style="margin-left:10px;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;
           border:1px solid rgba(255,179,71,.4);color:#ffb347;background:rgba(255,179,71,.1)">→ Budget Adjustments</button>
     </div>`:activeIncs.map(inc=>{
@@ -7830,7 +7826,7 @@ function buildSmartTab(){
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${missingMonths.map(m=>`<button
-          onclick="goTab(document.querySelector('[onclick*=\\'entry\\']'),\\'entry\\');setTimeout(()=>document.querySelector('[data-m=\\'${m}\\']')?.scrollIntoView({behavior:'smooth'}),300)"
+          onclick="navToEntry(${m})""
           style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
             border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1)"
           onmouseover="this.style.background='rgba(245,197,66,.2)'"
@@ -9425,6 +9421,24 @@ function modalDeleteAll(){
     confirmText:'DELETE EVERYTHING', cancelText:'Cancel — Keep Data',
     confirmCol:'#ff6b6b', confirmRgb:'255,107,107'
   });
+}
+
+
+function navToEntry(month){
+  // Navigate to Monthly Entry and scroll to specific month card
+  const entryTab = document.querySelector('.ntab[onclick*=\'entry\']');
+  if(entryTab) goTab(entryTab, 'entry');
+  if(month !== undefined){
+    setTimeout(()=>{
+      const card = document.querySelector(`.mc[data-m="${month}"]`);
+      if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 400);
+  }
+}
+
+function navToTab(tabId){
+  const tab = document.querySelector(`.ntab[onclick*='${tabId}']`);
+  if(tab) goTab(tab, tabId);
 }
 
 /* ── INIT ── */
