@@ -1207,16 +1207,53 @@ function doLogin(){
   <div class="ph">
     <div class="pt">Projection Planner <span>Enter expected rooms sold → budget auto-projects using prior-year CPOR</span></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <select id="clear-proj-year" style="background:#212d42;border:1px solid rgba(255,107,107,.3);border-radius:20px;color:#ff6b6b;font-family:'Outfit',sans-serif;font-size:11px;padding:5px 10px">
-        <option value="">🗑 Clear a year...</option>
-        <option value="2024">Clear 2024</option><option value="2025">Clear 2025</option>
-        <option value="2026">Clear 2026</option><option value="2027">Clear 2027</option>
-        <option value="2028">Clear 2028</option><option value="2029">Clear 2029</option>
-        <option value="2030">Clear 2030</option><option value="2031">Clear 2031</option>
-        <option value="2032">Clear 2032</option><option value="2033">Clear 2033</option>
-        <option value="2034">Clear 2034</option><option value="2035">Clear 2035</option>
-      </select>
-      <button onclick="clearProjYear()" class="pill" style="border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.1)" onmouseover="this.style.background='rgba(255,107,107,.2)'" onmouseout="this.style.background='rgba(255,107,107,.1)'">✕ Clear Year</button>
+      <!-- Clear Year -->
+      <div style="display:flex;align-items:center;gap:5px;background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:20px;padding:3px 8px 3px 10px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#ff6b6b;white-space:nowrap">Full Year</span>
+        <select id="clear-proj-year" style="background:transparent;border:none;color:#ff6b6b;font-family:'Outfit',sans-serif;font-size:11px;padding:2px 4px;outline:none;cursor:pointer">
+          <option value="">Year...</option>
+          <option value="2024">2024</option><option value="2025">2025</option>
+          <option value="2026">2026</option><option value="2027">2027</option>
+          <option value="2028">2028</option><option value="2029">2029</option>
+          <option value="2030">2030</option><option value="2031">2031</option>
+          <option value="2032">2032</option><option value="2033">2033</option>
+          <option value="2034">2034</option><option value="2035">2035</option>
+        </select>
+        <button onclick="clearProjYear()"
+          style="padding:3px 10px;border-radius:14px;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;
+            border:1px solid rgba(255,107,107,.5);color:#ff6b6b;background:rgba(255,107,107,.12);cursor:pointer;white-space:nowrap"
+          onmouseover="this.style.background='rgba(255,107,107,.25)'" onmouseout="this.style.background='rgba(255,107,107,.12)'">
+          🗑 Clear
+        </button>
+      </div>
+      <!-- Clear Month -->
+      <div style="display:flex;align-items:center;gap:5px;background:#1a2236;border:1px solid rgba(255,179,71,.2);border-radius:20px;padding:3px 8px 3px 10px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#ffb347;white-space:nowrap">One Month</span>
+        <select id="clear-proj-month-year" style="background:transparent;border:none;color:#ffb347;font-family:'Outfit',sans-serif;font-size:11px;padding:2px 4px;outline:none;cursor:pointer">
+          <option value="">Year...</option>
+          <option value="2024">2024</option><option value="2025">2025</option>
+          <option value="2026">2026</option><option value="2027">2027</option>
+          <option value="2028">2028</option><option value="2029">2029</option>
+          <option value="2030">2030</option><option value="2031">2031</option>
+          <option value="2032">2032</option><option value="2033">2033</option>
+          <option value="2034">2034</option><option value="2035">2035</option>
+        </select>
+        <select id="clear-proj-month" style="background:transparent;border:none;color:#ffb347;font-family:'Outfit',sans-serif;font-size:11px;padding:2px 4px;outline:none;cursor:pointer">
+          <option value="">Month...</option>
+          <option value="0">January</option><option value="1">February</option>
+          <option value="2">March</option><option value="3">April</option>
+          <option value="4">May</option><option value="5">June</option>
+          <option value="6">July</option><option value="7">August</option>
+          <option value="8">September</option><option value="9">October</option>
+          <option value="10">November</option><option value="11">December</option>
+        </select>
+        <button onclick="clearProjMonth()"
+          style="padding:3px 10px;border-radius:14px;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;
+            border:1px solid rgba(255,179,71,.5);color:#ffb347;background:rgba(255,179,71,.1);cursor:pointer;white-space:nowrap"
+          onmouseover="this.style.background='rgba(255,179,71,.25)'" onmouseout="this.style.background='rgba(255,179,71,.1)'">
+          🗑 Clear
+        </button>
+      </div>
       <button class="pill pill-gold"   onclick="buildForecast()">⟳ Refresh Forecast</button>
       <button class="pill pill-violet" onclick="pushProjection()">⬆ Push to Entry Tab</button>
     </div>
@@ -7075,18 +7112,40 @@ function clearProjYear(){
   const sel = document.getElementById('clear-proj-year');
   const y = parseInt(sel.value);
   if(!y){ toast('⚠ Select a year to clear first'); return; }
-  if(!confirm(`Clear ALL projection rooms for ${y}? This cannot be undone.`)) return;
-  // Delete all projection entries for this year
+  if(!confirm(`Clear ALL 12 months of projection rooms for ${y}?\nThis cannot be undone.`)) return;
   delete PROJ[y];
-  // Also update all input fields visually
   document.querySelectorAll(`[data-fy="${y}"]`).forEach(el=>{
-    el.value='';
-    el.classList.remove('filled');
+    el.value=''; el.classList.remove('filled');
   });
-  sel.value = '';
-  saveAll(); // immediately sync to Firebase
-  buildForecast();
-  toast(`✓ ${y} projections cleared and synced to Firebase`);
+  sel.value='';
+  saveAll();
+  buildProject();
+  toast(`✓ All ${y} projections cleared & synced to Firebase`);
+}
+
+function clearProjMonth(){
+  const selY = document.getElementById('clear-proj-month-year');
+  const selM = document.getElementById('clear-proj-month');
+  const y = parseInt(selY.value);
+  const m = parseInt(selM.value);
+  const MS=['January','February','March','April','May','June',
+            'July','August','September','October','November','December'];
+  if(!y){ toast('⚠ Select a year first'); return; }
+  if(isNaN(m)||selM.value===''){ toast('⚠ Select a month first'); return; }
+  if(!confirm(`Clear projection rooms for ${MS[m]} ${y}?`)) return;
+  // Delete just this month's projection entry
+  if(PROJ[y]&&PROJ[y][m]){
+    delete PROJ[y][m].roomsSold;
+    if(Object.keys(PROJ[y][m]).length===0) delete PROJ[y][m];
+    if(Object.keys(PROJ[y]||{}).length===0) delete PROJ[y];
+  }
+  // Clear the input field visually
+  const inp = document.querySelector(`[data-fy="${y}"][data-fm="${m}"]`);
+  if(inp){ inp.value=''; inp.classList.remove('filled'); }
+  selY.value=''; selM.value='';
+  saveAll();
+  buildProject();
+  toast(`✓ ${MS[m]} ${y} projection cleared & synced to Firebase`);
 }
 
 /* ── INIT ── */
