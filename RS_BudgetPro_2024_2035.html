@@ -1223,6 +1223,31 @@ function doLogin(){
   </div>
   <div id="ys-strip"></div>
   <div class="mgrid" id="mgrid"></div>
+
+  <!-- ══ EXPENSES P&L SCHEDULE ══ -->
+  <div id="entry-pl-section" style="margin-top:28px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f5c542">📊 Expenses P&amp;L Schedule</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">Monthly actual vs budget · Full year totals · All 3 expense lines</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="printEntryPL()"
+          style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+            border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.08);cursor:pointer"
+          onmouseover="this.style.background='rgba(255,107,107,.18)'" onmouseout="this.style.background='rgba(255,107,107,.08)'">
+          🖨 Print PDF
+        </button>
+        <button onclick="exportEntryPLExcel()"
+          style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+            border:1px solid rgba(163,230,53,.4);color:#a3e635;background:rgba(163,230,53,.08);cursor:pointer"
+          onmouseover="this.style.background='rgba(163,230,53,.18)'" onmouseout="this.style.background='rgba(163,230,53,.08)'">
+          📊 Export Excel
+        </button>
+      </div>
+    </div>
+    <div id="entry-pl-table"></div>
+  </div>
 </div>
 
 <!-- ══ TAB: PROJECTION PLANNER ══ -->
@@ -2289,6 +2314,41 @@ function doLogin(){
     </button>
   </div>
   <div class="mgrid" id="rev-grid"></div>
+
+  <!-- ══ P&L REVENUE SCHEDULE ══ -->
+  <div id="rev-pl-section" style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f5c542">📊 Revenue P&amp;L Schedule</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">Monthly figures · Full year totals · Actual vs Budget</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="pl-year-sel" onchange="buildRevPL()"
+          style="background:#212d42;border:1px solid rgba(245,197,66,.3);border-radius:8px;color:#f5c542;
+            font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;padding:7px 12px;outline:none">
+          <option value="2025">2025</option><option value="2026">2026</option>
+          <option value="2027">2027</option><option value="2028">2028</option>
+          <option value="2029">2029</option><option value="2030">2030</option>
+          <option value="2031">2031</option><option value="2032">2032</option>
+          <option value="2033">2033</option><option value="2034">2034</option>
+          <option value="2035">2035</option>
+        </select>
+        <button onclick="printRevPL()"
+          style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+            border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.08);cursor:pointer"
+          onmouseover="this.style.background='rgba(255,107,107,.18)'" onmouseout="this.style.background='rgba(255,107,107,.08)'">
+          🖨 Print PDF
+        </button>
+        <button onclick="exportRevPLExcel()"
+          style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+            border:1px solid rgba(163,230,53,.4);color:#a3e635;background:rgba(163,230,53,.08);cursor:pointer"
+          onmouseover="this.style.background='rgba(163,230,53,.18)'" onmouseout="this.style.background='rgba(163,230,53,.08)'">
+          📊 Export Excel
+        </button>
+      </div>
+    </div>
+    <div id="rev-pl-table"></div>
+  </div>
 </div>
 
 <!-- Revenue Budget Modal -->
@@ -2553,6 +2613,7 @@ function buildEntry(){
   grid.innerHTML='';
   if(!DATA[activeY])DATA[activeY]={};
   for(let m=0;m<12;m++) grid.appendChild(makeCard(activeY,m));
+  setTimeout(buildEntryPL,100);
 }
 
 function makeCard(y,m){
@@ -2906,14 +2967,92 @@ function hProjTable(el){
   const y=+el.dataset.py,m=+el.dataset.pm;
   if(!PROJ[y])PROJ[y]={};
   if(!PROJ[y][m])PROJ[y][m]={};
-  const v=el.value===''?undefined:parseFloat(el.value);
-  PROJ[y][m].roomsSold=v;
-  el.classList.toggle('filled',v!==undefined);
-  // update budget cell next to it
-  const rooms=v||0;
-  const b=bud(y,m,rooms);
-  const next=el.closest('td').nextElementSibling;
-  if(next){next.innerHTML=`${b.tot?fN(b.tot):'—'}<div class="proj-cpor">${rooms&&b.tot?'CPOR:'+(b.tot/rooms).toFixed(2):''}</div>`}
+
+  const rawVal = el.value.trim();
+  const v = rawVal==='' ? null : parseFloat(rawVal);
+
+  // Save to PROJ — properly delete if empty
+  if(v===null||isNaN(v)){
+    delete PROJ[y][m].roomsSold;
+    if(Object.keys(PROJ[y][m]).length===0) delete PROJ[y][m];
+    if(PROJ[y]&&Object.keys(PROJ[y]).length===0) delete PROJ[y];
+  } else {
+    PROJ[y][m].roomsSold = v;
+  }
+
+  const rooms = v||0;
+  el.classList.toggle('filled', !!rooms);
+
+  // ── Update input color instantly ──
+  const isActual = !!DATA[y]?.[m]?.roomsSold;
+  const isForecast = !isActual && !!rooms;
+  el.style.color = isForecast ? '#f5c542' : 'var(--text1)';
+
+  // ── Update badge instantly ──
+  const td = el.closest('td');
+  let badge = td.querySelector('.proj-badge');
+  if(!badge){
+    badge = document.createElement('div');
+    badge.className = 'proj-badge';
+    td.appendChild(badge);
+  }
+  if(isForecast){
+    badge.innerHTML = `<div style="display:flex;align-items:center;gap:3px;margin-top:2px">
+      <div style="width:5px;height:5px;border-radius:50%;background:#f5c542;flex-shrink:0"></div>
+      <span style="font-size:8px;color:#f5c542;font-weight:700;letter-spacing:.3px">forecast</span>
+    </div>`;
+    td.style.borderLeft = '2px solid rgba(245,197,66,.2)';
+    td.style.background = 'rgba(245,197,66,.04)';
+  } else if(!rooms){
+    badge.innerHTML = '';
+    td.style.borderLeft = '';
+    td.style.background = '';
+  }
+
+  // ── Update budget cell next to it ──
+  const b = bud(y,m,rooms);
+  const next = td.nextElementSibling;
+  if(next){
+    next.innerHTML = `${b.tot?fN(b.tot):'—'}<div class="proj-cpor">${rooms&&b.tot?'CPOR:'+(b.tot/rooms).toFixed(2):''}</div>`;
+  }
+
+  // ── Update year total row ──
+  const tbody = td.closest('tbody');
+  if(tbody){
+    const totalRow = tbody.querySelector('.proj-total-row');
+    if(totalRow){
+      // Recalculate year total for this year's column
+      const allRows = tbody.querySelectorAll('tr:not(.proj-total-row)');
+      let totRs=0, totBud=0, actCount=0, fcCount=0;
+      for(let mm=0;mm<12;mm++){
+        const rs = DATA[y]?.[mm]?.roomsSold||PROJ[y]?.[mm]?.roomsSold||0;
+        totRs+=rs; totBud+=bud(y,mm,rs).tot;
+        if(DATA[y]?.[mm]?.roomsSold) actCount++;
+        else if(PROJ[y]?.[mm]?.roomsSold) fcCount++;
+      }
+      // Find the right total cell for this year column
+      const allYearCols = document.querySelectorAll('#proj-table thead tr th.yr-h');
+      let yIdx = -1;
+      allYearCols.forEach((th,i)=>{ if(th.textContent.includes(String(y))) yIdx=i; });
+      if(yIdx>=0){
+        const totalCells = totalRow.querySelectorAll('td');
+        const tc = totalCells[yIdx*2+1]; // +1 for month label column
+        if(tc){
+          tc.innerHTML = `${totRs?totRs.toLocaleString():'—'}
+            ${actCount||fcCount?`<div style="font-size:8px;font-weight:400;margin-top:2px;line-height:1.4">
+              ${actCount?`<span style="color:var(--teal)">${actCount} actual</span>`:''}
+              ${actCount&&fcCount?' · ':''}
+              ${fcCount?`<span style="color:#f5c542">${fcCount} forecast</span>`:''}
+            </div>`:''}`;
+        }
+      }
+    }
+  }
+
+  // ── Update Year Completion Forecast panel ──
+  const baseY = activeY > 2024 ? activeY-1 : activeY;
+  buildYearForecastPanel(baseY);
+
   autoSave();
 }
 
@@ -3671,6 +3810,7 @@ function buildRevTab(){
   buildRevYearPills();
   buildRevSummary();
   buildRevGrid();
+  setTimeout(buildRevPL,100);
 }
 
 function buildRevYearPills(){
@@ -3681,7 +3821,7 @@ function buildRevYearPills(){
     const b=document.createElement('button');
     b.className='yr'+(revYear===y?' active':'');
     b.textContent=y;
-    b.onclick=()=>{revYear=y;buildRevTab()};
+    b.onclick=()=>{revYear=y;buildRevTab();const sel=document.getElementById('pl-year-sel');if(sel)sel.value=y;};
     el.appendChild(b);
   });
 }
@@ -3731,10 +3871,10 @@ function buildRevGrid(){
 function makeRevCard(y,m){
   const r=REV[y]?.[m]||{};
   const b=REV_BUD[y]?.[m]||{};
-  const laA=r.laA||0, valA=r.valA||0;
-  const laB=b.laB||0,  valB=b.valB||0;
-  const totA=laA+valA, totB=laB+valB;
-  const hasData=!!(laA||valA);
+  const laA=r.laA||0, valA=r.valA||0, othA=r.othA||0;
+  const laB=b.laB||0, valB=b.valB||0, othB=b.othB||0;
+  const totA=laA+valA+othA, totB=laB+valB+othB;
+  const hasData=!!(laA||valA||othA);
 
   const laPct =laB ?Math.min(200,laA/laB*100):0;
   const valPct=valB?Math.min(200,valA/valB*100):0;
@@ -3852,6 +3992,33 @@ function makeRevCard(y,m){
           <input type="number" placeholder="0.00" value="${b.valB||''}"
             data-f="valB" class="${b.valB?'filled':''}"
             style="${b.valB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
+            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
+        </div>
+      </div>
+    </div>
+
+    <!-- Others Revenue (FS Doha only) -->
+    <div style="background:rgba(163,230,53,.04);border:1px solid rgba(163,230,53,.15);border-radius:10px;padding:12px 14px">
+      <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a3e635;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span>📎</span> Others Revenue — FS Doha
+          <span style="font-size:9px;color:#4a5568;font-weight:400">(supports negative)</span>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:${(r.othA||0)<0?'#ff6b6b':'#a3e635'}">${r.othA?(r.othA).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:9px;font-weight:700;color:var(--teal);display:block;margin-bottom:4px">ACTUAL <span style="color:#4a5568;font-weight:400">(− for negative)</span></label>
+          <input type="number" placeholder="0" data-f="othA"
+            class="${r.othA!==undefined&&r.othA!==0?'rev-inp filled':'rev-inp'}" value="${r.othA!==undefined&&r.othA!==0?r.othA:''}"
+            style="${r.othA?'color:var(--teal);border-color:rgba(0,212,184,.3)':''}"
+            oninput="hRevAct(this,${y},${m})" onblur="hRevActBlur(this,${y},${m})">
+        </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;color:var(--amber);display:block;margin-bottom:4px">BUDGET</label>
+          <input type="number" placeholder="0" data-f="othB"
+            class="${b.othB?'rev-inp filled':'rev-inp'}" value="${b.othB||''}"
+            style="${b.othB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
             oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
         </div>
       </div>
@@ -8041,6 +8208,737 @@ function buildRevCompletionPanel(baseYear, lastActM){
         </div>`:''}
       </div>
     </div>`;
+}
+
+
+/* ════════════════════════════════════════
+   REVENUE P&L SCHEDULE
+   ════════════════════════════════════════ */
+
+function buildRevPL(){
+  const el = document.getElementById('rev-pl-table');
+  if(!el) return;
+  const y = parseInt(document.getElementById('pl-year-sel')?.value || revYear);
+  const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MF = ['January','February','March','April','May','June',
+              'July','August','September','October','November','December'];
+  const q = (v,dec=2) => v!==0&&v!==undefined&&v!==null ? v.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}) : '—';
+  const qn = v => v<0 ? `(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})` : q(v);
+  const pct = (a,tot) => tot ? (a/tot*100).toFixed(1)+'%' : '—';
+
+  // Gather data for all 12 months
+  const rows = [];
+  let totLaA=0,totLaB=0,totValA=0,totValB=0,totOthA=0,totOthB=0;
+  for(let m=0;m<12;m++){
+    const r=REV[y]?.[m]||{}, b=REV_BUD[y]?.[m]||{};
+    const laA=r.laA||0, laB=b.laB||0;
+    const valA=r.valA||0, valB=b.valB||0;
+    const othA=r.othA||0, othB=b.othB||0;
+    const totA=laA+valA+othA, totB=laB+valB+othB;
+    rows.push({m,laA,laB,valA,valB,othA,othB,totA,totB});
+    totLaA+=laA; totLaB+=laB;
+    totValA+=valA; totValB+=valB;
+    totOthA+=othA; totOthB+=othB;
+  }
+  const grandTotA=totLaA+totValA+totOthA;
+  const grandTotB=totLaB+totValB+totOthB;
+
+  // Header months
+  const mHeaders = MS.map(m=>`<th style="background:#1e3a5f;color:#94a3b8;font-size:9px;font-weight:700;
+    text-align:right;padding:7px 8px;white-space:nowrap;min-width:70px">${m}</th>`).join('');
+
+  const thStyle = (c) => `style="background:#1e3a5f;color:${c};font-size:9px;font-weight:700;text-align:right;padding:7px 10px;white-space:nowrap"`;
+
+  // Build month cells for a line
+  const mCells = (vals, colFn, isBold=false) => vals.map((v,i)=>{
+    const col = colFn(v,i);
+    const fw = isBold ? 'font-weight:700;' : '';
+    const disp = v<0 ? `<span style="color:#ff6b6b">(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>` : (v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—');
+    return `<td style="text-align:right;padding:6px 8px;font-family:'DM Mono',monospace;font-size:11px;${fw}color:${col}">${disp}</td>`;
+  }).join('');
+
+  const varCell = (a,b) => {
+    const v=a-b;
+    const col = v>0?'#00d4b8':v<0?'#ff6b6b':'#64748b';
+    const disp = v<0?`(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})`:v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+    return `<td style="text-align:right;padding:6px 8px;font-family:'DM Mono',monospace;font-size:11px;color:${col};font-weight:600">${disp}</td>`;
+  };
+
+  const buildDataRow = (label, labelCol, actVals, budVals, totA, totB) => {
+    const actCells = actVals.map((v,i)=>{
+      const disp = v<0?`<span style="color:#ff6b6b">(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`:(v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—');
+      return `<td style="text-align:right;padding:6px 8px;font-family:'DM Mono',monospace;font-size:11px;color:${v<0?'#ff6b6b':labelCol}">${disp}</td>`;
+    }).join('');
+    const budCells = budVals.map(v=>`<td style="text-align:right;padding:6px 8px;font-family:'DM Mono',monospace;font-size:11px;color:#64748b">${v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>`).join('');
+    const varCells = actVals.map((a,i)=>varCell(a,budVals[i])).join('');
+    const totActDisp = totA<0?`<span style="color:#ff6b6b">(${Math.abs(totA).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`:totA?totA.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+    const totVr = totA-totB;
+    const totVrDisp = totVr<0?`<span style="color:#ff6b6b">(${Math.abs(totVr).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`:totVr?`<span style="color:#00d4b8">+${totVr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'—';
+    return `
+    <!-- ${label} Actual -->
+    <tr style="background:rgba(255,255,255,.01)" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='rgba(255,255,255,.01)'">
+      <td style="padding:6px 12px;font-size:11px;font-weight:600;color:${labelCol};white-space:nowrap">${label}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#64748b;white-space:nowrap">Actual</td>
+      ${actCells}
+      <td style="text-align:right;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${totA<0?'#ff6b6b':labelCol};border-left:1px solid #2a3550">${totActDisp}</td>
+    </tr>
+    <!-- ${label} Budget -->
+    <tr style="background:transparent" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+      <td style="padding:3px 12px 6px;font-size:10px;color:#4a5568"></td>
+      <td style="padding:3px 8px 6px;font-size:10px;color:#64748b;white-space:nowrap">Budget</td>
+      ${budCells}
+      <td style="text-align:right;padding:3px 10px 6px;font-family:'DM Mono',monospace;font-size:11px;color:#64748b;border-left:1px solid #2a3550">${totB?totB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
+    </tr>
+    <!-- ${label} Variance -->
+    <tr style="background:transparent;border-bottom:1px solid #2a3550">
+      <td style="padding:3px 12px 8px;font-size:10px;color:#4a5568"></td>
+      <td style="padding:3px 8px 8px;font-size:10px;color:#64748b;white-space:nowrap">Variance</td>
+      ${varCells}
+      <td style="text-align:right;padding:3px 10px 8px;font-family:'DM Mono',monospace;font-size:11px;border-left:1px solid #2a3550">${totVrDisp}</td>
+    </tr>`;
+  };
+
+  const laActVals  = rows.map(r=>r.laA),  laBudVals  = rows.map(r=>r.laB);
+  const valActVals = rows.map(r=>r.valA), valBudVals = rows.map(r=>r.valB);
+  const othActVals = rows.map(r=>r.othA), othBudVals = rows.map(r=>r.othB);
+  const totActVals = rows.map(r=>r.totA), totBudVals = rows.map(r=>r.totB);
+
+  // Total rows
+  const totActCells = totActVals.map(v=>{
+    const disp=v<0?`<span style="color:#ff6b6b">(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`:v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+    return `<td style="text-align:right;padding:8px;font-family:'DM Mono',monospace;font-size:12px;font-weight:800;color:#00d4b8">${disp}</td>`;
+  }).join('');
+  const totBudCells = totBudVals.map(v=>`<td style="text-align:right;padding:8px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:#ffb347">${v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>`).join('');
+  const totVarCells = totActVals.map((a,i)=>{
+    const v=a-totBudVals[i];
+    const col=v>0?'#00d4b8':v<0?'#ff6b6b':'#64748b';
+    const disp=v<0?`(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})`:v?`+${v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`:'—';
+    return `<td style="text-align:right;padding:8px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${col}">${disp}</td>`;
+  }).join('');
+
+  const grandVr = grandTotA-grandTotB;
+
+  el.innerHTML=`
+  <div style="background:#0f1a2e;border:1px solid #2a3550;border-radius:12px;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);padding:14px 18px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542">
+          Revenue P&amp;L Schedule — ${y}
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px">
+          Four Seasons Hotel Doha · Laundry &amp; Valet · Monthly Actual vs Budget
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:11px">
+        <div><span style="color:rgba(255,255,255,.4)">Total Actual: </span><strong style="color:#00d4b8;font-family:'DM Mono',monospace">${grandTotA<0?'('+Math.abs(grandTotA).toLocaleString('en-US',{minimumFractionDigits:2})+')':(grandTotA||0).toLocaleString('en-US',{minimumFractionDigits:2})}</strong></div>
+        <div><span style="color:rgba(255,255,255,.4)">Budget: </span><strong style="color:#ffb347;font-family:'DM Mono',monospace">${(grandTotB||0).toLocaleString('en-US',{minimumFractionDigits:2})}</strong></div>
+        <div><span style="color:rgba(255,255,255,.4)">Variance: </span><strong style="color:${grandVr>=0?'#00d4b8':'#ff6b6b'};font-family:'DM Mono',monospace">${grandVr<0?'('+Math.abs(grandVr).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandVr>0?'+'+grandVr.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</strong></div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:1100px">
+        <thead>
+          <tr style="background:#1a2a4a">
+            <th style="background:#1a2a4a;color:#64748b;font-size:9px;font-weight:700;text-align:left;padding:8px 12px;white-space:nowrap;min-width:160px">Revenue Line</th>
+            <th style="background:#1a2a4a;color:#64748b;font-size:9px;font-weight:700;text-align:left;padding:8px 8px;min-width:55px"></th>
+            ${mHeaders}
+            <th style="background:#0f172a;color:#f5c542;font-size:9px;font-weight:700;text-align:right;padding:8px 10px;white-space:nowrap;border-left:1px solid #2a3550;min-width:90px">FULL YEAR</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${buildDataRow('🏨 Laundry Revenue','#38bdf8',laActVals,laBudVals,totLaA,totLaB)}
+          ${buildDataRow('💎 Pearl Valet Revenue','#a78bfa',valActVals,valBudVals,totValA,totValB)}
+          ${buildDataRow('📎 Others','#a3e635',othActVals,othBudVals,totOthA,totOthB)}
+
+          <!-- Divider -->
+          <tr><td colspan="15" style="background:linear-gradient(90deg,#f5c542,#00d4b8);height:1px;padding:0"></td></tr>
+
+          <!-- Total Actual -->
+          <tr style="background:rgba(0,212,184,.06)">
+            <td style="padding:9px 12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#00d4b8">TOTAL REVENUES</td>
+            <td style="padding:9px 8px;font-size:10px;color:#64748b">Actual</td>
+            ${totActCells}
+            <td style="text-align:right;padding:9px 10px;font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:#00d4b8;border-left:1px solid #2a3550">${grandTotA<0?'('+Math.abs(grandTotA).toLocaleString('en-US',{minimumFractionDigits:2})+')':(grandTotA||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+          </tr>
+          <!-- Total Budget -->
+          <tr style="background:rgba(255,179,71,.04)">
+            <td style="padding:4px 12px 9px;font-size:10px;color:#4a5568"></td>
+            <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Budget</td>
+            ${totBudCells}
+            <td style="text-align:right;padding:4px 10px 9px;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:#ffb347;border-left:1px solid #2a3550">${(grandTotB||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+          </tr>
+          <!-- Total Variance -->
+          <tr style="background:rgba(245,197,66,.04);border-top:1px solid rgba(245,197,66,.15)">
+            <td style="padding:4px 12px 9px;font-size:10px;color:#4a5568"></td>
+            <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Variance</td>
+            ${totVarCells}
+            <td style="text-align:right;padding:4px 10px 9px;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${grandVr>=0?'#00d4b8':'#ff6b6b'};border-left:1px solid #2a3550">${grandVr<0?'('+Math.abs(grandVr).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandVr>0?'+'+grandVr.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="padding:10px 16px;border-top:1px solid #2a3550;display:flex;gap:14px;font-size:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#00d4b8"></div><span style="color:#64748b">Actual</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#ffb347"></div><span style="color:#64748b">Budget</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#00d4b8"></div><span style="color:#64748b">Positive variance = above budget</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#ff6b6b"></div><span style="color:#64748b">Negative shown in (brackets)</span></div>
+    </div>
+  </div>`;
+}
+
+function printRevPL(){
+  const y = parseInt(document.getElementById('pl-year-sel')?.value || revYear);
+  const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const q = v => v!==0&&v!==undefined&&v!==null ? v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  const qn = v => v<0 ? `(${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})` : q(v);
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const LOGO = document.querySelector('[alt="RS Logo"]')?.src || '';
+
+  let rows=[], totLaA=0,totLaB=0,totValA=0,totValB=0,totOthA=0,totOthB=0;
+  for(let m=0;m<12;m++){
+    const r=REV[y]?.[m]||{}, b=REV_BUD[y]?.[m]||{};
+    const laA=r.laA||0,laB=b.laB||0,valA=r.valA||0,valB=b.valB||0,othA=r.othA||0,othB=b.othB||0;
+    rows.push({m,laA,laB,valA,valB,othA,othB,totA:laA+valA+othA,totB:laB+valB+othB});
+    totLaA+=laA;totLaB+=laB;totValA+=valA;totValB+=valB;totOthA+=othA;totOthB+=othB;
+  }
+  const grandTotA=totLaA+totValA+totOthA, grandTotB=totLaB+totValB+totOthB;
+
+  const mCols = MS.map(m=>`<col style="width:70px">`).join('');
+  const mThs = MS.map(m=>`<th style="background:#1e3a5f;color:#94a3b8;font-size:8px;font-weight:700;text-align:right;padding:5px 6px">${m}</th>`).join('');
+
+  const buildPDFRow = (label, col, actVals, budVals, totA, totB) => {
+    const vr=totA-totB;
+    const cells = actVals.map(v=>`<td style="text-align:right;padding:4px 6px;font-size:9px;color:${v<0?'#dc2626':col}">${v<0?'('+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2})+')':v?v.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`).join('');
+    const bCells = budVals.map(v=>`<td style="text-align:right;padding:4px 6px;font-size:9px;color:#6b7280">${v?v.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`).join('');
+    const vCells = actVals.map((a,i)=>{const v=a-budVals[i];return`<td style="text-align:right;padding:4px 6px;font-size:9px;color:${v>0?'#059669':v<0?'#dc2626':'#6b7280'}">${v<0?'('+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2})+')':v?'+'+v.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`}).join('');
+    const totStyle = `text-align:right;padding:4px 8px;font-size:9px;font-weight:700;border-left:2px solid #e5e7eb;`;
+    return `
+    <tr style="background:#fafafa"><td style="padding:5px 8px;font-size:10px;font-weight:700;color:${col}">${label}</td><td style="font-size:9px;color:#6b7280;padding:5px 6px">Actual</td>${cells}<td style="${totStyle}color:${totA<0?'#dc2626':col}">${totA<0?'('+Math.abs(totA).toLocaleString('en-US',{minimumFractionDigits:2})+')':totA?totA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td></tr>
+    <tr><td style="padding:3px 8px;font-size:9px;color:#9ca3af"></td><td style="font-size:9px;color:#9ca3af;padding:3px 6px">Budget</td>${bCells}<td style="${totStyle}color:#6b7280">${totB?totB.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td></tr>
+    <tr style="border-bottom:1px solid #e5e7eb"><td></td><td style="font-size:9px;color:#9ca3af;padding:3px 6px 6px">Variance</td>${vCells}<td style="${totStyle}color:${vr>0?'#059669':vr<0?'#dc2626':'#6b7280'}">${vr<0?'('+Math.abs(vr).toLocaleString('en-US',{minimumFractionDigits:2})+')':vr?'+'+vr.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td></tr>`;
+  };
+
+  const grandVr=grandTotA-grandTotB;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Revenue P&L Schedule ${y}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A3 landscape;margin:8mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}
+    table{border-collapse:collapse;width:100%}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  <\/style><\/head><body>
+  <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:16px 20px;margin-bottom:12px;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${LOGO?`<img src="${LOGO}" style="width:42px;height:42px;border-radius:8px;object-fit:cover">`:''}
+      <div>
+        <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
+        <div style="font-size:18px;font-weight:800;color:#f5c542">Revenue P&amp;L Schedule — ${y}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">Laundry Revenue · Pearl Valet · Others · Monthly Actual vs Budget</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:rgba(255,255,255,.4)">Generated: ${now}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.4)">Prepared by: Reda Salah, Laundry Manager</div>
+      <div style="font-size:14px;font-weight:800;color:#f5c542;margin-top:4px">CONFIDENTIAL</div>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div style="display:flex;gap:10px;margin-bottom:10px">
+    ${[['Total Actual',grandTotA<0?'('+Math.abs(grandTotA).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandTotA.toLocaleString('en-US',{minimumFractionDigits:2}),'#059669'],
+       ['Total Budget',grandTotB.toLocaleString('en-US',{minimumFractionDigits:2}),'#d97706'],
+       ['Variance',(grandVr<0?'('+Math.abs(grandVr).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandVr>0?'+'+grandVr.toLocaleString('en-US',{minimumFractionDigits:2}):'—'),grandVr>=0?'#059669':'#dc2626'],
+    ].map(([l,v,c])=>`<div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px"><div style="font-size:8px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:3px">${l}</div><div style="font-size:15px;font-weight:800;color:${c}">${v}</div></div>`).join('')}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="background:#1e3a5f;color:#e2e8f0;font-size:9px;font-weight:700;text-align:left;padding:6px 8px;min-width:140px">Revenue Line</th>
+        <th style="background:#1e3a5f;color:#64748b;font-size:9px;font-weight:700;text-align:left;padding:6px 6px;min-width:50px"></th>
+        ${mThs}
+        <th style="background:#0f172a;color:#f5c542;font-size:9px;font-weight:700;text-align:right;padding:6px 8px;border-left:2px solid #374151;min-width:85px">FULL YEAR</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${buildPDFRow('Laundry Revenue — FS Doha','#0369a1',rows.map(r=>r.laA),rows.map(r=>r.laB),totLaA,totLaB)}
+      ${buildPDFRow('Pearl Valet Revenue — FS Pearl','#7c3aed',rows.map(r=>r.valA),rows.map(r=>r.valB),totValA,totValB)}
+      ${buildPDFRow('Others — FS Doha','#059669',rows.map(r=>r.othA),rows.map(r=>r.othB),totOthA,totOthB)}
+      <tr><td colspan="15" style="background:linear-gradient(90deg,#f5c542,#00d4b8);height:2px;padding:0"></td></tr>
+      <tr style="background:#f0fdf4">
+        <td style="padding:7px 8px;font-size:11px;font-weight:800;color:#0f172a">TOTAL REVENUES</td>
+        <td style="font-size:9px;color:#6b7280;padding:7px 6px">Actual</td>
+        ${rows.map(r=>`<td style="text-align:right;padding:7px 6px;font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:${r.totA<0?'#dc2626':'#059669'}">${r.totA<0?'('+Math.abs(r.totA).toLocaleString('en-US',{minimumFractionDigits:2})+')':r.totA?r.totA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`).join('')}
+        <td style="text-align:right;padding:7px 8px;font-family:'Courier New',monospace;font-size:11px;font-weight:800;color:${grandTotA<0?'#dc2626':'#059669'};border-left:2px solid #e5e7eb">${grandTotA<0?'('+Math.abs(grandTotA).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandTotA.toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+      </tr>
+      <tr style="background:#fffbeb">
+        <td style="padding:4px 8px 7px"></td>
+        <td style="font-size:9px;color:#9ca3af;padding:4px 6px 7px">Budget</td>
+        ${rows.map(r=>`<td style="text-align:right;padding:4px 6px 7px;font-family:'Courier New',monospace;font-size:9px;color:#6b7280">${r.totB?r.totB.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`).join('')}
+        <td style="text-align:right;padding:4px 8px 7px;font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#d97706;border-left:2px solid #e5e7eb">${grandTotB.toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+      </tr>
+      <tr style="background:${grandVr>=0?'#f0fdf4':'#fef2f2'}">
+        <td style="padding:4px 8px 8px"></td>
+        <td style="font-size:9px;color:#9ca3af;padding:4px 6px 8px">Variance</td>
+        ${rows.map(r=>{const v=r.totA-r.totB;return`<td style="text-align:right;padding:4px 6px 8px;font-family:'Courier New',monospace;font-size:9px;color:${v>0?'#059669':v<0?'#dc2626':'#6b7280'}">${v<0?'('+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2})+')':v?'+'+v.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`}).join('')}
+        <td style="text-align:right;padding:4px 8px 8px;font-family:'Courier New',monospace;font-size:11px;font-weight:800;color:${grandVr>=0?'#059669':'#dc2626'};border-left:2px solid #e5e7eb">${grandVr<0?'('+Math.abs(grandVr).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandVr>0?'+'+grandVr.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:10px;padding:8px 12px;font-size:8px;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb">
+    Four Seasons Hotel Doha · Laundry Department · Revenue P&amp;L Schedule · CONFIDENTIAL · RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}
+  </div>
+  <\/body><\/html>`;
+
+  const win=window.open('','_blank','width=1400,height=900');
+  if(!win){toast('⚠ Allow popups to print');return;}
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>setTimeout(()=>win.print(),600);
+  toast('Revenue P&L PDF ready ✓');
+}
+
+function exportRevPLExcel(){
+  const y = parseInt(document.getElementById('pl-year-sel')?.value || revYear);
+  const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const q = v => v!==0&&v!==undefined&&v!==null ? v : '';
+
+  let csv = `Revenue P&L Schedule - ${y}\nFour Seasons Hotel Doha - Laundry Department\n\n`;
+  csv += `Line,Type,${MS.join(',')},FULL YEAR\n`;
+
+  const addLine = (label, actVals, budVals, totA, totB) => {
+    csv += `${label},Actual,${actVals.join(',')},${totA}\n`;
+    csv += `,Budget,${budVals.join(',')},${totB}\n`;
+    const vrVals = actVals.map((a,i)=>a-budVals[i]);
+    csv += `,Variance,${vrVals.join(',')},${totA-totB}\n`;
+  };
+
+  let totLaA=0,totLaB=0,totValA=0,totValB=0,totOthA=0,totOthB=0;
+  const laA=[],laB=[],valA=[],valB=[],othA=[],othB=[];
+  for(let m=0;m<12;m++){
+    const r=REV[y]?.[m]||{}, b=REV_BUD[y]?.[m]||{};
+    laA.push(r.laA||0); laB.push(b.laB||0);
+    valA.push(r.valA||0); valB.push(b.valB||0);
+    othA.push(r.othA||0); othB.push(b.othB||0);
+    totLaA+=r.laA||0; totLaB+=b.laB||0;
+    totValA+=r.valA||0; totValB+=b.valB||0;
+    totOthA+=r.othA||0; totOthB+=b.othB||0;
+  }
+  addLine('Laundry Revenue - FS Doha',laA,laB,totLaA,totLaB);
+  addLine('Pearl Valet Revenue - FS Pearl',valA,valB,totValA,totValB);
+  addLine('Others - FS Doha',othA,othB,totOthA,totOthB);
+
+  const gA=totLaA+totValA+totOthA, gB=totLaB+totValB+totOthB;
+  const totActLine = [0,1,2,3,4,5,6,7,8,9,10,11].map(m=>(laA[m]+valA[m]+othA[m]));
+  const totBudLine = [0,1,2,3,4,5,6,7,8,9,10,11].map(m=>(laB[m]+valB[m]+othB[m]));
+  csv += `\nTOTAL REVENUES,Actual,${totActLine.join(',')},${gA}\n`;
+  csv += `,Budget,${totBudLine.join(',')},${gB}\n`;
+  csv += `,Variance,${totActLine.map((a,i)=>a-totBudLine[i]).join(',')},${gA-gB}\n`;
+
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`Revenue_PL_Schedule_${y}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Revenue Excel exported ✓');
+}
+
+
+/* ════════════════════════════════════════
+   EXPENSES P&L SCHEDULE
+   ════════════════════════════════════════ */
+
+function buildEntryPL(){
+  const el = document.getElementById('entry-pl-table');
+  if(!el) return;
+  const y = activeY;
+  const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MF = ['January','February','March','April','May','June',
+              'July','August','September','October','November','December'];
+
+  const q2 = v => v ? v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  const col = (a,b) => a>b ? '#ff6b6b' : a>0 ? '#00d4b8' : '#64748b';
+  const vrDisp = (v) => v===0?'—':v>0?`<span style="color:#ff6b6b">+${q2(v)}</span>`:`<span style="color:#00d4b8">${q2(v)}</span>`;
+
+  // Gather monthly data
+  let rows=[];
+  let totLaA=0,totLaB=0,totOpA=0,totOpB=0,totPrA=0,totPrB=0;
+  let totKg=0,totRs=0;
+  for(let m=0;m<12;m++){
+    const r=DATA[y]?.[m]||{};
+    const rs=r.roomsSold||0;
+    const kg=r.kg||0;
+    const laA=r.laA||0,opA=r.opA||0,prA=r.prA||0;
+    const b=bud(y,m,rs);
+    const laB=b.la||0,opB=b.op||0,prB=b.pr||0;
+    const totA=laA+opA+prA, totB=laB+opB+prB;
+    const occ=rs&&maxRN(y,m)?rs/maxRN(y,m)*100:0;
+    rows.push({m,rs,kg,occ,laA,laB,opA,opB,prA,prB,totA,totB});
+    totLaA+=laA;totLaB+=laB;totOpA+=opA;totOpB+=opB;totPrA+=prA;totPrB+=prB;
+    totKg+=kg;totRs+=rs;
+  }
+  const grandA=totLaA+totOpA+totPrA;
+  const grandB=totLaB+totOpB+totPrB;
+  const grandVr=grandA-grandB;
+  const cporA=totRs?grandA/totRs:0;
+  const cporB=totRs?grandB/totRs:0;
+
+  // Month header cells
+  const mHeaders = MS.map(m=>`<th style="background:#1e3a5f;color:#94a3b8;font-size:9px;font-weight:700;
+    text-align:right;padding:7px 8px;white-space:nowrap;min-width:78px">${m}</th>`).join('');
+
+  // Build a data section (3 rows: Actual, Budget, Variance)
+  const buildSection = (label, col1, actVals, budVals, totA, totB) => {
+    const vr = totA-totB;
+    const actCells = actVals.map(v=>`<td style="text-align:right;padding:5px 8px;
+      font-family:'DM Mono',monospace;font-size:11px;color:${v?col1:'#4a5568'}">${q2(v)}</td>`).join('');
+    const budCells = budVals.map(v=>`<td style="text-align:right;padding:5px 8px;
+      font-family:'DM Mono',monospace;font-size:11px;color:#64748b">${q2(v)}</td>`).join('');
+    const vrCells = actVals.map((a,i)=>{
+      const v=a-budVals[i];
+      return `<td style="text-align:right;padding:5px 8px;font-family:'DM Mono',monospace;
+        font-size:11px;color:${v>0?'#ff6b6b':v<0?'#00d4b8':'#64748b'}">${vrDisp(v)}</td>`;
+    }).join('');
+    return `
+    <tr style="background:rgba(255,255,255,.015)" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='rgba(255,255,255,.015)'">
+      <td style="padding:6px 12px;font-size:11px;font-weight:700;color:${col1};white-space:nowrap">${label}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#64748b">Actual</td>
+      ${actCells}
+      <td style="text-align:right;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;
+        font-weight:700;color:${col1};border-left:1px solid #2a3550">${q2(totA)}</td>
+    </tr>
+    <tr onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background='transparent'">
+      <td style="padding:3px 12px 6px"></td>
+      <td style="padding:3px 8px 6px;font-size:10px;color:#64748b">Budget</td>
+      ${budCells}
+      <td style="text-align:right;padding:3px 10px 6px;font-family:'DM Mono',monospace;
+        font-size:11px;color:#64748b;border-left:1px solid #2a3550">${q2(totB)}</td>
+    </tr>
+    <tr style="border-bottom:1px solid #2a3550" onmouseover="this.style.background='rgba(255,255,255,.02)'" onmouseout="this.style.background='transparent'">
+      <td style="padding:3px 12px 8px"></td>
+      <td style="padding:3px 8px 8px;font-size:10px;color:#64748b">Variance</td>
+      ${vrCells}
+      <td style="text-align:right;padding:3px 10px 8px;font-family:'DM Mono',monospace;
+        font-size:11px;border-left:1px solid #2a3550">${vrDisp(vr)}</td>
+    </tr>`;
+  };
+
+  // Total expense rows
+  const totActCells = rows.map(r=>`<td style="text-align:right;padding:8px;font-family:'DM Mono',monospace;
+    font-size:12px;font-weight:800;color:#00d4b8">${q2(r.totA)}</td>`).join('');
+  const totBudCells = rows.map(r=>`<td style="text-align:right;padding:8px;font-family:'DM Mono',monospace;
+    font-size:11px;font-weight:700;color:#ffb347">${q2(r.totB)}</td>`).join('');
+  const totVrCells = rows.map(r=>{
+    const v=r.totA-r.totB;
+    return `<td style="text-align:right;padding:8px;font-family:'DM Mono',monospace;font-size:11px;
+      font-weight:700;color:${v>0?'#ff6b6b':v<0?'#00d4b8':'#64748b'}">${vrDisp(v)}</td>`;
+  }).join('');
+
+  // Occupancy & KG rows
+  const occCells = rows.map(r=>`<td style="text-align:right;padding:5px 8px;font-family:'DM Mono',monospace;
+    font-size:10px;color:#a78bfa">${r.occ?r.occ.toFixed(1)+'%':'—'}</td>`).join('');
+  const kgCells = rows.map(r=>`<td style="text-align:right;padding:5px 8px;font-family:'DM Mono',monospace;
+    font-size:10px;color:#38bdf8">${r.kg?r.kg.toLocaleString():'—'}</td>`).join('');
+  const cporCells = rows.map(r=>`<td style="text-align:right;padding:5px 8px;font-family:'DM Mono',monospace;
+    font-size:10px;color:${r.totA>r.totB?'#ff6b6b':'#a78bfa'}">${r.rs&&r.totA?(r.totA/r.rs).toFixed(4):'—'}</td>`).join('');
+
+  el.innerHTML=`
+  <div style="background:#0f1a2e;border:1px solid #2a3550;border-radius:12px;overflow:hidden">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);padding:14px 18px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#f5c542">
+          Expenses P&amp;L Schedule — ${y}
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:3px">
+          Four Seasons Hotel Doha · Laundry · Monthly Actual vs Budget · 3 Expense Lines
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap">
+        <div><span style="color:rgba(255,255,255,.4)">Total Actual: </span>
+          <strong style="color:#00d4b8;font-family:'DM Mono',monospace">${q2(grandA)}</strong></div>
+        <div><span style="color:rgba(255,255,255,.4)">Budget: </span>
+          <strong style="color:#ffb347;font-family:'DM Mono',monospace">${q2(grandB)}</strong></div>
+        <div><span style="color:rgba(255,255,255,.4)">Variance: </span>
+          <strong style="color:${grandVr>0?'#ff6b6b':'#00d4b8'};font-family:'DM Mono',monospace">${vrDisp(grandVr)}</strong></div>
+        <div><span style="color:rgba(255,255,255,.4)">CPOR: </span>
+          <strong style="color:#a78bfa;font-family:'DM Mono',monospace">${cporA?cporA.toFixed(4):'—'}</strong></div>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:1200px">
+        <thead>
+          <tr style="background:#1a2a4a">
+            <th style="background:#1a2a4a;color:#64748b;font-size:9px;font-weight:700;
+              text-align:left;padding:8px 12px;white-space:nowrap;min-width:170px">Expense Line</th>
+            <th style="background:#1a2a4a;color:#64748b;font-size:9px;font-weight:700;
+              text-align:left;padding:8px 8px;min-width:55px"></th>
+            ${mHeaders}
+            <th style="background:#0f172a;color:#f5c542;font-size:9px;font-weight:700;
+              text-align:right;padding:8px 10px;white-space:nowrap;border-left:1px solid #2a3550;min-width:90px">FULL YEAR</th>
+          </tr>
+          <!-- Stats row -->
+          <tr style="background:#141e30;border-bottom:1px solid #2a3550">
+            <td style="padding:5px 12px;font-size:9px;color:#4a5568">Rooms Sold</td>
+            <td style="padding:5px 8px;font-size:9px;color:#4a5568"></td>
+            ${rows.map(r=>`<td style="text-align:right;padding:5px 8px;font-family:'DM Mono',monospace;font-size:10px;color:#a78bfa">${r.rs?r.rs.toLocaleString():'—'}</td>`).join('')}
+            <td style="text-align:right;padding:5px 10px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:#a78bfa;border-left:1px solid #2a3550">${totRs?totRs.toLocaleString():'—'}</td>
+          </tr>
+          <tr style="background:#141e30;border-bottom:2px solid #2a3550">
+            <td style="padding:5px 12px;font-size:9px;color:#4a5568">Occupancy %</td>
+            <td style="padding:5px 8px;font-size:9px;color:#4a5568"></td>
+            ${occCells}
+            <td style="text-align:right;padding:5px 10px;font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:#a78bfa;border-left:1px solid #2a3550">${totRs&&maxRN(y,0)*12?(totRs/(SETT.roomsAvail*365)*100).toFixed(1)+'%':'—'}</td>
+          </tr>
+        </thead>
+        <tbody>
+          ${buildSection('🟡 Laundry Supplies','#ffb347',rows.map(r=>r.laA),rows.map(r=>r.laB),totLaA,totLaB)}
+          ${buildSection('🟢 Operating Supplies','#a3e635',rows.map(r=>r.opA),rows.map(r=>r.opB),totOpA,totOpB)}
+          ${buildSection('🔴 Printing &amp; Stationery','#ff6b6b',rows.map(r=>r.prA),rows.map(r=>r.prB),totPrA,totPrB)}
+
+          <!-- Gradient divider -->
+          <tr><td colspan="15" style="background:linear-gradient(90deg,#f5c542,#00d4b8);height:2px;padding:0"></td></tr>
+
+          <!-- Total Actual -->
+          <tr style="background:rgba(0,212,184,.06)">
+            <td style="padding:9px 12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#00d4b8">TOTAL EXPENSES</td>
+            <td style="padding:9px 8px;font-size:10px;color:#64748b">Actual</td>
+            ${totActCells}
+            <td style="text-align:right;padding:9px 10px;font-family:'DM Mono',monospace;
+              font-size:13px;font-weight:800;color:#00d4b8;border-left:1px solid #2a3550">${q2(grandA)}</td>
+          </tr>
+          <!-- Total Budget -->
+          <tr style="background:rgba(255,179,71,.04)">
+            <td style="padding:4px 12px 9px"></td>
+            <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Budget</td>
+            ${totBudCells}
+            <td style="text-align:right;padding:4px 10px 9px;font-family:'DM Mono',monospace;
+              font-size:12px;font-weight:700;color:#ffb347;border-left:1px solid #2a3550">${q2(grandB)}</td>
+          </tr>
+          <!-- Total Variance -->
+          <tr style="background:rgba(245,197,66,.04);border-top:1px solid rgba(245,197,66,.15)">
+            <td style="padding:4px 12px 9px"></td>
+            <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Variance</td>
+            ${totVrCells}
+            <td style="text-align:right;padding:4px 10px 9px;font-family:'DM Mono',monospace;
+              font-size:12px;font-weight:700;color:${grandVr>0?'#ff6b6b':'#00d4b8'};border-left:1px solid #2a3550">${vrDisp(grandVr)}</td>
+          </tr>
+
+          <!-- CPOR Row -->
+          <tr style="background:#141e30;border-top:1px solid #2a3550">
+            <td colspan="2" style="padding:6px 12px;font-size:10px;font-weight:700;color:#a78bfa;font-family:'Syne',sans-serif">CPOR (Cost per Room)</td>
+            ${cporCells}
+            <td style="text-align:right;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;
+              font-weight:700;color:#a78bfa;border-left:1px solid #2a3550">${cporA?cporA.toFixed(4):'—'}</td>
+          </tr>
+          <!-- KG Row -->
+          <tr style="background:#141e30">
+            <td colspan="2" style="padding:6px 12px;font-size:10px;font-weight:700;color:#38bdf8;font-family:'Syne',sans-serif">KG Processed</td>
+            ${kgCells}
+            <td style="text-align:right;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;
+              font-weight:700;color:#38bdf8;border-left:1px solid #2a3550">${totKg?totKg.toLocaleString():'—'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Legend -->
+    <div style="padding:10px 16px;border-top:1px solid #2a3550;display:flex;gap:16px;font-size:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#00d4b8"></div><span style="color:#64748b">Variance under budget (good)</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#ff6b6b"></div><span style="color:#64748b">Over budget</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#a78bfa"></div><span style="color:#64748b">CPOR</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#38bdf8"></div><span style="color:#64748b">KG Processed</span></div>
+    </div>
+  </div>`;
+}
+
+function printEntryPL(){
+  const y = activeY;
+  const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const LOGO = document.querySelector('[alt="RS Logo"]')?.src || '';
+  const q2 = v => v ? v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+
+  let rows=[];
+  let totLaA=0,totLaB=0,totOpA=0,totOpB=0,totPrA=0,totPrB=0,totKg=0,totRs=0;
+  for(let m=0;m<12;m++){
+    const r=DATA[y]?.[m]||{};
+    const rs=r.roomsSold||0, kg=r.kg||0;
+    const laA=r.laA||0, opA=r.opA||0, prA=r.prA||0;
+    const b=bud(y,m,rs);
+    rows.push({m,rs,kg,laA,laB:b.la||0,opA,opB:b.op||0,prA,prB:b.pr||0,
+               totA:laA+opA+prA,totB:(b.la||0)+(b.op||0)+(b.pr||0)});
+    totLaA+=laA;totLaB+=b.la||0;totOpA+=opA;totOpB+=b.op||0;
+    totPrA+=prA;totPrB+=b.pr||0;totKg+=kg;totRs+=rs;
+  }
+  const gA=totLaA+totOpA+totPrA, gB=totLaB+totOpB+totPrB, gVr=gA-gB;
+  const cporA=totRs?gA/totRs:0;
+
+  const mThs = MS.map(m=>`<th style="background:#1e3a5f;color:#94a3b8;font-size:8px;font-weight:700;text-align:right;padding:5px 6px;min-width:68px">${m}</th>`).join('');
+
+  const buildPDFSection = (label, col, actV, budV, totA, totB) => {
+    const vr=totA-totB;
+    const aC=actV.map(v=>`<td style="text-align:right;padding:4px 5px;font-size:9px;color:${v?col:'#9ca3af'}">${q2(v)}</td>`).join('');
+    const bC=budV.map(v=>`<td style="text-align:right;padding:4px 5px;font-size:9px;color:#9ca3af">${q2(v)}</td>`).join('');
+    const vC=actV.map((a,i)=>{const v=a-budV[i];return`<td style="text-align:right;padding:4px 5px;font-size:9px;color:${v>0?'#dc2626':v<0?'#059669':'#6b7280'}">${v>0?'+'+q2(v):v<0?q2(v):'—'}</td>`}).join('');
+    const ts=`text-align:right;padding:4px 7px;font-size:9px;font-weight:700;border-left:2px solid #e5e7eb;`;
+    return `
+    <tr style="background:#fafafa"><td style="padding:5px 8px;font-size:10px;font-weight:700;color:${col}">${label}</td><td style="font-size:9px;color:#6b7280;padding:5px 5px">Actual</td>${aC}<td style="${ts}color:${col}">${q2(totA)}</td></tr>
+    <tr><td style="padding:3px 8px"></td><td style="font-size:9px;color:#9ca3af;padding:3px 5px">Budget</td>${bC}<td style="${ts}color:#6b7280">${q2(totB)}</td></tr>
+    <tr style="border-bottom:1px solid #e5e7eb"><td></td><td style="font-size:9px;color:#9ca3af;padding:3px 5px 6px">Variance</td>${vC}<td style="${ts}color:${vr>0?'#dc2626':vr<0?'#059669':'#6b7280'}">${vr>0?'+'+q2(vr):vr<0?q2(vr):'—'}</td></tr>`;
+  };
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Expenses P&L Schedule ${y}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}
+  @page{size:A3 landscape;margin:8mm}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}
+  table{border-collapse:collapse;width:100%}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}<\/style><\/head><body>
+
+  <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:16px 20px;margin-bottom:10px;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${LOGO?`<img src="${LOGO}" style="width:42px;height:42px;border-radius:8px;object-fit:cover">`:''}
+      <div>
+        <div style="font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
+        <div style="font-size:18px;font-weight:800;color:#f5c542">Operating Expenses P&amp;L Schedule — ${y}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">Laundry · Operating · Printing Supplies · Monthly Actual vs Budget</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:rgba(255,255,255,.4)">Generated: ${now}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.4)">Prepared by: Reda Salah, Laundry Manager</div>
+      <div style="font-size:14px;font-weight:800;color:#f5c542;margin-top:4px">CONFIDENTIAL</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:10px">
+    ${[['Total Actual',q2(gA),'#059669'],['Total Budget',q2(gB),'#d97706'],
+       ['Variance',gVr>0?'+'+q2(gVr):q2(gVr),gVr<=0?'#059669':'#dc2626'],
+       ['Rooms Sold',totRs.toLocaleString(),'#7c3aed'],
+       ['CPOR Actual',cporA?cporA.toFixed(4):'—','#7c3aed'],
+       ['KG Processed',totKg.toLocaleString(),'#0369a1'],
+    ].map(([l,v,c])=>`<div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:7px 10px"><div style="font-size:8px;font-weight:700;text-transform:uppercase;color:#64748b;margin-bottom:2px">${l}</div><div style="font-size:13px;font-weight:800;color:${c}">${v}</div></div>`).join('')}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="background:#1e3a5f;color:#e2e8f0;font-size:9px;font-weight:700;text-align:left;padding:6px 8px;min-width:150px">Expense Line</th>
+        <th style="background:#1e3a5f;color:#64748b;font-size:9px;font-weight:700;text-align:left;padding:6px 5px;min-width:50px"></th>
+        ${mThs}
+        <th style="background:#0f172a;color:#f5c542;font-size:9px;font-weight:700;text-align:right;padding:6px 7px;border-left:2px solid #374151;min-width:85px">FULL YEAR</th>
+      </tr>
+      <tr style="background:#1e293b">
+        <td style="padding:5px 8px;font-size:9px;color:#6b7280;font-weight:600">Rooms Sold</td>
+        <td></td>
+        ${rows.map(r=>`<td style="text-align:right;padding:5px 5px;font-family:'Courier New',monospace;font-size:9px;color:#7c3aed">${r.rs?r.rs.toLocaleString():'—'}</td>`).join('')}
+        <td style="text-align:right;padding:5px 7px;font-family:'Courier New',monospace;font-size:9px;font-weight:700;color:#7c3aed;border-left:2px solid #374151">${totRs?totRs.toLocaleString():'—'}</td>
+      </tr>
+    </thead>
+    <tbody>
+      ${buildPDFSection('Laundry Supplies','#d97706',rows.map(r=>r.laA),rows.map(r=>r.laB),totLaA,totLaB)}
+      ${buildPDFSection('Operating Supplies','#16a34a',rows.map(r=>r.opA),rows.map(r=>r.opB),totOpA,totOpB)}
+      ${buildPDFSection('Printing &amp; Stationery','#dc2626',rows.map(r=>r.prA),rows.map(r=>r.prB),totPrA,totPrB)}
+      <tr><td colspan="15" style="background:linear-gradient(90deg,#f5c542,#00d4b8);height:2px;padding:0"></td></tr>
+      <tr style="background:#f0fdf4">
+        <td style="padding:7px 8px;font-size:11px;font-weight:800;color:#0f172a">TOTAL OPERATING EXPENSES</td>
+        <td style="font-size:9px;color:#6b7280;padding:7px 5px">Actual</td>
+        ${rows.map(r=>`<td style="text-align:right;padding:7px 5px;font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#059669">${q2(r.totA)}</td>`).join('')}
+        <td style="text-align:right;padding:7px 7px;font-family:'Courier New',monospace;font-size:11px;font-weight:800;color:#059669;border-left:2px solid #e5e7eb">${q2(gA)}</td>
+      </tr>
+      <tr style="background:#fffbeb">
+        <td style="padding:4px 8px 7px"></td>
+        <td style="font-size:9px;color:#9ca3af;padding:4px 5px 7px">Budget</td>
+        ${rows.map(r=>`<td style="text-align:right;padding:4px 5px 7px;font-family:'Courier New',monospace;font-size:9px;color:#6b7280">${q2(r.totB)}</td>`).join('')}
+        <td style="text-align:right;padding:4px 7px 7px;font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#d97706;border-left:2px solid #e5e7eb">${q2(gB)}</td>
+      </tr>
+      <tr style="background:${gVr<=0?'#f0fdf4':'#fef2f2'}">
+        <td style="padding:4px 8px 8px"></td>
+        <td style="font-size:9px;color:#9ca3af;padding:4px 5px 8px">Variance</td>
+        ${rows.map(r=>{const v=r.totA-r.totB;return`<td style="text-align:right;padding:4px 5px 8px;font-family:'Courier New',monospace;font-size:9px;color:${v>0?'#dc2626':v<0?'#059669':'#6b7280'}">${v>0?'+'+q2(v):v<0?q2(v):'—'}</td>`}).join('')}
+        <td style="text-align:right;padding:4px 7px 8px;font-family:'Courier New',monospace;font-size:11px;font-weight:800;color:${gVr<=0?'#059669':'#dc2626'};border-left:2px solid #e5e7eb">${gVr>0?'+'+q2(gVr):q2(gVr)}</td>
+      </tr>
+      <tr style="background:#f5f3ff">
+        <td colspan="2" style="padding:6px 8px;font-size:9px;font-weight:700;color:#7c3aed">CPOR (Cost per Occupied Room)</td>
+        ${rows.map(r=>`<td style="text-align:right;padding:6px 5px;font-family:'Courier New',monospace;font-size:9px;color:#7c3aed">${r.rs&&r.totA?(r.totA/r.rs).toFixed(4):'—'}</td>`).join('')}
+        <td style="text-align:right;padding:6px 7px;font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#7c3aed;border-left:2px solid #e5e7eb">${cporA?cporA.toFixed(4):'—'}</td>
+      </tr>
+      <tr style="background:#eff6ff">
+        <td colspan="2" style="padding:6px 8px;font-size:9px;font-weight:700;color:#0369a1">KG Processed</td>
+        ${rows.map(r=>`<td style="text-align:right;padding:6px 5px;font-family:'Courier New',monospace;font-size:9px;color:#0369a1">${r.kg?r.kg.toLocaleString():'—'}</td>`).join('')}
+        <td style="text-align:right;padding:6px 7px;font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#0369a1;border-left:2px solid #e5e7eb">${totKg?totKg.toLocaleString():'—'}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:10px;padding:8px 12px;font-size:8px;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb">
+    Four Seasons Hotel Doha · Laundry Department · Expenses P&amp;L Schedule · CONFIDENTIAL · RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}
+  </div>
+  <\/body><\/html>`;
+
+  const win=window.open('','_blank','width=1400,height=900');
+  if(!win){toast('⚠ Allow popups to print');return;}
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>setTimeout(()=>win.print(),600);
+  toast('Expenses P&L PDF ready ✓');
+}
+
+function exportEntryPLExcel(){
+  const y = activeY;
+  const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const q2 = v => v||0;
+
+  let csv=`Expenses P&L Schedule - ${y}\nFour Seasons Hotel Doha - Laundry Department\n\n`;
+  csv+=`Line,Type,${MS.join(',')},FULL YEAR\n`;
+
+  let totLaA=0,totLaB=0,totOpA=0,totOpB=0,totPrA=0,totPrB=0,totKg=0,totRs=0;
+  const laA=[],laB=[],opA=[],opB=[],prA=[],prB=[],kgV=[],rsV=[];
+  for(let m=0;m<12;m++){
+    const r=DATA[y]?.[m]||{};
+    const rs=r.roomsSold||0;
+    const b=bud(y,m,rs);
+    laA.push(r.laA||0); laB.push(b.la||0);
+    opA.push(r.opA||0); opB.push(b.op||0);
+    prA.push(r.prA||0); prB.push(b.pr||0);
+    kgV.push(r.kg||0); rsV.push(rs);
+    totLaA+=r.laA||0; totLaB+=b.la||0;
+    totOpA+=r.opA||0; totOpB+=b.op||0;
+    totPrA+=r.prA||0; totPrB+=b.pr||0;
+    totKg+=r.kg||0; totRs+=rs;
+  }
+
+  const addLine=(lbl,av,bv,tA,tB)=>{
+    csv+=`${lbl},Actual,${av.join(',')},${tA}\n`;
+    csv+=`,Budget,${bv.join(',')},${tB}\n`;
+    csv+=`,Variance,${av.map((a,i)=>a-bv[i]).join(',')},${tA-tB}\n`;
+  };
+  addLine('Laundry Supplies',laA,laB,totLaA,totLaB);
+  addLine('Operating Supplies',opA,opB,totOpA,totOpB);
+  addLine('Printing & Stationery',prA,prB,totPrA,totPrB);
+
+  const tA=[0,1,2,3,4,5,6,7,8,9,10,11].map(m=>laA[m]+opA[m]+prA[m]);
+  const tB=[0,1,2,3,4,5,6,7,8,9,10,11].map(m=>laB[m]+opB[m]+prB[m]);
+  const gA=totLaA+totOpA+totPrA, gB=totLaB+totOpB+totPrB;
+  csv+=`\nTOTAL EXPENSES,Actual,${tA.join(',')},${gA}\n`;
+  csv+=`,Budget,${tB.join(',')},${gB}\n`;
+  csv+=`,Variance,${tA.map((a,i)=>a-tB[i]).join(',')},${gA-gB}\n`;
+  csv+=`\nRooms Sold,,${rsV.join(',')},${totRs}\n`;
+  csv+=`CPOR,,${rsV.map((rs,i)=>rs?((tA[i])/rs).toFixed(4):'').join(',')},${totRs?((gA)/totRs).toFixed(4):''}\n`;
+  csv+=`KG Processed,,${kgV.join(',')},${totKg}\n`;
+
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`Expenses_PL_Schedule_${y}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Expenses Excel exported ✓');
 }
 
 /* ── INIT ── */
