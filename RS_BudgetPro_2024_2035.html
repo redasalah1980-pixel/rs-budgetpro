@@ -1289,10 +1289,10 @@ function doLogin(){
   </div>
 
   <!-- Year Completion Forecast -->
-  <div id="year-forecast-panel" style="margin-bottom:14px"></div>
+  <div id="year-forecast-panel" style="margin-bottom:14px;display:none"></div>
 
   <!-- Budget Season Forecaster -->
-  <div class="fcast-card" id="fcast-section">
+  <div class="fcast-card" id="fcast-section" style="display:none">
     <div class="fcast-title">🗓 Budget Season Forecaster
       <span style="font-family:var(--ff-b);font-size:11px;color:var(--text2);font-weight:400">Aug–Dec forecast for current incomplete year</span>
     </div>
@@ -2297,7 +2297,7 @@ function doLogin(){
   <div class="mgrid" id="rev-grid"></div>
 
   <!-- ══ P&L REVENUE SCHEDULE ══ -->
-  <div id="rev-pl-section" style="margin-top:24px">
+  <div id="rev-pl-section" style="margin-top:24px;display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
       <div>
         <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:#f5c542">📊 Revenue P&amp;L Schedule</div>
@@ -2864,6 +2864,7 @@ function buildForecast(){
   for(let m=0;m<12;m++){const r=DATA[fcYear]?.[m]||{};if(r.roomsSold||r.laA)lastActual=m}
 
   const content=document.getElementById('fcast-content');
+  const fcastSection=document.getElementById('fcast-section');if(fcastSection)fcastSection.style.display='block';
 
   if(lastActual<0){
     content.innerHTML=`<div style="color:var(--text3);font-size:12px;padding:8px 0">No actuals entered for ${fcYear} yet. Enter Jan–Jul data in Monthly Entry first.</div>`;
@@ -3897,7 +3898,13 @@ function buildRevTab(){
   buildRevYearPills();
   buildRevSummary();
   buildRevGrid();
-  setTimeout(buildRevPL,100);
+  // Only show P&L if revenue data exists
+  const hasRevData = Object.keys(REV[revYear]||{}).length > 0 || Object.keys(REV_BUD[revYear]||{}).length > 0;
+  if(hasRevData) setTimeout(buildRevPL,100);
+  else {
+    const s = document.getElementById('rev-pl-section');
+    if(s) s.style.display = 'none';
+  }
 }
 
 function buildRevYearPills(){
@@ -8073,6 +8080,7 @@ function getLineColour(key){
 function buildYearForecastPanel(y){
   const el = document.getElementById('year-forecast-panel');
   if(!el) return;
+  el.style.display = 'block';
   const est = getYearEstimate(y);
   const MF2=['January','February','March','April','May','June',
              'July','August','September','October','November','December'];
@@ -8386,6 +8394,8 @@ function buildRevCompletionPanel(baseYear, lastActM){
 function buildRevPL(){
   const el = document.getElementById('rev-pl-table');
   if(!el) return;
+  const section = document.getElementById('rev-pl-section');
+  if(section) section.style.display = 'block';
   const y = parseInt(document.getElementById('pl-year-sel')?.value || revYear);
   const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const MF = ['January','February','March','April','May','June',
