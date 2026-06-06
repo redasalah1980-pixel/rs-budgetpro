@@ -985,7 +985,14 @@ select option{background:var(--bg4)}
 <style>
 @keyframes rotateSlow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 
+#rs-modal-overlay{
+  position:fixed!important;inset:0;z-index:9999;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(4px);
+  animation:modalBgIn .2s ease;
+}
 #rs-modal-overlay.active{display:flex}
+@keyframes modalBgIn{from{opacity:0}to{opacity:1}}
 @keyframes modalFadeIn{from{opacity:0}to{opacity:1}}
 #rs-modal-box{
   background:linear-gradient(135deg,#0f1a2e,#1a2236);
@@ -1159,7 +1166,7 @@ function doLogin(){
 </nav>
 
 <!-- ══ CUSTOM MODAL ══ -->
-<div id="rs-modal-overlay" style="display:none">
+<div id="rs-modal-overlay">
   <div id="rs-modal-box">
     <!-- Header -->
     <div id="rs-modal-header" style="padding:20px 24px 16px;border-bottom:1px solid rgba(245,197,66,.15)">
@@ -9435,7 +9442,7 @@ function rsModal({icon='❓', iconBg='rgba(245,197,66,.15)', iconBorder='rgba(24
     }
 
     const overlay = document.getElementById('rs-modal-overlay');
-    overlay.style.display = 'flex';
+    overlay.style.display = '';
     overlay.classList.add('active');
     // Close on overlay click
     overlay.onclick = e => { if(e.target===overlay) rsModalClose(false); };
@@ -9446,7 +9453,7 @@ function rsModal({icon='❓', iconBg='rgba(245,197,66,.15)', iconBorder='rgba(24
 
 function rsModalClose(result){
   const overlay = document.getElementById('rs-modal-overlay');
-  overlay.style.display = 'none';
+  overlay.style.display = '';
   overlay.classList.remove('active');
   document.onkeydown = null;
   if(_modalResolve){ _modalResolve(result); _modalResolve=null; }
