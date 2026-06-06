@@ -2558,6 +2558,9 @@ function doLogin(){
 }
 
 const YEARS=[2024,2025,2026,2027,2028,2029,2030,2031,2032,2033,2034,2035];
+// Pearl (FS Pearl) started August 2024 — no revenue or budget before this
+const PEARL_START_Y=2024, PEARL_START_M=7; // month index 7 = August
+function pearlActive(y,m){ return y>PEARL_START_Y||(y===PEARL_START_Y&&m>=PEARL_START_M); }
 const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -4323,7 +4326,7 @@ function makeRevCard(y,m){
       <!-- Revenue streams -->
       <div class="rev-streams">
         ${streamHTML('Laundry Revenue',laA,laB,laPct,'var(--teal)','#00907d')}
-        ${streamHTML('Pearl Valet Revenue — FS Pearl',valA,valB,valPct,'var(--violet)','#7c3aed')}
+        ${pearlActive(y,m)?streamHTML('Pearl Valet Revenue — FS Pearl',valA,valB,valPct,'var(--violet)','#7c3aed'):`<div style="background:var(--bg4);border-radius:8px;padding:10px 12px;border-left:3px solid var(--border2)"><span style="font-size:10px;color:var(--text3)">💎 Pearl Valet — Not yet operational (started Aug 2024)</span></div>`}
       </div>
 
       <!-- Input fields: Actual + Budget side by side -->
@@ -4336,13 +4339,13 @@ function makeRevCard(y,m){
             style="${r.laA!==undefined?'color:var(--teal);border-color:rgba(0,212,184,.3)':''}"
             oninput="hRev(this,${y},${m})" onblur="hRevBlur(this,${y},${m})">
         </div>
-        <div class="fld">
+        ${pearlActive(y,m)?`<div class="fld">
           <label><span class="ld" style="background:var(--violet)"></span>Valet Actual (Pearl)</label>
           <input type="number" placeholder="0.00" value="${r.valA!==undefined?r.valA:''}"
             data-f="valA" class="${r.valA!==undefined?'filled':''}"
             style="${r.valA!==undefined?'color:var(--violet);border-color:rgba(167,139,250,.3)':''}"
             oninput="hRev(this,${y},${m})" onblur="hRevBlur(this,${y},${m})">
-        </div>
+        </div>`:'<div style="opacity:.3;font-size:10px;color:var(--text3);padding:6px 0">Pearl N/A</div>'}
       </div>
       <div class="csl" style="color:var(--amber);margin-top:6px">Budget (QAR)</div>
       <div class="fg">
@@ -4353,13 +4356,13 @@ function makeRevCard(y,m){
             style="${b.laB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
             oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
         </div>
-        <div class="fld">
+        ${pearlActive(y,m)?`<div class="fld">
           <label><span class="ld" style="background:var(--amber)"></span>Valet Budget (Pearl)</label>
           <input type="number" placeholder="0.00" value="${b.valB||''}"
             data-f="valB" class="${b.valB?'filled':''}"
             style="${b.valB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
             oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
-        </div>
+        </div>`:'<div style="opacity:.3;font-size:10px;color:var(--text3);padding:6px 0">Pearl N/A</div>'}
       </div>
     </div>
 
@@ -4452,10 +4455,14 @@ function buildRevModalTable(){
     <thead><tr><th>Month</th><th style="color:var(--teal)">Laundry Revenue Budget</th><th style="color:var(--violet)">Pearl Valet Revenue Budget — FS Pearl</th></tr></thead><tbody>`;
   for(let m=0;m<12;m++){
     const b=REV_BUD[_revModalYear]?.[m]||{};
+    const pActive = pearlActive(_revModalYear,m);
     html+=`<tr>
       <td>${MF[m]}</td>
       <td><input type="number" id="rb-la-${m}" value="${b.laB||''}" placeholder="0.00" style="color:var(--teal)"></td>
-      <td><input type="number" id="rb-val-${m}" value="${b.valB||''}" placeholder="0.00" style="color:var(--violet)"></td>
+      <td>${pActive
+        ? `<input type="number" id="rb-val-${m}" value="${b.valB||''}" placeholder="0.00" style="color:var(--violet)">`
+        : `<input type="number" id="rb-val-${m}" value="" placeholder="N/A — Pearl not yet active" disabled style="opacity:.35;cursor:not-allowed;font-style:italic;font-size:11px">`
+      }</td>
     </tr>`;
   }
   html+='</tbody></table>';
@@ -5008,13 +5015,13 @@ function getRevRPOR(baseYear, lastActualMonth){
   // If not specified, use all months with actual data
   let cutoff = lastActualMonth !== undefined ? lastActualMonth : 11;
 
-  // Count actual months
+  // Count actual months — Pearl only from Aug 2024 onwards
   let actRs=0, actLa=0, actVa=0;
   for(let m=0;m<=cutoff;m++){
     const rooms = DATA[baseYear]?.[m]?.roomsSold || 0;
     actRs += rooms;
     actLa += REV[baseYear]?.[m]?.laA || 0;
-    actVa += REV[baseYear]?.[m]?.valA || 0;
+    if(pearlActive(baseYear,m)) actVa += REV[baseYear]?.[m]?.valA || 0;
   }
 
   const isPartial = cutoff < 11;
