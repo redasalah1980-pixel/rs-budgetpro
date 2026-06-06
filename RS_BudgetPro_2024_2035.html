@@ -5743,7 +5743,16 @@ function qmeUpdateSummary(){
   const prB = qmeVal('qme-prB') !== undefined ? qmeVal('qme-prB') : b.pr;
   const totA = laA + opA + prA;
   const totB = laB + opB + prB;
-  const vr = totA - totB;
+  const vr = totA - totB; // positive = overspent, negative = saved
+
+  // Display as Finance standard: Budget - Actual (savings = positive = green)
+  const fmtV = v => {
+    if(v===0) return '<span style="color:#4a5568">—</span>';
+    const disp = -v; // flip: under budget shows as positive saving
+    const sign = disp > 0 ? '+' : '';
+    const col  = disp > 0 ? '#00d4b8' : '#ff6b6b'; // teal=saving, red=overspent
+    return '<span style="color:'+col+'">'+sign+fN(disp)+'</span>';
+  };
 
   const laRA = qmeVal('qme-laRA') || 0;
   const vaRA = qmeVal('qme-vaRA') || 0;
@@ -5758,9 +5767,6 @@ function qmeUpdateSummary(){
   if(occEl && rs) occEl.innerHTML =
     `<span style="color:#a78bfa">Occupancy: ${occ}</span> · <span style="color:#38bdf8">Max RN: ${maxRn.toLocaleString()}</span>`;
   else if(occEl) occEl.innerHTML = '';
-
-  const fmtV = v => v===0?'<span style="color:#4a5568">—</span>':
-    v>0?`<span style="color:#ff6b6b">+${fN(v)}</span>`:`<span style="color:#00d4b8">${fN(v)}</span>`;
 
   const summary = document.getElementById('qme-summary');
   if(!summary) return;
