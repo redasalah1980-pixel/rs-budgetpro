@@ -3099,12 +3099,23 @@ function buildForecast(){
 }
 
 function hProj(el){
-  const y=+el.dataset.fy,m=+el.dataset.fm;
-  if(!PROJ[y])PROJ[y]={};
-  if(!PROJ[y][m])PROJ[y][m]={};
-  const v=el.value===''?undefined:parseFloat(el.value);
-  PROJ[y][m].roomsSold=v;
-  el.classList.toggle('filled',v!==undefined);
+  const y=+el.dataset.fy, m=+el.dataset.fm;
+  const v = el.value==='' ? null : parseFloat(el.value);
+
+  if(v===null || isNaN(v)){
+    // Field cleared — remove this month entry cleanly
+    if(PROJ[y] && PROJ[y][m]){ delete PROJ[y][m]; }
+    if(PROJ[y] && Object.keys(PROJ[y]).length===0){ delete PROJ[y]; }
+    el.classList.remove('filled');
+  } else {
+    if(!PROJ[y]) PROJ[y]={};
+    if(!PROJ[y][m]) PROJ[y][m]={};
+    PROJ[y][m].roomsSold = v;
+    el.classList.add('filled');
+  }
+
+  // Keep localStorage in sync immediately (prevents stale data on refresh)
+  localStorage.setItem('rsBP_p_v4', JSON.stringify(PROJ));
   buildForecast();
   autoSave();
 }
@@ -3315,6 +3326,8 @@ function hProjTable(el){
   const baseY = activeY > 2024 ? activeY-1 : activeY;
   buildYearForecastPanel(baseY);
 
+  // Keep localStorage in sync immediately so a page refresh never restores stale projections
+  localStorage.setItem('rsBP_p_v4', JSON.stringify(PROJ));
   autoSave();
 }
 
@@ -8075,20 +8088,28 @@ async function clearProjYear(){
   const sel = document.getElementById('clear-proj-year');
   const y = parseInt(sel.value);
   if(!y){ toast('⚠ Select a year to clear first'); return; }
+
+  // Guard: check if there are actually any projections for this year
+  const projCount = PROJ[y] ? Object.keys(PROJ[y]).length : 0;
+  if(!projCount){
+    toast(`⚠ No projections found for ${y} — nothing to clear`);
+    sel.value='';
+    return;
+  }
+
   const ok = await modalClearYear(y);
   if(!ok) return;
+
+  // Wipe entire year from PROJ
   delete PROJ[y];
-  // Table uses data-py; forecast panel uses data-fy — clear both
-  document.querySelectorAll(`[data-py="${y}"]`).forEach(el=>{
-    el.value=''; el.classList.remove('filled'); el.style.color='var(--text1)';
-  });
-  document.querySelectorAll(`[data-fy="${y}"]`).forEach(el=>{
-    el.value=''; el.classList.remove('filled');
-  });
+
+  // Sync localStorage immediately so refresh does not restore old data
+  localStorage.setItem('rsBP_p_v4', JSON.stringify(PROJ));
+
   sel.value='';
-  saveAll();
-  buildProject();
-  toast(`✓ All ${y} projections cleared & synced to Firebase`);
+  saveAll();          // also pushes to Firebase
+  buildProject();     // rebuilds table; actual rooms from DATA still show as read-only teal
+  toast(`✓ All ${y} projections cleared (${projCount} months) & synced to Firebase`);
 }
 
 async function clearProjMonth(){
@@ -8096,28 +8117,43 @@ async function clearProjMonth(){
   const selM = document.getElementById('clear-proj-month');
   const y = parseInt(selY.value);
   const m = parseInt(selM.value);
-  const MS=['January','February','March','April','May','June',
-            'July','August','September','October','November','December'];
+  const MFL=['January','February','March','April','May','June',
+             'July','August','September','October','November','December'];
   if(!y){ toast('⚠ Select a year first'); return; }
   if(isNaN(m)||selM.value===''){ toast('⚠ Select a month first'); return; }
+
+  // Guard: check there is actually a projection for this specific month
+  const hasProj = !!(PROJ[y]&&PROJ[y][m]&&PROJ[y][m].roomsSold!==undefined);
+  if(!hasProj){
+    // Check if what the user sees is actually an actual from Monthly Entry
+    const hasActual = !!(DATA[y]&&DATA[y][m]&&DATA[y][m].roomsSold);
+    if(hasActual){
+      toast(`⚠ ${MFL[m]} ${y} shows actual rooms from Monthly Entry — clear it there, not here`);
+    } else {
+      toast(`⚠ No projection found for ${MFL[m]} ${y} — nothing to clear`);
+    }
+    selY.value=''; selM.value='';
+    return;
+  }
+
   const ok2 = await modalClearMonth(y, m);
   if(!ok2) return;
-  // Delete just this month's projection entry
-  if(PROJ[y]&&PROJ[y][m]){
-    delete PROJ[y][m].roomsSold;
-    if(Object.keys(PROJ[y][m]).length===0) delete PROJ[y][m];
-    if(Object.keys(PROJ[y]||{}).length===0) delete PROJ[y];
+
+  // Delete this month cleanly — remove entire month object then prune year if empty
+  if(PROJ[y] && PROJ[y][m]){
+    delete PROJ[y][m];
   }
-  // Clear the input field visually
-  // Table uses data-py/data-pm; forecast panel uses data-fy/data-fm
-  const inp = document.querySelector(`[data-py="${y}"][data-pm="${m}"]`);
-  if(inp){ inp.value=''; inp.classList.remove('filled'); inp.style.color='var(--text1)'; }
-  const inp2 = document.querySelector(`[data-fy="${y}"][data-fm="${m}"]`);
-  if(inp2){ inp2.value=''; inp2.classList.remove('filled'); }
+  if(PROJ[y] && Object.keys(PROJ[y]).length===0){
+    delete PROJ[y];
+  }
+
+  // Sync localStorage immediately so refresh does not restore old data
+  localStorage.setItem('rsBP_p_v4', JSON.stringify(PROJ));
+
   selY.value=''; selM.value='';
-  saveAll();
-  buildProject();
-  toast(`✓ ${MS[m]} ${y} projection cleared & synced to Firebase`);
+  saveAll();          // also pushes to Firebase
+  buildProject();     // rebuilds table fresh
+  toast(`✓ ${MFL[m]} ${y} projection cleared & synced to Firebase`);
 }
 
 
