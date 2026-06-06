@@ -3249,8 +3249,22 @@ function hProjTable(el){
     delete PROJ[y][m].roomsSold;
     if(Object.keys(PROJ[y][m]).length===0) delete PROJ[y][m];
     if(PROJ[y]&&Object.keys(PROJ[y]).length===0) delete PROJ[y];
+    // Also remove from DATA if it was a rooms-only pushed projection (no expenses)
+    if(DATA[y]?.[m]?.roomsSold!==undefined){
+      const hasExp = !!(DATA[y][m].laA||DATA[y][m].opA||DATA[y][m].prA||DATA[y][m].kg);
+      if(!hasExp){
+        delete DATA[y][m].roomsSold;
+        if(Object.keys(DATA[y][m]).length===0) delete DATA[y][m];
+        localStorage.setItem('rsBP_d_v4', JSON.stringify(DATA));
+      }
+    }
   } else {
     PROJ[y][m].roomsSold = v;
+    // Mirror to DATA so the table stays consistent (rooms only, no expense override)
+    if(!DATA[y]) DATA[y]={};
+    if(!DATA[y][m]) DATA[y][m]={};
+    const hasExp = !!(DATA[y][m].laA||DATA[y][m].opA||DATA[y][m].prA||DATA[y][m].kg);
+    if(!hasExp) DATA[y][m].roomsSold = v; // only mirror if no real actuals entered
   }
 
   const rooms = v||0;
@@ -8089,9 +8103,16 @@ async function clearProjYear(){
   const y = parseInt(sel.value);
   if(!y){ toast('⚠ Select a year to clear first'); return; }
 
-  // Guard: check if there are actually any projections for this year
+  // Count PROJ entries + DATA rooms-only entries (pushed projections with no expenses)
   const projCount = PROJ[y] ? Object.keys(PROJ[y]).length : 0;
-  if(!projCount){
+  let pushedCount = 0;
+  for(let m=0;m<12;m++){
+    const hasRs = !!(DATA[y]?.[m]?.roomsSold);
+    const hasExp = !!(DATA[y]?.[m]?.laA || DATA[y]?.[m]?.opA || DATA[y]?.[m]?.prA || DATA[y]?.[m]?.kg);
+    if(hasRs && !hasExp) pushedCount++;
+  }
+
+  if(!projCount && !pushedCount){
     toast(`⚠ No projections found for ${y} — nothing to clear`);
     sel.value='';
     return;
@@ -8100,16 +8121,30 @@ async function clearProjYear(){
   const ok = await modalClearYear(y);
   if(!ok) return;
 
-  // Wipe entire year from PROJ
+  // Wipe PROJ for this year
   delete PROJ[y];
 
-  // Sync localStorage immediately so refresh does not restore old data
+  // Also wipe DATA rooms that were pushed projections (rooms only, no expenses)
+  if(DATA[y]){
+    for(let m=0;m<12;m++){
+      if(!DATA[y][m]) continue;
+      const hasExp = !!(DATA[y][m].laA || DATA[y][m].opA || DATA[y][m].prA || DATA[y][m].kg);
+      if(!hasExp && DATA[y][m].roomsSold!==undefined){
+        delete DATA[y][m].roomsSold;
+        if(Object.keys(DATA[y][m]).length===0) delete DATA[y][m];
+      }
+    }
+    if(Object.keys(DATA[y]||{}).length===0) delete DATA[y];
+    localStorage.setItem('rsBP_d_v4', JSON.stringify(DATA));
+  }
+
   localStorage.setItem('rsBP_p_v4', JSON.stringify(PROJ));
 
   sel.value='';
-  saveAll();          // also pushes to Firebase
-  buildProject();     // rebuilds table; actual rooms from DATA still show as read-only teal
-  toast(`✓ All ${y} projections cleared (${projCount} months) & synced to Firebase`);
+  saveAll();
+  buildProject();
+  const total = projCount + pushedCount;
+  toast(`✓ All ${y} projections cleared (${total} months) & synced to Firebase`);
 }
 
 async function clearProjMonth(){
@@ -8122,16 +8157,23 @@ async function clearProjMonth(){
   if(!y){ toast('⚠ Select a year first'); return; }
   if(isNaN(m)||selM.value===''){ toast('⚠ Select a month first'); return; }
 
-  // Guard: check there is actually a projection for this specific month
-  const hasProj = !!(PROJ[y]&&PROJ[y][m]&&PROJ[y][m].roomsSold!==undefined);
-  if(!hasProj){
-    // Check if what the user sees is actually an actual from Monthly Entry
-    const hasActual = !!(DATA[y]&&DATA[y][m]&&DATA[y][m].roomsSold);
-    if(hasActual){
-      toast(`⚠ ${MFL[m]} ${y} shows actual rooms from Monthly Entry — clear it there, not here`);
-    } else {
-      toast(`⚠ No projection found for ${MFL[m]} ${y} — nothing to clear`);
-    }
+  const hasProj   = !!(PROJ[y]?.[m]?.roomsSold !== undefined && PROJ[y]?.[m] !== undefined);
+  const hasDataRs = !!(DATA[y]?.[m]?.roomsSold);
+  // A "real actual" means rooms + at least one expense line entered
+  const hasExpenses = !!(DATA[y]?.[m]?.laA || DATA[y]?.[m]?.opA || DATA[y]?.[m]?.prA || DATA[y]?.[m]?.kg);
+  const isRealActual = hasDataRs && hasExpenses;   // rooms + expenses = genuine actual
+  const isProjCopied = hasDataRs && !hasExpenses;  // rooms only, no expenses = pushed from Projection Planner
+
+  // Nothing to clear at all
+  if(!hasProj && !hasDataRs){
+    toast(\`⚠ No data found for \${MFL[m]} \${y} — nothing to clear\`);
+    selY.value=''; selM.value='';
+    return;
+  }
+
+  // Real actual with expenses — cannot clear from here
+  if(isRealActual){
+    toast(\`⚠ \${MFL[m]} \${y} has actual expenses entered — go to Monthly Entry tab to edit it\`);
     selY.value=''; selM.value='';
     return;
   }
@@ -8139,21 +8181,31 @@ async function clearProjMonth(){
   const ok2 = await modalClearMonth(y, m);
   if(!ok2) return;
 
-  // Delete this month cleanly — remove entire month object then prune year if empty
-  if(PROJ[y] && PROJ[y][m]){
+  // Clear PROJ entry
+  if(PROJ[y]?.[m] !== undefined){
     delete PROJ[y][m];
-  }
-  if(PROJ[y] && Object.keys(PROJ[y]).length===0){
-    delete PROJ[y];
+    if(Object.keys(PROJ[y]).length===0) delete PROJ[y];
   }
 
-  // Sync localStorage immediately so refresh does not restore old data
+  // Also clear DATA rooms if it was just a pushed projection (rooms only, no expenses)
+  if(isProjCopied){
+    if(DATA[y]?.[m]){
+      delete DATA[y][m].roomsSold;
+      // Clean up empty month object
+      if(Object.keys(DATA[y][m]).length===0) delete DATA[y][m];
+      if(DATA[y] && Object.keys(DATA[y]).length===0) delete DATA[y];
+    }
+    // Sync DATA to localStorage immediately
+    localStorage.setItem('rsBP_d_v4', JSON.stringify(DATA));
+  }
+
+  // Sync PROJ to localStorage immediately
   localStorage.setItem('rsBP_p_v4', JSON.stringify(PROJ));
 
   selY.value=''; selM.value='';
-  saveAll();          // also pushes to Firebase
-  buildProject();     // rebuilds table fresh
-  toast(`✓ ${MFL[m]} ${y} projection cleared & synced to Firebase`);
+  saveAll();       // pushes both DATA + PROJ to Firebase
+  buildProject();  // rebuilds table — month will now be blank
+  toast(\`✓ \${MFL[m]} \${y} cleared & synced to Firebase\`);
 }
 
 
