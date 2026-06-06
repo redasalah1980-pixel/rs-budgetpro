@@ -5706,13 +5706,25 @@ function qmeLoad(){
 function qmeSet(id, val){
   const el = document.getElementById(id);
   if(!el) return;
-  el.value = (val !== undefined && val !== null) ? val : '';
+  if(val !== undefined && val !== null && val !== ''){
+    const n = parseFloat(val);
+    if(!isNaN(n)){
+      // Format with commas: integers no decimals, floats up to 2dp
+      el.value = Number.isInteger(n)
+        ? n.toLocaleString('en-US')
+        : n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    } else {
+      el.value = val;
+    }
+  } else {
+    el.value = '';
+  }
 }
 
 function qmeVal(id){
   const el = document.getElementById(id);
   if(!el || el.value === '') return undefined;
-  const v = parseFloat(el.value);
+  const v = parseFloat(el.value.replace(/,/g, ''));
   return isNaN(v) ? undefined : v;
 }
 
