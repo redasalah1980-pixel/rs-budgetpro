@@ -65,7 +65,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .ntab.active{color:var(--teal);border-bottom-color:var(--teal)}
 
 /* MAIN */
-.main{position:relative;z-index:1;padding:22px 28px;max-width:1800px;margin:0 auto}
+.main{position:relative;z-index:1;padding:22px 28px 80px;max-width:1800px;margin:0 auto}
 .pane{display:none;animation:fi .2s ease}
 .pane.active{display:block}
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -7994,7 +7994,7 @@ function buildSmartTab(){
   </div>
 
   <!-- ══ SECTION 7: DATA ENTRY REMINDERS ══ -->
-  <div style="background:#1a2236;border:1px solid rgba(245,197,66,.2);border-radius:12px;padding:18px 20px">
+  <div style="background:#1a2236;border:1px solid rgba(245,197,66,.2);border-radius:12px;padding:18px 20px;margin-bottom:40px">
     ${secHdr('📝','Data Entry Reminders','#f5c542','245,197,66','Past months missing actuals — enter data to improve accuracy')}
     ${missingMonths.length===0?`<div style="display:flex;align-items:center;gap:10px;background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.2);border-radius:8px;padding:12px 14px">
       <span style="font-size:20px">✅</span>
@@ -9698,7 +9698,7 @@ window.addEventListener('beforeunload',saveAll);
     <div class="pt">Smart Insights <span>AI-powered budget intelligence · forecasts · alerts · analysis</span></div>
     <button class="pill pill-teal" onclick="buildSmartTab()" style="border-radius:6px;padding:6px 14px;font-size:12px">↺ Refresh Analysis</button>
   </div>
-  <div id="smart-body">
+  <div id="smart-body" style="padding-bottom:80px">
     <div style="text-align:center;padding:40px;color:#4a5568;font-size:13px">
       Click "Refresh Analysis" to generate insights from your data
     </div>
