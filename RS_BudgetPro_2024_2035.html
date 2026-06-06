@@ -265,6 +265,18 @@ select option{background:var(--bg4)}
 
 @media(max-width:768px){.main{padding:14px 16px}.hdr,.nav{padding:0 14px}.mgrid{grid-template-columns:1fr}.inc-grid{grid-template-columns:1fr 1fr}}
 
+/* ── OTHERS REVENUE INPUTS ── */
+.rev-inp{
+  width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:6px;
+  color:var(--text2);font-family:var(--ff-m);font-size:13px;padding:7px 9px;
+  text-align:right;outline:none;transition:border-color .15s,background .15s;
+  -moz-appearance:textfield;
+}
+.rev-inp::-webkit-outer-spin-button,.rev-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.rev-inp::placeholder{color:var(--text4);font-size:11px}
+.rev-inp:focus{border-color:var(--teal);background:rgba(0,212,184,.04)}
+.rev-inp.filled{color:var(--teal);border-color:rgba(0,212,184,.3)}
+
 /* ── REVENUE TAB ── */
 .rev-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;transition:border-color .2s,box-shadow .2s}
 .rev-card:hover{border-color:var(--border2);box-shadow:0 4px 20px rgba(0,0,0,.3)}
