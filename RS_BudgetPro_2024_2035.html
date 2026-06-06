@@ -2864,7 +2864,7 @@ function makeCard(y,m){
       <div class="fg">
         <div class="fld fr">
           <label><span class="ld" style="background:var(--violet)"></span>Rooms Sold</label>
-          <input type="number" placeholder="0" value="${rs||''}" data-f="roomsSold"
+          <input type="text" inputmode="decimal" placeholder="0" value="${fmtInp(rs,true)}" data-f="roomsSold"
             id="rs-inp-${y}-${m}"
             class="${rs?'filled':''}"
             oninput="hCard(this,${y},${m})"
@@ -2912,7 +2912,7 @@ function makeCard(y,m){
       </div>
       <div class="fld fk" style="margin-bottom:7px">
         <label><span class="ld" style="background:var(--sky)"></span>Total KG Processed</label>
-        <input type="number" placeholder="0" value="${row.kg||''}" data-f="kg" class="${row.kg?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+2}">
+        <input type="text" inputmode="decimal" placeholder="0" value="${fmtInp(row.kg,true)}" data-f="kg" class="${row.kg?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+2}">
       </div>
       <!-- Actual + Budget side by side for each line -->
       <div class="csl" style="color:var(--amber);margin-bottom:4px">Expenses (QAR) — Actual / Budget</div>
@@ -2925,7 +2925,7 @@ function makeCard(y,m){
         <div class="fg">
           <div class="fld fl">
             <label><span class="ld" style="background:var(--amber)"></span>Actual</label>
-            <input type="number" placeholder="0.00" value="${row.laA!==undefined?row.laA:''}" data-f="laA"
+            <input type="text" inputmode="decimal" placeholder="0.00" value="${fmtInp(row.laA)}" data-f="laA"
               class="${row.laA!==undefined?'filled':''}"
               oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
               ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
@@ -2936,7 +2936,7 @@ function makeCard(y,m){
               <span class="ld" style="background:var(--gold)"></span>Budget
               ${row.laB===undefined?'<span style="font-size:8px;color:#4a5568;margin-left:3px">auto</span>':'<span style="font-size:8px;color:var(--gold);margin-left:3px">✎</span>'}
             </label>
-            <input type="number" placeholder="${b.autoLa?fN(b.autoLa):'0.00'}" value="${row.laB!==undefined?row.laB:''}" data-f="laB"
+            <input type="text" inputmode="decimal" placeholder="${b.autoLa?fN(b.autoLa):'0.00'}" value="${fmtInp(row.laB)}" data-f="laB"
               class="${row.laB!==undefined?'filled':''}"
               style="${row.laB!==undefined?'color:var(--gold);border-color:rgba(245,197,66,.4)':'color:var(--text3)'}"
               oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
@@ -2961,7 +2961,7 @@ function makeCard(y,m){
           </div>
           <div class="fld fo" style="margin-bottom:5px">
             <label><span class="ld" style="background:var(--lime)"></span>Actual</label>
-            <input type="number" placeholder="0.00" value="${row.opA!==undefined?row.opA:''}" data-f="opA"
+            <input type="text" inputmode="decimal" placeholder="0.00" value="${fmtInp(row.opA)}" data-f="opA"
               class="${row.opA!==undefined?'filled':''}"
               oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
               ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
@@ -2972,7 +2972,7 @@ function makeCard(y,m){
               <span class="ld" style="background:var(--gold)"></span>Budget
               ${row.opB===undefined?'<span style="font-size:8px;color:#4a5568">auto</span>':'<span style="font-size:8px;color:var(--gold)">✎</span>'}
             </label>
-            <input type="number" placeholder="${b.autoOp?fN(b.autoOp):'0.00'}" value="${row.opB!==undefined?row.opB:''}" data-f="opB"
+            <input type="text" inputmode="decimal" placeholder="${b.autoOp?fN(b.autoOp):'0.00'}" value="${fmtInp(row.opB)}" data-f="opB"
               class="${row.opB!==undefined?'filled':''}"
               style="${row.opB!==undefined?'color:var(--gold);border-color:rgba(245,197,66,.4)':'color:var(--text3)'}"
               oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
@@ -2987,7 +2987,7 @@ function makeCard(y,m){
           </div>
           <div class="fld fp" style="margin-bottom:5px">
             <label><span class="ld" style="background:var(--coral)"></span>Actual</label>
-            <input type="number" placeholder="0.00" value="${row.prA!==undefined?row.prA:''}" data-f="prA"
+            <input type="text" inputmode="decimal" placeholder="0.00" value="${fmtInp(row.prA)}" data-f="prA"
               class="${row.prA!==undefined?'filled':''}"
               oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
               ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
@@ -2998,7 +2998,7 @@ function makeCard(y,m){
               <span class="ld" style="background:var(--gold)"></span>Budget
               ${row.prB===undefined?'<span style="font-size:8px;color:#4a5568">auto</span>':'<span style="font-size:8px;color:var(--gold)">✎</span>'}
             </label>
-            <input type="number" placeholder="${b.autoPr?fN(b.autoPr):'0.00'}" value="${row.prB!==undefined?row.prB:''}" data-f="prB"
+            <input type="text" inputmode="decimal" placeholder="${b.autoPr?fN(b.autoPr):'0.00'}" value="${fmtInp(row.prB)}" data-f="prB"
               class="${row.prB!==undefined?'filled':''}"
               style="${row.prB!==undefined?'color:var(--gold);border-color:rgba(245,197,66,.4)':'color:var(--text3)'}"
               oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
@@ -3031,7 +3031,7 @@ function makeCard(y,m){
 function hCard(el,y,m){
   if(!DATA[y])DATA[y]={};
   if(!DATA[y][m])DATA[y][m]={};
-  const v = el.value===''?undefined:parseFloat(el.value);
+  const v = el.value===''?undefined:parseFloat(el.value.replace(/,/g,''));
   const field = el.dataset.f;
 
   // Special handling for roomsSold — show forecast reference
@@ -3075,7 +3075,7 @@ function hCard(el,y,m){
 async function hCardBlur(el,y,m){
   // If rooms field — check for forecast confirmation
   if(el.dataset.f==='roomsSold'){
-    const v = parseFloat(el.value)||0;
+    const v = parseFloat(el.value.replace(/,/g,''))||0;
     const projRs = PROJ[y]?.[m]?.roomsSold;
     const hadActual = !!(DATA[y]?.[m]?.roomsSold);
 
@@ -4247,6 +4247,7 @@ function exportCSV(){
 
 /* ── UTILS ── */
 function fN(n){if(!n&&n!==0)return'—';return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtInp(val,isInt){if(val===undefined||val===null||val==='')return '';const n=parseFloat(val);if(isNaN(n))return '';return isInt?n.toLocaleString('en-US'):n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function f0(n){if(!n&&n!==0)return'—';return n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}
 
 
@@ -10825,7 +10826,7 @@ window.addEventListener('beforeunload',saveAll);
           <div>
             <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
               color:#a78bfa;display:block;margin-bottom:4px">Rooms Sold</label>
-            <input id="qme-rs" type="number" placeholder="0"
+            <input id="qme-rs" type="text" inputmode="decimal" placeholder="0"
               style="width:100%;background:#0f1a2e;border:1px solid rgba(167,139,250,.3);border-radius:7px;
                 color:#a78bfa;font-family:'DM Mono',monospace;font-size:15px;font-weight:600;
                 padding:9px 12px;text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10835,7 +10836,7 @@ window.addEventListener('beforeunload',saveAll);
           <div>
             <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
               color:#38bdf8;display:block;margin-bottom:4px">KG Processed</label>
-            <input id="qme-kg" type="number" placeholder="0"
+            <input id="qme-kg" type="text" inputmode="decimal" placeholder="0"
               style="width:100%;background:#0f1a2e;border:1px solid rgba(56,189,248,.3);border-radius:7px;
                 color:#38bdf8;font-family:'DM Mono',monospace;font-size:15px;font-weight:600;
                 padding:9px 12px;text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10864,13 +10865,13 @@ window.addEventListener('beforeunload',saveAll);
             <div style="width:3px;height:28px;background:#ffb347;border-radius:2px;flex-shrink:0"></div>
             🧴 Laundry
           </div>
-          <input id="qme-laA" type="number" placeholder="0.00"
+          <input id="qme-laA" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(255,179,71,.25);border-radius:7px;
               color:#ffb347;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
             onfocus="this.style.borderColor='rgba(255,179,71,.7)'"
             onblur="this.style.borderColor='rgba(255,179,71,.25)'">
-          <input id="qme-laB" type="number" placeholder="auto"
+          <input id="qme-laB" type="text" inputmode="decimal" placeholder="auto"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.25);border-radius:7px;
               color:#f5c542;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10883,13 +10884,13 @@ window.addEventListener('beforeunload',saveAll);
             <div style="width:3px;height:28px;background:#a3e635;border-radius:2px;flex-shrink:0"></div>
             ⚙️ Operating
           </div>
-          <input id="qme-opA" type="number" placeholder="0.00"
+          <input id="qme-opA" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(163,230,53,.25);border-radius:7px;
               color:#a3e635;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
             onfocus="this.style.borderColor='rgba(163,230,53,.7)'"
             onblur="this.style.borderColor='rgba(163,230,53,.25)'">
-          <input id="qme-opB" type="number" placeholder="auto"
+          <input id="qme-opB" type="text" inputmode="decimal" placeholder="auto"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.25);border-radius:7px;
               color:#f5c542;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10902,13 +10903,13 @@ window.addEventListener('beforeunload',saveAll);
             <div style="width:3px;height:28px;background:#ff6b6b;border-radius:2px;flex-shrink:0"></div>
             🖨️ Printing
           </div>
-          <input id="qme-prA" type="number" placeholder="0.00"
+          <input id="qme-prA" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(255,107,107,.25);border-radius:7px;
               color:#ff6b6b;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
             onfocus="this.style.borderColor='rgba(255,107,107,.7)'"
             onblur="this.style.borderColor='rgba(255,107,107,.25)'">
-          <input id="qme-prB" type="number" placeholder="auto"
+          <input id="qme-prB" type="text" inputmode="decimal" placeholder="auto"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.25);border-radius:7px;
               color:#f5c542;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10935,13 +10936,13 @@ window.addEventListener('beforeunload',saveAll);
             <div style="width:3px;height:28px;background:#00d4b8;border-radius:2px;flex-shrink:0"></div>
             🏨 Laundry Rev
           </div>
-          <input id="qme-laRA" type="number" placeholder="0.00"
+          <input id="qme-laRA" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(0,212,184,.25);border-radius:7px;
               color:#00d4b8;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
             onfocus="this.style.borderColor='rgba(0,212,184,.7)'"
             onblur="this.style.borderColor='rgba(0,212,184,.25)'">
-          <input id="qme-laRB" type="number" placeholder="0.00"
+          <input id="qme-laRB" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.25);border-radius:7px;
               color:#f5c542;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10954,13 +10955,13 @@ window.addEventListener('beforeunload',saveAll);
             <div style="width:3px;height:28px;background:#a78bfa;border-radius:2px;flex-shrink:0"></div>
             💎 Pearl Valet
           </div>
-          <input id="qme-vaRA" type="number" placeholder="0.00"
+          <input id="qme-vaRA" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(167,139,250,.25);border-radius:7px;
               color:#a78bfa;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
             onfocus="this.style.borderColor='rgba(167,139,250,.7)'"
             onblur="this.style.borderColor='rgba(167,139,250,.25)'">
-          <input id="qme-vaRB" type="number" placeholder="0.00"
+          <input id="qme-vaRB" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.25);border-radius:7px;
               color:#f5c542;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
@@ -10973,13 +10974,13 @@ window.addEventListener('beforeunload',saveAll);
             <div style="width:3px;height:28px;background:#a3e635;border-radius:2px;flex-shrink:0"></div>
             📎 Others
           </div>
-          <input id="qme-othA" type="number" placeholder="0.00 or -305"
+          <input id="qme-othA" type="text" inputmode="decimal" placeholder="0.00 or -305"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(163,230,53,.25);border-radius:7px;
               color:#a3e635;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
             onfocus="this.style.borderColor='rgba(163,230,53,.7)'"
             onblur="this.style.borderColor='rgba(163,230,53,.25)'">
-          <input id="qme-othB" type="number" placeholder="0.00"
+          <input id="qme-othB" type="text" inputmode="decimal" placeholder="0.00"
             style="width:100%;background:#0f1a2e;border:1px solid rgba(245,197,66,.25);border-radius:7px;
               color:#f5c542;font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;
               text-align:right;outline:none;transition:border-color .2s;-moz-appearance:textfield"
