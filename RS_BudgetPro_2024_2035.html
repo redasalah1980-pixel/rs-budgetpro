@@ -1163,7 +1163,7 @@ function doLogin(){
 </header>
 
 <nav class="nav">
-  <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry</div>
+  <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry <span style="font-size:9px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.3);border-radius:8px;padding:1px 6px;margin-left:4px;letter-spacing:.3px">ACTUALS ONLY</span></div>
   <div class="ntab"         onclick="goTab(this,'project')">  🔮 Projection Planner</div>
   <div class="ntab"         onclick="goTab(this,'overview')">📊 Multi-Year Overview</div>
   <div class="ntab"         onclick="goTab(this,'increases')">⚙ Budget Adjustments</div>
@@ -1202,7 +1202,7 @@ function doLogin(){
 <!-- ══ TAB: MONTHLY ENTRY ══ -->
 <div id="pane-entry" class="pane active">
   <div class="ph">
-    <div class="pt">Monthly Data Entry <span>Enter actuals · budget auto-calculates from prior-year CPOR</span></div>
+    <div class="pt">Monthly Data Entry <span>Actuals only — forecasts go in Projection Planner · budget auto-calculates from prior-year CPOR</span></div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <div class="ypills" id="yp-entry"></div>
       <button onclick="lockFullYear(activeY)"
@@ -1222,6 +1222,17 @@ function doLogin(){
     </div>
   </div>
   <div id="ys-strip" style="display:none"></div>
+
+  <!-- Actuals-only reminder banner -->
+  <div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.2);border-radius:8px;
+    padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:16px;flex-shrink:0">🟢</span>
+    <div style="font-size:11px;color:#94a3b8;line-height:1.5">
+      <strong style="color:#00d4b8">Actuals only</strong> — enter real rooms sold and expenses for months that have already happened.
+      For future months, use the <strong style="color:#f5c542">Projection Planner</strong> tab instead.
+    </div>
+  </div>
+
   <div class="mgrid" id="mgrid"></div>
 
   <!-- ══ EXPENSES P&L SCHEDULE ══ -->
@@ -6159,7 +6170,7 @@ function toggleArabic(){
 function buildNavTabs(){
   // Rebuild nav tabs with correct current English names
   const tabs=[
-    ['entry','📋 Monthly Entry'],
+    ['entry','📋 Monthly Entry <span style="font-size:9px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.3);border-radius:8px;padding:1px 6px;margin-left:4px">ACTUALS ONLY</span>'],
     ['project','🔮 Projection Planner'],
     ['overview','📊 Multi-Year Overview'],
     ['increases','⚙ Budget Adjustments'],
