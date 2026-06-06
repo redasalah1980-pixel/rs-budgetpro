@@ -3259,12 +3259,9 @@ function hProjTable(el){
       }
     }
   } else {
+    // Save to PROJ only — never touch DATA from here
+    // DATA = actuals (Monthly Entry only), PROJ = forecasts (Projection Planner only)
     PROJ[y][m].roomsSold = v;
-    // Mirror to DATA so the table stays consistent (rooms only, no expense override)
-    if(!DATA[y]) DATA[y]={};
-    if(!DATA[y][m]) DATA[y][m]={};
-    const hasExp = !!(DATA[y][m].laA||DATA[y][m].opA||DATA[y][m].prA||DATA[y][m].kg);
-    if(!hasExp) DATA[y][m].roomsSold = v; // only mirror if no real actuals entered
   }
 
   const rooms = v||0;
