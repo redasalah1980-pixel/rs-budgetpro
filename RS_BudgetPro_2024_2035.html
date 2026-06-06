@@ -56,10 +56,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* NAV */
 .nav{position:sticky;top:58px;z-index:99;background:var(--bg2);border-bottom:1px solid var(--border);
-  display:flex;padding:0 28px;overflow-x:auto}
+  display:flex;padding:0 16px;overflow-x:auto}
 .nav::-webkit-scrollbar{height:0}
-.ntab{padding:0 18px;height:46px;display:flex;align-items:center;gap:6px;font-family:var(--ff-d);
-  font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;
+.ntab{padding:0 11px;height:40px;display:flex;align-items:center;gap:4px;font-family:var(--ff-d);
+  font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;
   transition:all .2s;white-space:nowrap}
 .ntab:hover{color:var(--text2)}
 .ntab.active{color:var(--teal);border-bottom-color:var(--teal)}
@@ -1163,7 +1163,7 @@ function doLogin(){
 </header>
 
 <nav class="nav">
-  <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry <span style="font-size:9px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.3);border-radius:8px;padding:1px 6px;margin-left:4px;letter-spacing:.3px">ACTUALS ONLY</span></div>
+  <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">ACT</span></div>
   <div class="ntab"         onclick="goTab(this,'project')">  🔮 Projection Planner</div>
   <div class="ntab"         onclick="goTab(this,'overview')">📊 Multi-Year Overview</div>
   <div class="ntab"         onclick="goTab(this,'increases')">⚙ Budget Adjustments</div>
@@ -6170,7 +6170,7 @@ function toggleArabic(){
 function buildNavTabs(){
   // Rebuild nav tabs with correct current English names
   const tabs=[
-    ['entry','📋 Monthly Entry <span style="font-size:9px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.3);border-radius:8px;padding:1px 6px;margin-left:4px">ACTUALS ONLY</span>'],
+    ['entry','📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px">ACT</span>'],
     ['project','🔮 Projection Planner'],
     ['overview','📊 Multi-Year Overview'],
     ['increases','⚙ Budget Adjustments'],
