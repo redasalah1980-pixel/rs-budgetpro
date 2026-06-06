@@ -1205,6 +1205,13 @@ function doLogin(){
     <div class="pt">Monthly Data Entry <span>Actuals only — forecasts go in Projection Planner · budget auto-calculates from prior-year CPOR</span></div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <div class="ypills" id="yp-entry"></div>
+      <button onclick="openBudgetModal(activeY)"
+        style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+          border:1px solid rgba(245,197,66,.4);color:var(--gold);background:rgba(245,197,66,.08);cursor:pointer;white-space:nowrap"
+        onmouseover="this.style.background='rgba(245,197,66,.18)'" onmouseout="this.style.background='rgba(245,197,66,.08)'"
+        title="Set budget for all 12 months at once">
+        📊 Bulk Budget Entry
+      </button>
       <button onclick="lockFullYear(activeY)"
         style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
           border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.08);cursor:pointer;white-space:nowrap"
@@ -2727,10 +2734,18 @@ function getSpecialAmt(y,m,line){
 
 function bud(y,m,rooms){
   const c=cporForYear(y),mult=incMult(y,m);
-  const la=rooms?c.la*rooms*mult:0;
-  const op=(rooms?c.op*rooms:0)+getSpecialAmt(y,m,'op');
-  const pr=rooms?c.pr*rooms:0;
-  return{la,op,pr,tot:la+op+pr}
+  // Auto-calc from CPOR
+  const autoLa=rooms?c.la*rooms*mult:0;
+  const autoOp=(rooms?c.op*rooms:0)+getSpecialAmt(y,m,'op');
+  const autoPr=rooms?c.pr*rooms:0;
+  // Manual override — use if set, else auto
+  const row=DATA[y]?.[m]||{};
+  const la = row.laB!==undefined ? row.laB : autoLa;
+  const op = row.opB!==undefined ? row.opB : autoOp;
+  const pr = row.prB!==undefined ? row.prB : autoPr;
+  return{la,op,pr,tot:la+op+pr,
+    autoLa,autoOp,autoPr,
+    hasManual:!!(row.laB!==undefined||row.opB!==undefined||row.prB!==undefined)}
 }
 
 function dim(y,m){return new Date(y,m+1,0).getDate()}
@@ -2890,19 +2905,97 @@ function makeCard(y,m){
         <label><span class="ld" style="background:var(--sky)"></span>Total KG Processed</label>
         <input type="number" placeholder="0" value="${row.kg||''}" data-f="kg" class="${row.kg?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+2}">
       </div>
-      <div class="csl" style="color:var(--amber)">Actual Expenses (QAR)</div>
-      <div class="fld fl" style="margin-bottom:7px">
-        <label><span class="ld" style="background:var(--amber)"></span>Laundry Supplies${hasInc?' ▲':''} <span style="color:var(--text3);font-weight:400;margin-left:auto">Bud: ${b.la?fN(b.la):'—'}</span></label>
-        <input type="number" placeholder="0.00" value="${row.laA!==undefined?row.laA:''}" data-f="laA" class="${row.laA!==undefined?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+3}">
-      </div>
-      <div class="fg">
-        <div class="fld fo">
-          <label><span class="ld" style="background:var(--lime)"></span>Operating ${getSpecialAmt(y,m,'op')>0?'<span style="color:var(--lime);font-size:9px;background:var(--lime-bg);padding:1px 5px;border-radius:6px;margin-left:2px">+Special</span>':''} <span style="color:var(--text3);font-weight:400;margin-left:4px">${b.op?fN(b.op):'—'}</span></label>
-          <input type="number" placeholder="0.00" value="${row.opA!==undefined?row.opA:''}" data-f="opA" class="${row.opA!==undefined?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+4}">
+      <!-- Actual + Budget side by side for each line -->
+      <div class="csl" style="color:var(--amber);margin-bottom:4px">Expenses (QAR) — Actual / Budget</div>
+
+      <!-- Laundry Supplies -->
+      <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:3px solid var(--amber)">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);margin-bottom:6px">
+          🧴 Laundry Supplies${hasInc?" <span style='color:var(--amber);font-size:9px'>▲ Inc</span>":''}
         </div>
-        <div class="fld fp">
-          <label><span class="ld" style="background:var(--coral)"></span>Printing <span style="color:var(--text3);font-weight:400;margin-left:4px">${b.pr?fN(b.pr):'—'}</span></label>
-          <input type="number" placeholder="0.00" value="${row.prA!==undefined?row.prA:''}" data-f="prA" class="${row.prA!==undefined?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+5}">
+        <div class="fg">
+          <div class="fld fl">
+            <label><span class="ld" style="background:var(--amber)"></span>Actual</label>
+            <input type="number" placeholder="0.00" value="${row.laA!==undefined?row.laA:''}" data-f="laA"
+              class="${row.laA!==undefined?'filled':''}"
+              oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
+              ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
+              tabindex="${m*6+3}">
+          </div>
+          <div class="fld" style="--fc:var(--gold)">
+            <label style="color:var(--gold)">
+              <span class="ld" style="background:var(--gold)"></span>Budget
+              ${row.laB===undefined?'<span style="font-size:8px;color:#4a5568;margin-left:3px">auto</span>':'<span style="font-size:8px;color:var(--gold);margin-left:3px">✎</span>'}
+            </label>
+            <input type="number" placeholder="${b.autoLa?fN(b.autoLa):'0.00'}" value="${row.laB!==undefined?row.laB:''}" data-f="laB"
+              class="${row.laB!==undefined?'filled':''}"
+              style="${row.laB!==undefined?'color:var(--gold);border-color:rgba(245,197,66,.4)':'color:var(--text3)'}"
+              oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
+              ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
+              tabindex="${m*6+3}">
+          </div>
+        </div>
+        ${row.laA!==undefined&&b.la?`<div style="font-size:9px;margin-top:4px;display:flex;gap:8px">
+          <span style="color:${row.laA>b.la?'var(--coral)':'var(--teal)'}">
+            ${row.laA>b.la?'▲ Over':'▼ Under'} by ${fN(Math.abs(row.laA-b.la))}
+          </span>
+          <span style="color:var(--text3)">(${b.la?((row.laA/b.la)*100).toFixed(0):'—'}% of budget)</span>
+        </div>`:''}
+      </div>
+
+      <!-- Operating + Printing side by side -->
+      <div class="fg" style="gap:6px">
+        <!-- Operating -->
+        <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;border-left:3px solid var(--lime)">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--lime);margin-bottom:6px">
+            ⚙️ Operating ${getSpecialAmt(y,m,'op')>0?'<span style="color:var(--lime);font-size:8px;background:var(--lime-bg);padding:1px 4px;border-radius:4px">+Spec</span>':''}
+          </div>
+          <div class="fld fo" style="margin-bottom:5px">
+            <label><span class="ld" style="background:var(--lime)"></span>Actual</label>
+            <input type="number" placeholder="0.00" value="${row.opA!==undefined?row.opA:''}" data-f="opA"
+              class="${row.opA!==undefined?'filled':''}"
+              oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
+              ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
+              tabindex="${m*6+4}">
+          </div>
+          <div class="fld" style="--fc:var(--gold)">
+            <label style="color:var(--gold)">
+              <span class="ld" style="background:var(--gold)"></span>Budget
+              ${row.opB===undefined?'<span style="font-size:8px;color:#4a5568">auto</span>':'<span style="font-size:8px;color:var(--gold)">✎</span>'}
+            </label>
+            <input type="number" placeholder="${b.autoOp?fN(b.autoOp):'0.00'}" value="${row.opB!==undefined?row.opB:''}" data-f="opB"
+              class="${row.opB!==undefined?'filled':''}"
+              style="${row.opB!==undefined?'color:var(--gold);border-color:rgba(245,197,66,.4)':'color:var(--text3)'}"
+              oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
+              ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
+              tabindex="${m*6+4}">
+          </div>
+        </div>
+        <!-- Printing -->
+        <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;border-left:3px solid var(--coral)">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--coral);margin-bottom:6px">
+            🖨️ Printing
+          </div>
+          <div class="fld fp" style="margin-bottom:5px">
+            <label><span class="ld" style="background:var(--coral)"></span>Actual</label>
+            <input type="number" placeholder="0.00" value="${row.prA!==undefined?row.prA:''}" data-f="prA"
+              class="${row.prA!==undefined?'filled':''}"
+              oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
+              ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
+              tabindex="${m*6+5}">
+          </div>
+          <div class="fld" style="--fc:var(--gold)">
+            <label style="color:var(--gold)">
+              <span class="ld" style="background:var(--gold)"></span>Budget
+              ${row.prB===undefined?'<span style="font-size:8px;color:#4a5568">auto</span>':'<span style="font-size:8px;color:var(--gold)">✎</span>'}
+            </label>
+            <input type="number" placeholder="${b.autoPr?fN(b.autoPr):'0.00'}" value="${row.prB!==undefined?row.prB:''}" data-f="prB"
+              class="${row.prB!==undefined?'filled':''}"
+              style="${row.prB!==undefined?'color:var(--gold);border-color:rgba(245,197,66,.4)':'color:var(--text3)'}"
+              oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})"
+              ${locked?'disabled style="opacity:.4;cursor:not-allowed;"':''}
+              tabindex="${m*6+5}">
+          </div>
         </div>
       </div>
       <div class="ctots">
@@ -5513,6 +5606,136 @@ async function signOut(){
 /* ════════════════════════════════════════
    FEATURE 4: NOTES PER MONTH
    ════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   BULK BUDGET ENTRY MODAL
+   ════════════════════════════════════════ */
+let _budModalYear = 2025;
+
+function openBudgetModal(y){
+  _budModalYear = y || activeY;
+  document.getElementById('bm-title').textContent = `Bulk Budget Entry — ${_budModalYear}`;
+  buildBudgetModalTable();
+  const ov = document.getElementById('budget-modal-overlay');
+  ov.style.display = 'flex';
+}
+
+function closeBudgetModal(){
+  document.getElementById('budget-modal-overlay').style.display = 'none';
+}
+
+function buildBudgetModalTable(){
+  const MS2 = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const y = _budModalYear;
+  let html = `<thead>
+    <tr>
+      <th style="text-align:left;padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;
+        font-weight:700;letter-spacing:.5px;color:#64748b;border-radius:6px 0 0 0">Month</th>
+      <th style="padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.5px;color:var(--amber);text-align:center">🧴 Laundry Supplies</th>
+      <th style="padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.5px;color:var(--lime);text-align:center">⚙️ Operating Supplies</th>
+      <th style="padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:.5px;color:var(--coral);text-align:center;border-radius:0 6px 0 0">🖨️ Printing & Stationery</th>
+    </tr>
+  </thead><tbody>`;
+
+  const inpStyle = (col, filled) =>
+    `width:100%;background:${filled?'rgba(245,197,66,.06)':'var(--bg3)'};border:1px solid ${filled?'rgba(245,197,66,.4)':'var(--border)'};
+     border-radius:6px;color:${filled?'var(--gold)':'var(--text2)'};font-family:'DM Mono',monospace;
+     font-size:12px;padding:7px 9px;text-align:right;outline:none;transition:all .15s;
+     -moz-appearance:textfield`;
+
+  for(let m=0;m<12;m++){
+    const row = DATA[y]?.[m] || {};
+    const rooms = row.roomsSold || PROJ[y]?.[m]?.roomsSold || 0;
+    const b = bud(y, m, rooms);
+    const bg = m%2===0 ? 'transparent' : 'rgba(255,255,255,.015)';
+    html += `<tr style="background:${bg}">
+      <td style="padding:8px 10px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap">
+        ${MS2[m]}
+        ${rooms?`<div style="font-size:9px;color:#4a5568;font-weight:400">${rooms.toLocaleString()} rooms</div>`:''}
+      </td>
+      <td style="padding:6px 8px">
+        <input type="number" id="bm-la-${m}" placeholder="${b.autoLa?fN(b.autoLa):'auto'}"
+          value="${row.laB!==undefined?row.laB:''}"
+          style="${inpStyle('var(--amber)', row.laB!==undefined)}"
+          onfocus="this.style.borderColor='rgba(245,197,66,.7)'"
+          onblur="this.style.borderColor=this.value?'rgba(245,197,66,.4)':'var(--border)'"
+          oninput="this.style.color=this.value?'var(--gold)':'var(--text2)'">
+      </td>
+      <td style="padding:6px 8px">
+        <input type="number" id="bm-op-${m}" placeholder="${b.autoOp?fN(b.autoOp):'auto'}"
+          value="${row.opB!==undefined?row.opB:''}"
+          style="${inpStyle('var(--lime)', row.opB!==undefined)}"
+          onfocus="this.style.borderColor='rgba(163,230,53,.7)'"
+          onblur="this.style.borderColor=this.value?'rgba(163,230,53,.4)':'var(--border)'"
+          oninput="this.style.color=this.value?'var(--gold)':'var(--text2)'">
+      </td>
+      <td style="padding:6px 8px">
+        <input type="number" id="bm-pr-${m}" placeholder="${b.autoPr?fN(b.autoPr):'auto'}"
+          value="${row.prB!==undefined?row.prB:''}"
+          style="${inpStyle('var(--coral)', row.prB!==undefined)}"
+          onfocus="this.style.borderColor='rgba(255,107,107,.7)'"
+          onblur="this.style.borderColor=this.value?'rgba(255,107,107,.4)':'var(--border)'"
+          oninput="this.style.color=this.value?'var(--gold)':'var(--text2)'">
+      </td>
+    </tr>`;
+  }
+  html += '</tbody>';
+  document.getElementById('bm-table').innerHTML = html;
+}
+
+function saveBudgetModal(){
+  const y = _budModalYear;
+  if(!DATA[y]) DATA[y] = {};
+  let saved = 0;
+  for(let m=0;m<12;m++){
+    if(!DATA[y][m]) DATA[y][m] = {};
+    const laV = document.getElementById('bm-la-'+m).value;
+    const opV = document.getElementById('bm-op-'+m).value;
+    const prV = document.getElementById('bm-pr-'+m).value;
+    if(laV!=='') { DATA[y][m].laB = parseFloat(laV); saved++; }
+    else delete DATA[y][m].laB;
+    if(opV!=='') { DATA[y][m].opB = parseFloat(opV); saved++; }
+    else delete DATA[y][m].opB;
+    if(prV!=='') { DATA[y][m].prB = parseFloat(prV); saved++; }
+    else delete DATA[y][m].prB;
+    // Clean up empty month objects
+    if(Object.keys(DATA[y][m]).length===0) delete DATA[y][m];
+  }
+  if(Object.keys(DATA[y]||{}).length===0) delete DATA[y];
+  localStorage.setItem('rsBP_d_v4', JSON.stringify(DATA));
+  saveAll();
+  buildEntry(); // refresh cards
+  closeBudgetModal();
+  toast(`✓ Budget saved for ${y} — ${saved} fields updated`);
+}
+
+function clearBudgetYear(){
+  const y = _budModalYear;
+  if(!confirm(`Clear all manual budgets for ${y}? Auto-calc will be used instead.`)) return;
+  if(DATA[y]){
+    for(let m=0;m<12;m++){
+      if(DATA[y][m]){
+        delete DATA[y][m].laB;
+        delete DATA[y][m].opB;
+        delete DATA[y][m].prB;
+      }
+    }
+  }
+  localStorage.setItem('rsBP_d_v4', JSON.stringify(DATA));
+  saveAll();
+  buildBudgetModalTable();
+  buildEntry();
+  toast(`✓ Manual budgets cleared for ${y} — auto-calc restored`);
+}
+
+// Close modal on overlay click
+document.addEventListener('DOMContentLoaded', ()=>{
+  const ov = document.getElementById('budget-modal-overlay');
+  if(ov) ov.addEventListener('click', e=>{ if(e.target===ov) closeBudgetModal(); });
+});
+
 function hNote(el,y,m){
   if(!DATA[y])DATA[y]={};
   if(!DATA[y][m])DATA[y][m]={};
@@ -10210,6 +10433,59 @@ window.addEventListener('beforeunload',saveAll);
     <div style="font-size:11px;color:#64748b;margin-bottom:6px">Four Seasons Hotel Doha · Laundry Department · 2024–2035</div>
     <div style="font-size:11px;color:#4a5568">Built and maintained by <strong style="color:#94a3b8">Reda Salah</strong> · Laundry Manager</div>
     <div style="margin-top:8px;font-size:10px;color:#374151">Firebase: rs-budgetpro · Singapore · GitHub: redasalah1980-pixel/rs-budgetpro</div>
+  </div>
+</div>
+
+<!-- ══ BULK BUDGET ENTRY MODAL ══ -->
+<div id="budget-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9998;
+  align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:linear-gradient(135deg,#0f1a2e,#1a2236);border:1px solid rgba(245,197,66,.3);
+    border-radius:16px;width:820px;max-width:96vw;max-height:90vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,.6)">
+    <!-- Header -->
+    <div style="padding:18px 24px 14px;border-bottom:1px solid rgba(245,197,66,.15);
+      display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;
+      background:linear-gradient(135deg,#0f1a2e,#1a2236);z-index:1">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,197,66,.12);
+          border:1px solid rgba(245,197,66,.3);display:flex;align-items:center;justify-content:center;font-size:18px">📊</div>
+        <div>
+          <div id="bm-title" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--gold)">Bulk Budget Entry</div>
+          <div style="font-size:11px;color:#64748b;margin-top:1px">Type Finance-approved budget for all 12 months — leave blank to use auto-calc</div>
+        </div>
+      </div>
+      <button onclick="closeBudgetModal()"
+        style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;
+          border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.08);cursor:pointer">
+        ✕ Close
+      </button>
+    </div>
+    <!-- Notice -->
+    <div style="margin:14px 24px 0;background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2);
+      border-radius:8px;padding:9px 14px;font-size:11px;color:#94a3b8;line-height:1.6">
+      💡 Enter your Finance-approved budget per line per month.
+      <strong style="color:var(--gold)">Gold = manual budget you typed · Grey "auto" = CPOR auto-calculation.</strong>
+      Leave a field blank to keep auto-calc for that month/line.
+    </div>
+    <!-- Table -->
+    <div style="padding:16px 24px;overflow-x:auto">
+      <table id="bm-table" style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px"></table>
+    </div>
+    <!-- Footer -->
+    <div style="padding:0 24px 20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+      <button onclick="clearBudgetYear()"
+        style="padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+          border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.08);cursor:pointer"
+        onmouseover="this.style.background='rgba(255,107,107,.18)'" onmouseout="this.style.background='rgba(255,107,107,.08)'">
+        🗑 Clear All Budgets This Year
+      </button>
+      <button onclick="saveBudgetModal()"
+        style="padding:8px 24px;border-radius:8px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+          border:1px solid rgba(245,197,66,.5);color:var(--gold);background:rgba(245,197,66,.12);cursor:pointer"
+        onmouseover="this.style.background='rgba(245,197,66,.22)'" onmouseout="this.style.background='rgba(245,197,66,.12)'">
+        💾 Save All Budgets
+      </button>
+    </div>
   </div>
 </div>
 
