@@ -8166,14 +8166,14 @@ async function clearProjMonth(){
 
   // Nothing to clear at all
   if(!hasProj && !hasDataRs){
-    toast(\`⚠ No data found for \${MFL[m]} \${y} — nothing to clear\`);
+    toast(`⚠ No data found for \${MFL[m]} \${y} — nothing to clear`);
     selY.value=''; selM.value='';
     return;
   }
 
   // Real actual with expenses — cannot clear from here
   if(isRealActual){
-    toast(\`⚠ \${MFL[m]} \${y} has actual expenses entered — go to Monthly Entry tab to edit it\`);
+    toast(`⚠ \${MFL[m]} \${y} has actual expenses entered — go to Monthly Entry tab to edit it`);
     selY.value=''; selM.value='';
     return;
   }
@@ -8205,7 +8205,7 @@ async function clearProjMonth(){
   selY.value=''; selM.value='';
   saveAll();       // pushes both DATA + PROJ to Firebase
   buildProject();  // rebuilds table — month will now be blank
-  toast(\`✓ \${MFL[m]} \${y} cleared & synced to Firebase\`);
+  toast(`✓ \${MFL[m]} \${y} cleared & synced to Firebase`);
 }
 
 
