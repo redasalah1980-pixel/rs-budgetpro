@@ -1164,7 +1164,7 @@ function doLogin(){
 
 <nav class="nav">
   <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">ACT</span></div>
-  <div class="ntab"         onclick="goTab(this,'project')">  🔮 Projection Planner</div>
+  <div class="ntab"         onclick="goTab(this,'project')">  🔮 Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">FCST</span></div>
   <div class="ntab"         onclick="goTab(this,'overview')">📊 Multi-Year Overview</div>
   <div class="ntab"         onclick="goTab(this,'increases')">⚙ Budget Adjustments</div>
   <div class="ntab"         onclick="goTab(this,'settings')">⚙️ Settings &amp; Base Data</div>
@@ -1264,7 +1264,7 @@ function doLogin(){
 <!-- ══ TAB: PROJECTION PLANNER ══ -->
 <div id="pane-project" class="pane">
   <div class="ph">
-    <div class="pt">Projection Planner <span>Enter expected rooms sold → budget auto-projects using prior-year CPOR</span></div>
+    <div class="pt">Projection Planner <span>Forecasts only — future months · budget auto-projects using prior-year CPOR</span></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <!-- Clear Year -->
       <div style="display:flex;align-items:center;gap:5px;background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:20px;padding:3px 8px 3px 10px">
@@ -1315,6 +1315,16 @@ function doLogin(){
       </div>
       <button class="pill pill-gold"   onclick="buildForecast()">⟳ Refresh Forecast</button>
       <button class="pill pill-violet" onclick="pushProjection()" title="Copies projected rooms to Monthly Entry for future years — only fills empty months">⬆ Copy Rooms → Monthly Entry</button>
+    </div>
+  </div>
+
+  <!-- Forecast-only reminder banner -->
+  <div style="background:rgba(245,197,66,.05);border:1px solid rgba(245,197,66,.2);border-radius:8px;
+    padding:8px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+    <span style="font-size:16px;flex-shrink:0">🟡</span>
+    <div style="font-size:11px;color:#94a3b8;line-height:1.5">
+      <strong style="color:#f5c542">Forecasts only</strong> — enter expected rooms for future months here.
+      When the month arrives, go to <strong style="color:#00d4b8">Monthly Entry</strong> to replace it with the real actual.
     </div>
   </div>
 
@@ -6171,7 +6181,7 @@ function buildNavTabs(){
   // Rebuild nav tabs with correct current English names
   const tabs=[
     ['entry','📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px">ACT</span>'],
-    ['project','🔮 Projection Planner'],
+    ['project','🔮 Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:6px;padding:1px 5px;margin-left:3px">FCST</span>'],
     ['overview','📊 Multi-Year Overview'],
     ['increases','⚙ Budget Adjustments'],
     ['settings','⚙️ Settings & Base Data'],
