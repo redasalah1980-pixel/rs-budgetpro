@@ -2592,7 +2592,7 @@ const K_D='rsBP_d_v4',K_I='rsBP_i_v4',K_S='rsBP_s_v4',K_P='rsBP_p_v4',K_SI='rsBP
 // DATA[year][0..11]={roomsSold,kg,laA,opA,prA}
 // PROJ[year][0..11]={roomsSold} — projection entries
 let DATA={},INCS=[],SETT={baseLa:324939.18,baseOp:47811,basePr:18590,baseRs:46613,roomsAvail:237,cporMethod:'single'},PROJ={},SPEC=[],LOCKS={};
-let activeY=2025,dashY=2025;
+let activeY=new Date().getFullYear(),dashY=new Date().getFullYear();
 
 /* ── PERSIST ── */
 function load(){
@@ -6318,8 +6318,316 @@ function buildTrendsTab(){
    ════════════════════════════════════════ */
 
 /* ════════════════════════════════════════
-   PERFORMANCE PULSE TAB
+   PERFORMANCE PULSE — PDF PRINT
    ════════════════════════════════════════ */
+function printPulsePDF(){
+  const y = pulseY;
+  const MF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const MS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const q  = v => (v!==undefined&&v!==null&&v!==0) ? v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  const qv = (v, isRev) => {
+    // Finance variance display: rev = A-B, exp = B-A
+    if(v===null||v===undefined) return '<span style="color:#6b7280">—</span>';
+    const good = v >= 0;
+    const col  = good ? '#059669' : '#dc2626';
+    const sign = v > 0 ? '+' : '';
+    return `<span style="color:${col};font-weight:700">${sign}${Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
+  };
+  const pctBar = (pct, col) => {
+    if(!pct && pct!==0) return '<span style="color:#9ca3af">—</span>';
+    const w = Math.min(pct, 100);
+    const over = pct > 100;
+    return `<div style="display:flex;align-items:center;gap:5px">
+      <div style="width:48px;height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:${col};border-radius:3px"></div>
+      </div>
+      <span style="font-size:9px;color:${over?(col==='#dc2626'?'#dc2626':'#059669'):col};font-weight:700">${pct}%</span>
+    </div>`;
+  };
+  const LOGO = document.querySelector('[alt="RS Logo"]')?.src || '';
+
+  // ── Aggregate all data ──
+  const curM  = new Date().getMonth();
+  const curY  = new Date().getFullYear();
+  const isCurrentYear = y === curY;
+  const ytdLimit = isCurrentYear ? curM : 11;
+
+  let ytdRevA=0,ytdRevB=0,ytdExpA=0,ytdExpB=0;
+  let totLaRevA=0,totLaRevB=0,totValRevA=0,totValRevB=0,totOthRevA=0,totOthRevB=0;
+  let totLaExpA=0,totLaExpB=0,totOpExpA=0,totOpExpB=0,totPrExpA=0,totPrExpB=0;
+  const months = [];
+
+  for(let m=0; m<12; m++){
+    const row  = (DATA[y]||{})[m] || {};
+    const rev  = (REV[y]||{})[m]  || {};
+    const revB = (REV_BUD[y]||{})[m] || {};
+    const rooms= getRooms(y, m);
+    const b    = bud(y, m, rooms);
+    const isPearlOn = pearlActive(y, m);
+    const locked = isLocked(y, m);
+    const isFuture = y > curY || (y===curY && m > curM);
+
+    const laRevA=rev.laA||0,  laRevB=revB.laB||0;
+    const valRevA=rev.valA||0,valRevB=revB.valB||0;
+    const othRevA=rev.othA||0,othRevB=revB.othB||0;
+    const laExpA=row.laA||0,  laExpB=b.la||0;
+    const opExpA=row.opA||0,  opExpB=b.op||0;
+    const prExpA=row.prA||0,  prExpB=b.pr||0;
+    const revA=laRevA+valRevA+othRevA, revBud=laRevB+valRevB+othRevB;
+    const expA=laExpA+opExpA+prExpA,   expBud=laExpB+opExpB+prExpB;
+    const netA=revA-expA, netB=revBud-expBud;
+    const maxRN = SETT.roomsAvail * new Date(y,m+1,0).getDate();
+    const occ = rooms&&maxRN ? (rooms/maxRN*100).toFixed(1)+'%' : '—';
+
+    months.push({m,laRevA,laRevB,valRevA,valRevB,othRevA,othRevB,
+                 laExpA,laExpB,opExpA,opExpB,prExpA,prExpB,
+                 revA,revBud,expA,expBud,netA,netB,
+                 rooms,occ,locked,isFuture,isPearlOn,
+                 hasData:!!(revA||expA)});
+
+    if(m<=ytdLimit){ ytdRevA+=revA; ytdRevB+=revBud; ytdExpA+=expA; ytdExpB+=expBud; }
+    totLaRevA+=laRevA;  totLaRevB+=laRevB;
+    totValRevA+=valRevA;totValRevB+=valRevB;
+    totOthRevA+=othRevA;totOthRevB+=othRevB;
+    totLaExpA+=laExpA;  totLaExpB+=laExpB;
+    totOpExpA+=opExpA;  totOpExpB+=opExpB;
+    totPrExpA+=prExpA;  totPrExpB+=prExpB;
+  }
+  const totRevA=totLaRevA+totValRevA+totOthRevA, totRevB=totLaRevB+totValRevB+totOthRevB;
+  const totExpA=totLaExpA+totOpExpA+totPrExpA,   totExpB=totLaExpB+totOpExpB+totPrExpB;
+  const netYrA=totRevA-totExpA, netYrB=totRevB-totExpB;
+
+  // ── KPI card HTML ──
+  const kpiCard = (icon, label, val, bval, pct, col, varVal) => `
+    <div style="background:${col}08;border:1px solid ${col}30;border-radius:10px;padding:14px 16px;flex:1;min-width:140px">
+      <div style="font-size:18px;margin-bottom:6px">${icon}</div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#64748b;margin-bottom:5px">${label}</div>
+      <div style="font-size:17px;font-weight:800;color:${col};font-family:'Courier New',monospace;margin-bottom:3px">${val}</div>
+      ${bval?`<div style="font-size:9px;color:#9ca3af">Budget: ${bval}</div>`:''}
+      ${pct!==null?`<div style="display:flex;align-items:center;gap:4px;margin-top:6px">
+        <div style="flex:1;height:4px;border-radius:2px;background:#e5e7eb;overflow:hidden">
+          <div style="height:100%;width:${Math.min(pct,100)}%;background:${col};border-radius:2px"></div>
+        </div>
+        <span style="font-size:9px;color:${col};font-weight:700">${pct}%</span>
+      </div>`:''}
+      ${varVal!==null&&varVal!==undefined?`<div style="font-size:10px;margin-top:5px">
+        <span style="color:#9ca3af">Variance: </span>
+        <span style="font-weight:700;color:${varVal>=0?'#059669':'#dc2626'}">${varVal>=0?'+':''}${Math.abs(varVal).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+      </div>`:''}
+    </div>`;
+
+  // ── Month rows HTML ──
+  const monthRows = months.map(d => {
+    const bg = d.isFuture ? '#f8fafc' : d.locked ? '#f0fdf4' : d.hasData ? '#ffffff' : '#fafafa';
+    const revPct = d.revBud ? Math.round((d.revA/d.revBud)*100) : null;
+    const expPct = d.expBud ? Math.round((d.expA/d.expBud)*100) : null;
+    const revVar = d.revBud ? d.revA-d.revBud : null;
+    const expVar = d.expBud ? d.expBud-d.expA : null;
+
+    // mini progress bar for PDF
+    const mbar = (pct, col) => {
+      if(pct===null) return '<span style="color:#9ca3af;font-size:8px">—</span>';
+      const over = pct > 100;
+      const barCol = over ? (col==='#0d9488'?'#dc2626':'#dc2626') : col;
+      return `<div style="display:flex;align-items:center;gap:4px">
+        <div style="width:40px;height:5px;border-radius:3px;background:#e5e7eb;overflow:hidden">
+          <div style="height:100%;width:${Math.min(pct,100)}%;background:${barCol};border-radius:3px"></div>
+        </div>
+        <span style="font-size:8px;color:${barCol};font-weight:700">${pct}%</span>
+      </div>`;
+    };
+
+    return `<tr style="background:${bg};${d.isFuture?'opacity:.5':''}">
+      <td style="padding:7px 10px;font-size:10px;font-weight:700;color:${d.isFuture?'#9ca3af':d.hasData?'#1e293b':'#9ca3af'};white-space:nowrap;border-right:2px solid #f1f5f9">
+        ${d.locked?'🔒 ':''}<span style="font-weight:800">${MS[d.m]}</span>
+        ${d.isFuture?'<br><span style="font-size:8px;color:#94a3b8">Forecast</span>':''}
+      </td>
+      <td style="padding:7px 8px;text-align:center;font-size:9px;color:#6b7280">${d.rooms?d.rooms.toLocaleString():'—'}</td>
+      <td style="padding:7px 8px;text-align:center;font-size:9px;color:#7c3aed">${d.occ}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;color:#0d9488;font-weight:600">${d.laRevA?d.laRevA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;color:#7c3aed;font-weight:600">${d.isPearlOn&&d.valRevA?d.valRevA.toLocaleString('en-US',{minimumFractionDigits:2}):d.isPearlOn?'—':'N/A'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;color:#0284c7;font-weight:600">${d.othRevA?d.othRevA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:10px;color:#0d9488;font-weight:800;background:#f0fdfa">${d.revA?d.revA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:center;border-left:1px solid #e5e7eb">${mbar(revPct,'#0d9488')}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700">${qv(revVar,true)}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;color:#d97706;font-weight:600;border-left:2px solid #f1f5f9">${d.laExpA?d.laExpA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;color:#d97706;font-weight:600">${d.opExpA?d.opExpA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;color:#d97706;font-weight:600">${d.prExpA?d.prExpA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:10px;color:#d97706;font-weight:800;background:#fffbeb">${d.expA?d.expA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:7px 8px;text-align:center;border-left:1px solid #e5e7eb">${mbar(expPct,'#d97706')}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700">${qv(expVar,false)}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:10px;font-weight:800;color:${d.netA>=0?'#059669':'#dc2626'};background:${d.netA>=0?'#f0fdf4':'#fff1f2'};border-left:2px solid #e5e7eb">${d.netA!==0?d.netA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Summary table rows ──
+  const sumRow = (icon, label, actA, budB, isRev, isTot=false, isNet=false) => {
+    const vr = budB ? (isRev ? actA-budB : budB-actA) : null;
+    const pct = budB ? Math.round((actA/budB)*100) : null;
+    const aCol = isNet ? (actA>=0?'#059669':'#dc2626') : isRev ? '#0d9488' : '#d97706';
+    const bg = isTot||isNet ? (isNet?'#f0fdf4':'#f8fafc') : '#ffffff';
+    const fw = isTot||isNet ? '800' : '600';
+    return `<tr style="background:${bg};${isTot?'border-top:2px solid #e5e7eb':''}">
+      <td style="padding:${isTot||isNet?'9':'6'}px 12px;font-size:${isTot||isNet?'11':'10'}px;font-weight:${fw};color:${isTot||isNet?'#1e293b':'#475569'}">${icon} ${label}</td>
+      <td style="padding:6px 10px;text-align:right;font-family:'Courier New',monospace;font-size:10px;font-weight:${fw};color:${aCol}">${actA?actA.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:6px 10px;text-align:right;font-family:'Courier New',monospace;font-size:10px;color:#9ca3af">${budB?budB.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:6px 10px;text-align:right;font-size:10px">${qv(vr,isRev)}</td>
+      <td style="padding:6px 10px;text-align:center">${pctBar(pct, vr>=0?'#059669':'#dc2626')}</td>
+    </tr>`;
+  };
+
+  const ytdRevPct = ytdRevB ? Math.round((ytdRevA/ytdRevB)*100) : null;
+  const ytdExpPct = ytdExpB ? Math.round((ytdExpA/ytdExpB)*100) : null;
+  const ytdNetA   = ytdRevA-ytdExpA, ytdNetB=ytdRevB-ytdExpB;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Performance Pulse — ${y} — RS BudgetPro</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A3 landscape;margin:8mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11px}
+    table{border-collapse:collapse;width:100%}
+    th{font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:7px 8px;white-space:nowrap}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    .section-label{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:#f1f5f9;color:#475569;border-top:2px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
+    .page-break{page-break-before:always}
+  </style></head><body>
+
+  <!-- ═══ HEADER ═══ -->
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1e1b4b 100%);padding:18px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:14px">
+      ${LOGO?`<img src="${LOGO}" style="width:48px;height:48px;border-radius:10px;object-fit:cover">` : ''}
+      <div>
+        <div style="font-size:8px;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
+        <div style="font-size:22px;font-weight:900;color:#f5c542;letter-spacing:-.5px">⚡ Performance Pulse — ${y}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:3px">Budget vs Actual · Revenue &amp; Expenses · Full Year Detail</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:9px;color:rgba(255,255,255,.4);margin-bottom:3px">Prepared by</div>
+      <div style="font-size:13px;font-weight:700;color:#fff">Reda Salah</div>
+      <div style="font-size:10px;color:#f5c542;margin-top:2px">RS BudgetPro V3.0</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.35);margin-top:3px">${now}</div>
+    </div>
+  </div>
+
+  <!-- ═══ YTD KPI CARDS ═══ -->
+  <div style="margin:0 0 16px;padding:0 2px">
+    <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:8px">YTD SUMMARY${isCurrentYear?' (Jan – '+MS[ytdLimit]+')':' (Full Year)'}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${kpiCard('💰','YTD Revenue',ytdRevA.toLocaleString('en-US',{minimumFractionDigits:2}),ytdRevB?ytdRevB.toLocaleString('en-US',{minimumFractionDigits:2}):null,ytdRevPct,'#0d9488',ytdRevB?ytdRevA-ytdRevB:null)}
+      ${kpiCard('🔥','YTD Expenses',ytdExpA.toLocaleString('en-US',{minimumFractionDigits:2}),ytdExpB?ytdExpB.toLocaleString('en-US',{minimumFractionDigits:2}):null,ytdExpPct,'#d97706',ytdExpB?ytdExpB-ytdExpA:null)}
+      ${kpiCard('📊','YTD Net',(ytdNetA).toLocaleString('en-US',{minimumFractionDigits:2}),ytdNetB?(ytdNetB).toLocaleString('en-US',{minimumFractionDigits:2}):null,null,ytdNetA>=0?'#059669':'#dc2626',ytdNetB?ytdNetA-ytdNetB:null)}
+      ${kpiCard('📋','Full Year Budget Rev',totRevB?totRevB.toLocaleString('en-US',{minimumFractionDigits:2}):'Not set',null,null,'#7c3aed',null)}
+      ${kpiCard('📋','Full Year Budget Exp',totExpB?totExpB.toLocaleString('en-US',{minimumFractionDigits:2}):'Not set',null,null,'#d97706',null)}
+    </div>
+  </div>
+
+  <!-- ═══ MONTHLY DETAIL TABLE ═══ -->
+  <div style="margin-bottom:16px">
+    <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">MONTHLY DETAIL — ${y}</div>
+    <div style="overflow:hidden;border-radius:8px;border:1px solid #e2e8f0">
+      <table>
+        <thead>
+          <tr style="background:linear-gradient(135deg,#0f172a,#1e3a5f)">
+            <th style="color:#94a3b8;text-align:left;padding:8px 10px;border-right:2px solid rgba(255,255,255,.1)">Month</th>
+            <th style="color:#a78bfa">Rooms</th>
+            <th style="color:#a78bfa">Occ%</th>
+            <th style="color:#2dd4bf">FS Doha Rev</th>
+            <th style="color:#a78bfa">Pearl Valet</th>
+            <th style="color:#38bdf8">Others</th>
+            <th style="color:#2dd4bf;background:rgba(0,212,184,.1)">TOTAL REV</th>
+            <th style="color:#94a3b8;border-left:1px solid rgba(255,255,255,.1)">Rev %</th>
+            <th style="color:#94a3b8">Rev Var</th>
+            <th style="color:#fbbf24;border-left:2px solid rgba(255,255,255,.1)">Laundry Exp</th>
+            <th style="color:#fbbf24">Operating</th>
+            <th style="color:#fbbf24">Printing</th>
+            <th style="color:#fbbf24;background:rgba(255,179,71,.1)">TOTAL EXP</th>
+            <th style="color:#94a3b8;border-left:1px solid rgba(255,255,255,.1)">Exp %</th>
+            <th style="color:#94a3b8">Exp Var</th>
+            <th style="color:#a3e635;border-left:2px solid rgba(255,255,255,.1)">NET</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${monthRows}
+          <!-- TOTALS ROW -->
+          <tr style="background:linear-gradient(135deg,#0f172a,#1e293b);border-top:3px solid #334155">
+            <td style="padding:9px 10px;font-size:10px;font-weight:900;color:#f5c542;border-right:2px solid rgba(255,255,255,.1)">FULL YEAR</td>
+            <td style="padding:8px;text-align:center;color:#94a3b8;font-size:9px">—</td>
+            <td style="padding:8px;text-align:center;color:#94a3b8;font-size:9px">—</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:#2dd4bf">${q(totLaRevA)}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:#a78bfa">${q(totValRevA)}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:#38bdf8">${q(totOthRevA)}</td>
+            <td style="padding:8px;text-align:right;font-size:11px;font-weight:900;color:#2dd4bf;background:rgba(0,212,184,.15)">${q(totRevA)}</td>
+            <td style="padding:8px;text-align:center;font-size:9px;color:#94a3b8">${totRevB?Math.round((totRevA/totRevB)*100)+'%':'—'}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:${totRevA>=totRevB?'#4ade80':'#f87171'}">${totRevB?(totRevA>=totRevB?'+':'')+Math.abs(totRevA-totRevB).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:#fbbf24;border-left:2px solid rgba(255,255,255,.1)">${q(totLaExpA)}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:#fbbf24">${q(totOpExpA)}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:#fbbf24">${q(totPrExpA)}</td>
+            <td style="padding:8px;text-align:right;font-size:11px;font-weight:900;color:#fbbf24;background:rgba(255,179,71,.15)">${q(totExpA)}</td>
+            <td style="padding:8px;text-align:center;font-size:9px;color:#94a3b8">${totExpB?Math.round((totExpA/totExpB)*100)+'%':'—'}</td>
+            <td style="padding:8px;text-align:right;font-size:9px;font-weight:800;color:${totExpA<=totExpB?'#4ade80':'#f87171'}">${totExpB?(totExpB>=totExpA?'+':'')+Math.abs(totExpB-totExpA).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+            <td style="padding:8px;text-align:right;font-size:11px;font-weight:900;color:${netYrA>=0?'#4ade80':'#f87171'};background:${netYrA>=0?'rgba(74,222,128,.15)':'rgba(248,113,113,.15)'}">${netYrA.toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ YEAR SUMMARY TABLE ═══ -->
+  <div class="page-break">
+    <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px;margin-top:8px">YEAR SUMMARY — ${y} — FINANCE STANDARD VARIANCE</div>
+    <div style="overflow:hidden;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px">
+      <table>
+        <thead>
+          <tr style="background:linear-gradient(135deg,#0f172a,#1e3a5f)">
+            <th style="color:#94a3b8;text-align:left;padding:9px 12px;width:220px">Line Item</th>
+            <th style="color:#2dd4bf;text-align:right;padding:9px 10px">Actual (QAR)</th>
+            <th style="color:#94a3b8;text-align:right;padding:9px 10px">Budget (QAR)</th>
+            <th style="color:#94a3b8;text-align:right;padding:9px 10px">Variance</th>
+            <th style="color:#94a3b8;text-align:center;padding:9px 10px">% Achieved</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5" class="section-label">REVENUE</td></tr>
+          ${sumRow('🏨','Laundry Revenue (FS Doha)',totLaRevA,totLaRevB,true)}
+          ${sumRow('💎','Pearl Valet Revenue',totValRevA,totValRevB,true)}
+          ${sumRow('📎','Others Revenue',totOthRevA,totOthRevB,true)}
+          ${sumRow('','TOTAL REVENUE',totRevA,totRevB,true,true)}
+          <tr><td colspan="5" class="section-label">EXPENSES</td></tr>
+          ${sumRow('🧺','Laundry Supplies',totLaExpA,totLaExpB,false)}
+          ${sumRow('⚙️','Operating Expenses',totOpExpA,totOpExpB,false)}
+          ${sumRow('🖨','Printing Expenses',totPrExpA,totPrExpB,false)}
+          ${sumRow('','TOTAL EXPENSES',totExpA,totExpB,false,true)}
+          ${sumRow('📊','NET (Revenue − Expenses)',netYrA,netYrB,true,false,true)}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:8px;color:#94a3b8">Four Seasons Hotel Doha · Laundry Department · Performance Pulse Report · CONFIDENTIAL</div>
+      <div style="font-size:8px;color:#94a3b8">RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="background:#0d948820;border:1px solid #0d948840;border-radius:12px;padding:2px 10px;font-size:8px;color:#0d9488;font-weight:700">Revenue</span>
+        <span style="background:#d9770620;border:1px solid #d9770640;border-radius:12px;padding:2px 10px;font-size:8px;color:#d97706;font-weight:700">Expenses</span>
+        <span style="background:#05906920;border:1px solid #05906940;border-radius:12px;padding:2px 10px;font-size:8px;color:#059069;font-weight:700">Favorable</span>
+        <span style="background:#dc262620;border:1px solid #dc262640;border-radius:12px;padding:2px 10px;font-size:8px;color:#dc2626;font-weight:700">Unfavorable</span>
+      </div>
+    </div>
+  </div>
+
+  </body></html>`;
+
+  const w = window.open('','_blank','width=1400,height=900');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 600);
+  toast('Performance Pulse PDF ready ✓');
+}
+
+
 let pulseY = new Date().getFullYear();
 
 function buildPulseTab(){
@@ -10689,6 +10997,14 @@ window.addEventListener('beforeunload',saveAll);
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div id="pulse-year-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <button onclick="printPulsePDF()"
+          style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);
+            border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.08);
+            cursor:pointer;white-space:nowrap;letter-spacing:.3px;transition:all .2s"
+          onmouseover="this.style.background='rgba(255,107,107,.18)'"
+          onmouseout="this.style.background='rgba(255,107,107,.08)'">
+          🖨 Print PDF Report
+        </button>
       </div>
     </div>
     <!-- KPI Cards -->
