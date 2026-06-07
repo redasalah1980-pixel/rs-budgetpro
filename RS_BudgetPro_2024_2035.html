@@ -1182,6 +1182,7 @@ function doLogin(){
   <div class="ntab" onclick="goTab(this,'report')">📄 Budget Report</div>
   <div class="ntab" onclick="goTab(this,'trends')">📈 Trends &amp; Efficiency</div>
   <div class="ntab" onclick="goTab(this,'smart')">🧠 Smart Insights</div>
+  <div class="ntab" onclick="goTab(this,'pulse')">⚡ Performance Pulse</div>
   <div class="ntab" onclick="goTab(this,'backup')">🗄 Backup & Restore</div>
   <div class="ntab" onclick="goTab(this,'guide')">📖 User Guide</div>
 </nav>
@@ -2788,6 +2789,7 @@ function goTab(el,id){
   if(id==='trends')   {buildTrendsTab()}
   if(id==='backup')   {buildBackupTab()}
   if(id==='smart')    {buildSmartTab()}
+  if(id==='pulse')    {buildPulseTab()}
   if(id==='dashboard'){buildYP();buildDash()}
 }
 
@@ -6314,6 +6316,312 @@ function buildTrendsTab(){
 /* ════════════════════════════════════════
    FEATURE 5: BACKUP & RESTORE
    ════════════════════════════════════════ */
+
+/* ════════════════════════════════════════
+   PERFORMANCE PULSE TAB
+   ════════════════════════════════════════ */
+let pulseY = new Date().getFullYear();
+
+function buildPulseTab(){
+  // Build year pills
+  const pillsEl = document.getElementById('pulse-year-pills');
+  if(pillsEl){
+    pillsEl.innerHTML = '';
+    YEARS.forEach(y => {
+      const b = document.createElement('button');
+      b.className = 'yr' + (pulseY===y?' active':'');
+      b.textContent = y;
+      b.onclick = () => { pulseY=y; buildPulseTab(); };
+      pillsEl.appendChild(b);
+    });
+  }
+  buildPulseKPI();
+  buildPulseMonthGrid();
+  buildPulseSummaryTable();
+}
+
+function pulseGetMonthData(y, m){
+  const row  = (DATA[y]||{})[m] || {};
+  const rev  = (REV[y]||{})[m]  || {};
+  const revB = (REV_BUD[y]||{})[m] || {};
+  const b    = bud(y, m);
+
+  const revA  = (rev.laA||0)+(rev.valA||0)+(rev.othA||0);
+  const revBud= (revB.laB||0)+(revB.valB||0)+(revB.othB||0);
+  const expA  = (row.laA||0)+(row.opA||0)+(row.prA||0);
+  const expBud= b.tot || 0;
+
+  return { revA, revBud, expA, expBud,
+           hasAct: !!(row.laA||row.opA||row.prA||rev.laA||rev.valA),
+           hasBud: !!(expBud||revBud),
+           locked: isLocked(y,m) };
+}
+
+function pulseBar(actual, budget, type){
+  // type: 'rev' or 'exp'
+  if(!budget) return `<div style="height:6px;border-radius:3px;background:var(--bg4);width:100%"></div>`;
+  const pct   = Math.min((actual/budget)*100, 150);
+  const over  = actual > budget;
+  // Revenue: over budget = good (lime), under = teal
+  // Expenses: over budget = bad (coral), under = amber
+  let fillCol, trackCol;
+  if(type==='rev'){
+    fillCol  = over ? 'var(--lime)'  : 'var(--teal)';
+    trackCol = 'rgba(0,212,184,.12)';
+  } else {
+    fillCol  = over ? 'var(--coral)' : 'var(--amber)';
+    trackCol = 'rgba(255,179,71,.12)';
+  }
+  const pctDisplay = budget ? Math.round((actual/budget)*100) : 0;
+  return `
+    <div style="position:relative;height:6px;border-radius:3px;background:${trackCol};overflow:hidden;width:100%">
+      <div style="position:absolute;left:0;top:0;height:100%;width:${Math.min(pct,100)}%;background:${fillCol};border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>
+      ${over?`<div style="position:absolute;right:0;top:0;height:100%;width:${Math.min(pct-100,50)}%;background:${fillCol};opacity:.4;border-radius:0 3px 3px 0"></div>`:''}
+    </div>
+    <div style="font-family:var(--ff-m);font-size:9px;color:${fillCol};margin-top:2px;text-align:right">${pctDisplay}%</div>`;
+}
+
+function buildPulseKPI(){
+  const el = document.getElementById('pulse-kpi');
+  if(!el) return;
+  const now  = new Date();
+  const curM = now.getMonth();
+  const isCurrentYear = pulseY === now.getFullYear();
+
+  let ytdRevA=0, ytdRevB=0, ytdExpA=0, ytdExpB=0;
+  const limit = isCurrentYear ? curM : 11;
+  for(let m=0; m<=limit; m++){
+    const d = pulseGetMonthData(pulseY, m);
+    if(d.hasAct){ ytdRevA+=d.revA; ytdExpA+=d.expA; }
+    if(d.hasBud){ ytdRevB+=d.revBud; ytdExpB+=d.expBud; }
+  }
+  const netA = ytdRevA - ytdExpA;
+  const netB = ytdRevB - ytdExpB;
+  const revPct = ytdRevB ? Math.round((ytdRevA/ytdRevB)*100) : null;
+  const expPct = ytdExpB ? Math.round((ytdExpA/ytdExpB)*100) : null;
+  const netVar = netB ? netA - netB : null;
+
+  // Current month data
+  const cm = isCurrentYear ? curM : 11;
+  const cmD = pulseGetMonthData(pulseY, cm);
+  const MF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const kpis = [
+    {
+      icon:'💰', label:'YTD Revenue',
+      val: fN(ytdRevA), sub: ytdRevB ? `Budget: ${fN(ytdRevB)}` : 'No budget set',
+      pct: revPct, type:'rev',
+      color:'var(--teal)', bg:'rgba(0,212,184,.06)', border:'rgba(0,212,184,.2)'
+    },
+    {
+      icon:'🔥', label:'YTD Expenses',
+      val: fN(ytdExpA), sub: ytdExpB ? `Budget: ${fN(ytdExpB)}` : 'No budget set',
+      pct: expPct, type:'exp',
+      color:'var(--amber)', bg:'rgba(255,179,71,.06)', border:'rgba(255,179,71,.2)'
+    },
+    {
+      icon:'📊', label:'YTD Net',
+      val: fN(netA), sub: netB ? `Budget Net: ${fN(netB)}` : 'No budget set',
+      pct: null,
+      varVal: netVar,
+      color: netA>=0?'var(--lime)':'var(--coral)',
+      bg: netA>=0?'rgba(163,230,53,.06)':'rgba(255,107,107,.06)',
+      border: netA>=0?'rgba(163,230,53,.2)':'rgba(255,107,107,.2)'
+    },
+    {
+      icon:'📅', label: MF[cm] + (isCurrentYear?' (Current)':' (Last)'),
+      val: cmD.revA ? fN(cmD.revA) : '—',
+      sub: cmD.expA ? `Exp: ${fN(cmD.expA)}` : 'No data',
+      pct: null,
+      color:'var(--violet)', bg:'rgba(167,139,250,.06)', border:'rgba(167,139,250,.2)'
+    }
+  ];
+
+  el.innerHTML = kpis.map(k => `
+    <div style="background:${k.bg};border:1px solid ${k.border};border-radius:var(--rl);padding:14px 16px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-10px;right:-6px;font-size:36px;opacity:.07">${k.icon}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);margin-bottom:6px">${k.label}</div>
+      <div style="font-family:var(--ff-m);font-size:18px;font-weight:600;color:${k.color};margin-bottom:4px">${k.val}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:${k.pct!==null||k.varVal!==undefined?'8':'0'}px">${k.sub}</div>
+      ${k.pct!==null ? `
+        <div style="height:4px;border-radius:2px;background:var(--bg4);overflow:hidden">
+          <div style="height:100%;width:${Math.min(k.pct,100)}%;background:${k.color};border-radius:2px;transition:width .6s"></div>
+        </div>
+        <div style="font-family:var(--ff-m);font-size:9px;color:${k.color};margin-top:3px">${k.pct}% of budget</div>
+      ` : ''}
+      ${k.varVal!==undefined && k.varVal!==null ? `
+        <div style="font-size:10px;margin-top:4px">
+          <span style="color:var(--text3)">vs Budget: </span>
+          <span style="font-family:var(--ff-m);font-weight:600;color:${k.varVal>=0?'var(--lime)':'var(--coral)'}">
+            ${k.varVal>=0?'+':''}${fN(k.varVal)}
+          </span>
+        </div>
+      ` : ''}
+    </div>`).join('');
+}
+
+function buildPulseMonthGrid(){
+  const el = document.getElementById('pulse-month-grid');
+  if(!el) return;
+  const MF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now = new Date();
+  const curM = new Date().getMonth();
+  const curY = new Date().getFullYear();
+
+  let html = '';
+  for(let m=0; m<12; m++){
+    const d = pulseGetMonthData(pulseY, m);
+    const isFuture = pulseY > curY || (pulseY===curY && m > curM);
+    const isCurrent = pulseY===curY && m===curM;
+    const locked = d.locked;
+
+    // Revenue %
+    const revPct = d.revBud ? Math.round((d.revA/d.revBud)*100) : null;
+    const expPct = d.expBud ? Math.round((d.expA/d.expBud)*100) : null;
+    const revVar = d.revBud ? d.revA - d.revBud : null;
+    const expVar = d.expBud ? d.expBud - d.expA : null; // Finance: budget-actual for exp
+
+    const revVarCol = revVar===null ? '' : revVar>=0 ? 'var(--lime)' : 'var(--coral)';
+    const expVarCol = expVar===null ? '' : expVar>=0 ? 'var(--teal)' : 'var(--coral)';
+
+    html += `
+      <div style="display:grid;grid-template-columns:100px 1fr 1fr 140px 140px;align-items:center;gap:12px;
+        padding:10px 18px;border-bottom:1px solid var(--border);
+        ${isFuture?'opacity:.35':''}
+        ${isCurrent?'background:rgba(0,212,184,.03)':''}"
+        onmouseover="this.style.background='rgba(255,255,255,.02)'"
+        onmouseout="this.style.background='${isCurrent?'rgba(0,212,184,.03)':'transparent'}'">
+
+        <!-- Month label -->
+        <div style="display:flex;align-items:center;gap:7px">
+          ${isCurrent?`<div style="width:4px;height:4px;border-radius:50%;background:var(--teal);flex-shrink:0"></div>`
+                     :locked?`<div style="font-size:9px">🔒</div>`
+                     :`<div style="width:4px;height:4px;border-radius:50%;background:var(--border2);flex-shrink:0"></div>`}
+          <span style="font-family:var(--ff-d);font-size:12px;font-weight:600;color:${isCurrent?'var(--teal)':d.hasAct?'var(--text)':'var(--text3)'}">${MF[m]}</span>
+        </div>
+
+        <!-- Revenue bar -->
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;letter-spacing:.5px;text-transform:uppercase">Revenue</div>
+          ${d.revBud || d.revA ? pulseBar(d.revA, d.revBud, 'rev') : `<div style="height:6px;border-radius:3px;background:var(--bg4)"></div><div style="font-size:9px;color:var(--text3);margin-top:2px">—</div>`}
+        </div>
+
+        <!-- Expenses bar -->
+        <div>
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;letter-spacing:.5px;text-transform:uppercase">Expenses</div>
+          ${d.expBud || d.expA ? pulseBar(d.expA, d.expBud, 'exp') : `<div style="height:6px;border-radius:3px;background:var(--bg4)"></div><div style="font-size:9px;color:var(--text3);margin-top:2px">—</div>`}
+        </div>
+
+        <!-- Revenue figures -->
+        <div style="text-align:right">
+          <div style="font-family:var(--ff-m);font-size:11px;color:var(--teal)">${d.revA?fN(d.revA):'—'}</div>
+          ${revVar!==null?`<div style="font-size:9px;color:${revVarCol}">${revVar>=0?'+':''}${fN(revVar)}</div>`
+                         :`<div style="font-size:9px;color:var(--text3)">${d.revBud?'Bud: '+fN(d.revBud):'No budget'}</div>`}
+        </div>
+
+        <!-- Expenses figures -->
+        <div style="text-align:right">
+          <div style="font-family:var(--ff-m);font-size:11px;color:var(--amber)">${d.expA?fN(d.expA):'—'}</div>
+          ${expVar!==null?`<div style="font-size:9px;color:${expVarCol}">${expVar>=0?'+':''}${fN(expVar)}</div>`
+                         :`<div style="font-size:9px;color:var(--text3)">${d.expBud?'Bud: '+fN(d.expBud):'No budget'}</div>`}
+        </div>
+      </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function buildPulseSummaryTable(){
+  const el = document.getElementById('pulse-summary-table');
+  if(!el) return;
+
+  // Aggregate full year
+  let laRevA=0,laRevB=0,valRevA=0,valRevB=0,othRevA=0,othRevB=0;
+  let laExpA=0,laExpB=0,opExpA=0,opExpB=0,prExpA=0,prExpB=0;
+
+  for(let m=0; m<12; m++){
+    const row  = (DATA[pulseY]||{})[m] || {};
+    const rev  = (REV[pulseY]||{})[m]  || {};
+    const revB = (REV_BUD[pulseY]||{})[m] || {};
+    const b    = bud(pulseY, m);
+    laRevA  += rev.laA  ||0; laRevB  += revB.laB ||0;
+    valRevA += rev.valA ||0; valRevB += revB.valB||0;
+    othRevA += rev.othA ||0; othRevB += revB.othB||0;
+    laExpA  += row.laA  ||0; laExpB  += b.la     ||0;
+    opExpA  += row.opA  ||0; opExpB  += b.op     ||0;
+    prExpA  += row.prA  ||0; prExpB  += b.pr     ||0;
+  }
+
+  const totRevA = laRevA+valRevA+othRevA;
+  const totRevB = laRevB+valRevB+othRevB;
+  const totExpA = laExpA+opExpA+prExpA;
+  const totExpB = laExpB+opExpB+prExpB;
+  const netA = totRevA - totExpA;
+  const netB = totRevB - totExpB;
+
+  // row(label, actual, budget, isRevenue, isTotal, isNet)
+  const row = (label, a, b, isRev=true, isTotal=false, isNet=false, icon='') => {
+    const var_ = b ? (isRev ? a-b : b-a) : null; // Finance: rev A-B, exp B-A
+    const pct  = b ? Math.round((a/b)*100) : null;
+    const varCol = var_===null ? 'var(--text3)'
+                 : var_>=0    ? 'var(--teal)'
+                               : 'var(--coral)';
+    const aCol = isNet ? (a>=0?'var(--lime)':'var(--coral)')
+               : isTotal ? 'var(--text)'
+               : isRev   ? 'var(--teal)'
+                          : 'var(--amber)';
+    const rowBg = isNet   ? 'background:rgba(163,230,53,.04);border-top:2px solid rgba(163,230,53,.2)'
+                : isTotal ? 'background:var(--bg3);border-top:1px solid var(--border2)'
+                          : '';
+    return `<tr style="${rowBg}">
+      <td style="padding:${isTotal||isNet?'10':'7'}px 18px;font-size:${isTotal||isNet?'12':'11'}px;
+        font-weight:${isTotal||isNet?'700':'400'};
+        font-family:${isTotal||isNet?'var(--ff-d)':'var(--ff-b)'};
+        color:${isTotal||isNet?'var(--text)':'var(--text2)'};white-space:nowrap">
+        ${icon?`<span style="margin-right:5px">${icon}</span>`:''}${label}
+      </td>
+      <td style="padding:${isTotal||isNet?'10':'7'}px 18px;text-align:right;font-family:var(--ff-m);font-size:11px;color:${aCol};font-weight:${isTotal||isNet?'600':'400'}">${a?fN(a):'—'}</td>
+      <td style="padding:${isTotal||isNet?'10':'7'}px 18px;text-align:right;font-family:var(--ff-m);font-size:11px;color:var(--text3)">${b?fN(b):'—'}</td>
+      <td style="padding:${isTotal||isNet?'10':'7'}px 18px;text-align:right;font-family:var(--ff-m);font-size:11px;color:${varCol};font-weight:${isTotal||isNet?'600':'400'}">
+        ${var_!==null?(var_>=0?'+':'')+fN(var_):'—'}
+      </td>
+      <td style="padding:${isTotal||isNet?'10':'7'}px 18px;text-align:right;font-size:10px">
+        ${pct!==null?`<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <div style="width:50px;height:4px;border-radius:2px;background:var(--bg4);overflow:hidden">
+            <div style="height:100%;width:${Math.min(pct,100)}%;background:${varCol};border-radius:2px"></div>
+          </div>
+          <span style="font-family:var(--ff-m);color:${varCol};min-width:32px;text-align:right">${pct}%</span>
+        </div>`:'—'}
+      </td>
+    </tr>`;
+  };
+
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;min-width:560px">
+      <thead>
+        <tr style="background:var(--bg3)">
+          <th style="padding:10px 18px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);font-family:var(--ff-d)">Line</th>
+          <th style="padding:10px 18px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--teal);font-family:var(--ff-d)">Actual</th>
+          <th style="padding:10px 18px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);font-family:var(--ff-d)">Budget</th>
+          <th style="padding:10px 18px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);font-family:var(--ff-d)">Variance</th>
+          <th style="padding:10px 18px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);font-family:var(--ff-d)">% Achieved</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="5" style="padding:8px 18px 4px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);background:var(--bg3)">REVENUE</td></tr>
+        ${row('Laundry Revenue',  laRevA, laRevB,  true,  false, false, '🏨')}
+        ${row('Pearl Valet',      valRevA,valRevB,  true,  false, false, '💎')}
+        ${row('Others',           othRevA,othRevB,  true,  false, false, '📎')}
+        ${row('TOTAL REVENUE',    totRevA,totRevB,  true,  true,  false, '')}
+        <tr><td colspan="5" style="padding:8px 18px 4px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);background:var(--bg3)">EXPENSES</td></tr>
+        ${row('Laundry Supplies', laExpA, laExpB,  false, false, false, '🧺')}
+        ${row('Operating',        opExpA, opExpB,  false, false, false, '⚙️')}
+        ${row('Printing',         prExpA, prExpB,  false, false, false, '🖨')}
+        ${row('TOTAL EXPENSES',   totExpA,totExpB, false, true,  false, '')}
+        ${row('NET (Rev − Exp)',   netA,   netB,    true,  false, true,  '📊')}
+      </tbody>
+    </table>`;
+}
+
 function buildBackupTab(){
   // Count data stats
   let months=0,notes=0,yearsWithData=[];
@@ -10320,7 +10628,43 @@ window.addEventListener('beforeunload',saveAll);
 </div>
 
 <!-- TAB: BACKUP & RESTORE -->
-<div id="pane-backup" class="pane">
+<div id="pane-pulse" class="pane">
+  <div class="main" style="padding-bottom:80px">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+      <div>
+        <div class="pt">⚡ Performance Pulse <span>Budget vs Actual — Revenue &amp; Expenses</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div id="pulse-year-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+    <!-- KPI Cards -->
+    <div id="pulse-kpi" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px"></div>
+    <!-- Month Grid -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:24px">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--text)">Monthly Progress</div>
+        <div style="display:flex;align-items:center;gap:16px;font-size:10px;color:var(--text2)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;border-radius:2px;background:var(--teal);display:inline-block"></span>Revenue</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:3px;border-radius:2px;background:var(--amber);display:inline-block"></span>Expenses</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--border2);display:inline-block"></span>No data</span>
+        </div>
+      </div>
+      <div id="pulse-month-grid" style="padding:4px 0"></div>
+    </div>
+    <!-- Year Summary Table -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border)">
+        <div style="font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--text)">Year Summary</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Full year rollup — Finance-standard variance</div>
+      </div>
+      <div id="pulse-summary-table" style="overflow-x:auto"></div>
+    </div>
+  </div>
+</div>
+
+
   <div class="ph">
     <div class="pt">Backup & Restore <span>Protect your data</span></div>
   </div>
