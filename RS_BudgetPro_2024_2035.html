@@ -2548,23 +2548,29 @@ function doLogin(){
     btn.innerHTML='𓆣 &nbsp; Authenticating… &nbsp; 𓆣';
     btn.style.background='linear-gradient(135deg,#1a4a6b,#38bdf8)';btn.style.color='#fff';
     err.style.display='none';
-    // Sign in to Firebase silently
+
+    const proceed = () => {
+      btn.innerHTML='𓆣 &nbsp; Welcome, Reda Salah &nbsp; 𓆣';
+      btn.style.background='linear-gradient(135deg,#00907d,#00d4b8)';
+      const ls=document.getElementById('login-screen');
+      ls.style.transition='opacity .8s';ls.style.opacity='0';
+      setTimeout(()=>{
+        ls.style.display='none';
+        loadFromFirebase().then(()=>{
+          buildYP();buildEntry();buildIncList();deriveS();
+          setTimeout(buildLinesTable, 200);loadRev();buildMonthChips();buildSpecialList();
+        });
+      },800);
+    };
+
+    // Sign in to Firebase — wait for it to fully complete before proceeding
     fbSignIn(FB_EMAIL, p)
-      .catch(()=>{}) // don't block login if Firebase fails
-      .finally(()=>{
-        btn.innerHTML='𓆣 &nbsp; Welcome, Reda Salah &nbsp; 𓆣';
-        btn.style.background='linear-gradient(135deg,#00907d,#00d4b8)';
-        const ls=document.getElementById('login-screen');
-        ls.style.transition='opacity .8s';ls.style.opacity='0';
-        setTimeout(()=>{
-          ls.style.display='none';
-          // Load fresh data from Firebase after login
-          loadFromFirebase().then(()=>{
-            buildYP();buildEntry();buildIncList();deriveS();
-  setTimeout(buildLinesTable, 200);loadRev();buildMonthChips();buildSpecialList();
-          });
-        },800);
+      .then(proceed)   // auth succeeded → _fbAuth is true → load will work
+      .catch(()=>{
+        console.warn('Firebase sign-in failed — proceeding with local cache');
+        proceed();     // still open the app, just with local data
       });
+
   }else{
     err.style.display='block';
     btn.style.background='linear-gradient(135deg,#7a0000,#c44444)';btn.style.color='#fff';
@@ -2610,7 +2616,7 @@ function saveAll(){
 
   // 2. Save to Firebase (cloud backup)
   fbSave({
-    DATA, INCS, SETT, PROJ, SPEC, REV, REV_BUD,
+    DATA, INCS, SETT, PROJ, SPEC, REV, REV_BUD, LOCKS,
     _savedAt: new Date().toISOString()
   });
 }
@@ -6941,7 +6947,7 @@ function saveAll() {
   localStorage.setItem('rsBP_lastSaved', new Date().toLocaleString());
 
   // Save to Firebase (authenticated)
-  fbSave({DATA,INCS,SETT,PROJ,SPEC,REV,REV_BUD,_savedAt:new Date().toISOString()});
+  fbSave({DATA,INCS,SETT,PROJ,SPEC,REV,REV_BUD,LOCKS,_savedAt:new Date().toISOString()});
 }
 
 // ── LOAD FROM FIREBASE (authenticated) ──
@@ -6961,6 +6967,7 @@ function loadFromFirebase(){
         if(fbData.SPEC)    SPEC    = fbData.SPEC;
         if(fbData.REV)     REV     = fbData.REV;
         if(fbData.REV_BUD) REV_BUD = fbData.REV_BUD;
+        if(fbData.LOCKS)   LOCKS   = fbData.LOCKS;
         localStorage.setItem(K_D,  JSON.stringify(DATA));
         localStorage.setItem(K_I,  JSON.stringify(INCS));
         localStorage.setItem(K_S,  JSON.stringify(SETT));
