@@ -56,13 +56,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* NAV */
 .nav{position:sticky;top:58px;z-index:99;background:var(--bg2);border-bottom:1px solid var(--border);
-  display:flex;padding:0 16px;overflow-x:auto}
+  display:flex;padding:0 16px;overflow-x:auto;align-items:center}
 .nav::-webkit-scrollbar{height:0}
 .ntab{padding:0 11px;height:40px;display:flex;align-items:center;gap:4px;font-family:var(--ff-d);
   font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;
   transition:all .2s;white-space:nowrap}
 .ntab:hover{color:var(--text2)}
 .ntab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.nav-sep{width:1px;height:20px;background:var(--border2);margin:0 6px;flex-shrink:0}
+.nav-group-label{font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--text3);padding:0 6px 0 2px;white-space:nowrap;opacity:.6;flex-shrink:0}
 
 /* MAIN */
 .main{position:relative;z-index:1;padding:22px 28px 80px;max-width:1800px;margin:0 auto}
@@ -1172,22 +1175,28 @@ function doLogin(){
 </header>
 
 <nav class="nav">
-  <div class="ntab active"  onclick="goTab(this,'entry')">    📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">ACT</span></div>
-  <div class="ntab"         onclick="goTab(this,'project')">  🔮 Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">FCST</span></div>
-  <div class="ntab"         onclick="goTab(this,'overview')">📊 Multi-Year Overview</div>
-  <div class="ntab"         onclick="goTab(this,'increases')">⚙ Budget Adjustments</div>
-  <div class="ntab"         onclick="goTab(this,'settings')">⚙️ Settings &amp; Base Data</div>
-  <div class="ntab"         onclick="goTab(this,'revenue')"> 💰 Revenue</div>
-  <div class="ntab"         onclick="goTab(this,'dashboard')">🎯 Dashboard</div>
+  <span class="nav-group-label">DATA</span>
+  <div class="ntab active" onclick="goTab(this,'entry')">📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">ACT</span></div>
+  <div class="ntab" onclick="goTab(this,'project')">🔮 Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:6px;padding:1px 5px;margin-left:3px;letter-spacing:.2px">FCST</span></div>
+  <div class="ntab" onclick="goTab(this,'revenue')">💰 Revenue</div>
+  <div class="ntab" onclick="goTab(this,'increases')">⚙ Budget Adjustments</div>
+  <div class="ntab" onclick="goTab(this,'settings')">⚙️ Settings &amp; Base Data</div>
+  <div class="nav-sep"></div>
+  <span class="nav-group-label">ANALYSIS</span>
+  <div class="ntab" onclick="goTab(this,'dashboard')">🎯 Dashboard</div>
+  <div class="ntab" onclick="goTab(this,'pulse')">⚡ Performance Pulse</div>
+  <div class="ntab" onclick="goTab(this,'overview')">📊 Multi-Year Overview</div>
   <div class="ntab" onclick="goTab(this,'report')">📄 Budget Report</div>
   <div class="ntab" onclick="goTab(this,'trends')">📈 Trends &amp; Efficiency</div>
   <div class="ntab" onclick="goTab(this,'smart')">🧠 Smart Insights</div>
-  <div class="ntab" onclick="goTab(this,'pulse')">⚡ Performance Pulse</div>
-  <div class="ntab" onclick="goTab(this,'backup')">🗄 Backup & Restore</div>
+  <div class="ntab" onclick="goTab(this,'scenario')">🎯 Scenario Planner</div>
+  <div class="nav-sep"></div>
+  <span class="nav-group-label">SYSTEM</span>
+  <div class="ntab" onclick="goTab(this,'backup')">🗄 Backup &amp; Restore</div>
   <div class="ntab" onclick="goTab(this,'guide')">📖 User Guide</div>
 </nav>
 
-<!-- ══ CUSTOM MODAL ══ -->
+
 <div id="rs-modal-overlay">
   <div id="rs-modal-box">
     <!-- Header -->
@@ -1379,6 +1388,9 @@ function doLogin(){
     <div style="display:flex;align-items:center;gap:5px">
       <div style="width:8px;height:8px;border-radius:50%;background:#2a3550;border:1px solid #374151"></div>
       <span style="font-size:10px;color:#4a5568">Empty — not entered yet</span>
+    </div>
+    <div style="margin-left:auto">
+      <button onclick="syncProjToRevenue()" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(0,212,184,.18)'" onmouseout="this.style.background='rgba(0,212,184,.08)'">🔗 Sync Rooms → Revenue Planner</button>
     </div>
   </div>
   <div class="proj-wrap" id="proj-wrap-div" style="display:none">
@@ -2790,6 +2802,7 @@ function goTab(el,id){
   if(id==='backup')   {buildBackupTab()}
   if(id==='smart')    {buildSmartTab()}
   if(id==='pulse')    {buildPulseTab()}
+  if(id==='scenario') {buildScenarioTab()}
   if(id==='dashboard'){buildYP();buildDash()}
 }
 
@@ -3791,6 +3804,248 @@ function buildDash(){
 
   document.getElementById('dash-body').innerHTML=`
 
+    <!-- ══ TODAY PANEL ══ -->
+    ${(()=>{
+      const now = new Date();
+      const curM = now.getMonth();
+      const curY = now.getFullYear();
+      const MF2_tp=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const dayName = now.toLocaleDateString('en-US',{weekday:'long'});
+      const dateStr = now.toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'});
+
+      // Current month status
+      const cmRow = (DATA[curY]||{})[curM]||{};
+      const cmRev = (REV[curY]||{})[curM]||{};
+      const cmRevB= (REV_BUD[curY]||{})[curM]||{};
+      const cmRooms = cmRow.roomsSold||0;
+      const cmExpA  = (cmRow.laA||0)+(cmRow.opA||0)+(cmRow.prA||0);
+      const cmRevA  = (cmRev.laA||0)+(cmRev.valA||0)+(cmRev.othA||0);
+      const cmB     = bud(curY,curM,cmRooms);
+      const cmExpVar= cmB.tot ? cmB.tot-cmExpA : null; // B-A for exp
+      const cmRevVar= cmRevB.laB||cmRevB.valB ? (cmRevA-((cmRevB.laB||0)+(cmRevB.valB||0)+(cmRevB.othB||0))) : null;
+      const cmAvail = SETT.roomsAvail * new Date(curY,curM+1,0).getDate();
+      const cmOcc   = cmRooms&&cmAvail ? (cmRooms/cmAvail*100).toFixed(1)+'%' : '—';
+      const cmHasData = !!(cmExpA||cmRooms);
+
+      // Last month for comparison
+      const prevM = curM===0?11:curM-1;
+      const prevY = curM===0?curY-1:curY;
+      const pmRow = (DATA[prevY]||{})[prevM]||{};
+      const pmExpA = (pmRow.laA||0)+(pmRow.opA||0)+(pmRow.prA||0);
+      const pmEntered = !!(pmRow.roomsSold||pmRow.laA);
+
+      // YTD quick stats
+      let ytdExpA=0,ytdExpB=0,ytdRevA=0;
+      for(let m=0;m<curM;m++){
+        const r=(DATA[curY]||{})[m]||{};
+        const rv=(REV[curY]||{})[m]||{};
+        const rooms=getRooms(curY,m);
+        const b=bud(curY,m,rooms);
+        ytdExpA+=(r.laA||0)+(r.opA||0)+(r.prA||0);
+        ytdExpB+=b.tot||0;
+        ytdRevA+=(rv.laA||0)+(rv.valA||0)+(rv.othA||0);
+      }
+      const ytdVar = ytdExpB ? ytdExpB-ytdExpA : null;
+      const ytdPct = ytdExpB ? Math.round((ytdExpA/ytdExpB)*100) : null;
+
+      // What needs doing
+      const todos=[];
+      if(!cmHasData) todos.push({icon:'📋',text:`Enter ${MF2_tp[curM]} actuals`,action:`goTab(document.querySelector('.ntab[onclick*=\\'entry\\']'),'entry')`,col:'#ff6b6b'});
+      if(!pmEntered&&curM>0) todos.push({icon:'⚠️',text:`${MF2_tp[prevM]} data missing`,action:`goTab(document.querySelector('.ntab[onclick*=\\'entry\\']'),'entry')`,col:'#ffb347'});
+      if(!cmRevA&&curM>0) todos.push({icon:'💰',text:`Add ${MF2_tp[curM]} revenue`,action:`goTab(document.querySelector('.ntab[onclick*=\\'revenue\\']'),'revenue')`,col:'#00d4b8'});
+      if(todos.length===0) todos.push({icon:'✅',text:'All up to date',action:'',col:'#00d4b8'});
+
+      const todoHtml = todos.map(t=>`
+        <div onclick="${t.action}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;
+          border-radius:7px;border:1px solid ${t.col}25;background:${t.col}08;
+          cursor:${t.action?'pointer':'default'};transition:all .15s"
+          ${t.action?`onmouseover="this.style.background='${t.col}15'" onmouseout="this.style.background='${t.col}08'"`:''}>
+          <span style="font-size:14px">${t.icon}</span>
+          <span style="font-size:11px;color:${t.col};font-weight:600">${t.text}</span>
+          ${t.action?`<span style="margin-left:auto;font-size:10px;color:${t.col};opacity:.6">→</span>`:''}
+        </div>`).join('');
+
+      return `<div style="background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:var(--rl);padding:14px 18px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:start">
+
+        <!-- Date + greeting -->
+        <div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">${dayName}</div>
+          <div style="font-family:var(--ff-d);font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px">${dateStr}</div>
+          <div style="font-size:10px;color:var(--text3)">Four Seasons Doha · Laundry</div>
+          <div style="margin-top:10px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">To-do</div>
+            <div style="display:flex;flex-direction:column;gap:5px">${todoHtml}</div>
+          </div>
+        </div>
+
+        <!-- Current month -->
+        <div style="border-left:1px solid var(--border);padding-left:16px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--teal);margin-bottom:8px">${MF2_tp[curM]} ${curY} — Current Month</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.15);border-radius:7px;padding:7px 9px">
+              <div style="font-size:8px;color:var(--text3);margin-bottom:2px;letter-spacing:.5px">ROOMS</div>
+              <div style="font-family:var(--ff-m);font-size:14px;font-weight:700;color:var(--violet)">${cmRooms?cmRooms.toLocaleString():'—'}</div>
+              <div style="font-size:9px;color:var(--text3)">${cmOcc} occ</div>
+            </div>
+            <div style="background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.15);border-radius:7px;padding:7px 9px">
+              <div style="font-size:8px;color:var(--text3);margin-bottom:2px;letter-spacing:.5px">EXPENSES</div>
+              <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--teal)">${cmExpA?fN(cmExpA):'—'}</div>
+              <div style="font-size:9px;color:${cmExpVar===null?'var(--text3)':cmExpVar>=0?'var(--teal)':'var(--coral)'}">
+                ${cmExpVar!==null?(cmExpVar>=0?'✓ +'+fN(cmExpVar)+' saved':'▲ '+fN(Math.abs(cmExpVar))+' over'):'No budget set'}
+              </div>
+            </div>
+            <div style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);border-radius:7px;padding:7px 9px">
+              <div style="font-size:8px;color:var(--text3);margin-bottom:2px;letter-spacing:.5px">REVENUE</div>
+              <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--sky)">${cmRevA?fN(cmRevA):'—'}</div>
+              <div style="font-size:9px;color:${cmRevVar===null?'var(--text3)':cmRevVar>=0?'var(--lime)':'var(--coral)'}">
+                ${cmRevVar!==null?(cmRevVar>=0?'↑ '+fN(cmRevVar)+' above':'↓ '+fN(Math.abs(cmRevVar))+' below'):'No budget set'}
+              </div>
+            </div>
+            <div style="background:rgba(163,230,53,.06);border:1px solid rgba(163,230,53,.15);border-radius:7px;padding:7px 9px">
+              <div style="font-size:8px;color:var(--text3);margin-bottom:2px;letter-spacing:.5px">CPOR</div>
+              <div style="font-family:var(--ff-m);font-size:14px;font-weight:700;color:var(--lime)">${cmRooms&&cmExpA?(cmExpA/cmRooms).toFixed(4):'—'}</div>
+              <div style="font-size:9px;color:var(--text3)">${cmB.tot&&cmRooms?'Bud: '+(cmB.tot/cmRooms).toFixed(4):'—'}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- YTD summary -->
+        <div style="border-left:1px solid var(--border);padding-left:16px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);margin-bottom:8px">YTD ${curY} — Jan to ${MF2_tp[curM>0?curM-1:0]}</div>
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+              <span style="color:var(--text2)">Expenses</span>
+              <span style="font-family:var(--ff-m);color:var(--amber);font-weight:600">${fN(ytdExpA)}</span>
+            </div>
+            <div style="height:5px;border-radius:3px;background:var(--bg4);overflow:hidden;margin-bottom:2px">
+              <div style="height:100%;width:${ytdPct?Math.min(ytdPct,100):0}%;background:${ytdPct&&ytdPct>100?'var(--coral)':'var(--amber)'};border-radius:3px;transition:width .4s"></div>
+            </div>
+            <div style="font-size:9px;color:var(--text3)">${ytdPct!==null?ytdPct+'% of budget':'No budget'} · ${ytdVar!==null?(ytdVar>=0?'Saved QAR '+fN(ytdVar):'Over by QAR '+fN(Math.abs(ytdVar))):'—'}</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+              <span style="color:var(--text2)">Revenue</span>
+              <span style="font-family:var(--ff-m);color:var(--teal);font-weight:600">${fN(ytdRevA)}</span>
+            </div>
+            <div style="height:5px;border-radius:3px;background:var(--bg4);overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;width:${ytdRevA&&ytdExpA?Math.min((ytdRevA/ytdExpA)*50,100):0}%;background:var(--teal);border-radius:3px"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'entry\\']'),'entry')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(0,212,184,.3);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer">📋 Entry</button>
+            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'pulse\\']'),'pulse')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(167,139,250,.3);color:var(--violet);background:rgba(167,139,250,.08);cursor:pointer">⚡ Pulse</button>
+            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'smart\\']'),'smart')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">🧠 Insights</button>
+          </div>
+        </div>
+
+        <!-- Quick action: open Quick Entry -->
+        <div style="border-left:1px solid var(--border);padding-left:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:2px">Quick Actions</div>
+          <button onclick="openQME()" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(0,212,184,.18)'" onmouseout="this.style.background='rgba(0,212,184,.08)'">⚡ Quick Entry</button>
+          <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'project\\']'),'project')" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(245,197,66,.4);color:var(--gold);background:rgba(245,197,66,.08);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(245,197,66,.18)'" onmouseout="this.style.background='rgba(245,197,66,.08)'">🔮 Projection Planner</button>
+          <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'report\\']'),'report')" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(255,107,107,.15)'" onmouseout="this.style.background='rgba(255,107,107,.06)'">📄 Budget Report</button>
+          <button onclick="openBudgetWizard()" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.4);color:var(--lime);background:rgba(163,230,53,.06);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(163,230,53,.15)'" onmouseout="this.style.background='rgba(163,230,53,.06)'">🧙 Budget Wizard</button>
+        </div>
+      </div>`;
+    })()}
+    ${(()=>{
+      const cards = YEARS.filter(y=>y<=new Date().getFullYear()+1).map(y=>{
+        let hasAct=false, hasBud=false, expOver=false, revMissing=false;
+        let totActExp=0, totBudExp=0, totActRev=0, totBudRev=0;
+        for(let m=0;m<12;m++){
+          const r=(DATA[y]||{})[m]||{};
+          const rooms=getRooms(y,m);
+          const b=bud(y,m,rooms);
+          const rev=(REV[y]||{})[m]||{};
+          const revB=(REV_BUD[y]||{})[m]||{};
+          const expA=(r.laA||0)+(r.opA||0)+(r.prA||0);
+          const expBud=b.tot||0;
+          const revA=(rev.laA||0)+(rev.valA||0)+(rev.othA||0);
+          const revBud=(revB.laB||0)+(revB.valB||0)+(revB.othB||0);
+          if(expA>0||r.roomsSold)hasAct=true;
+          if(expBud>0)hasBud=true;
+          totActExp+=expA; totBudExp+=expBud;
+          totActRev+=revA; totBudRev+=revBud;
+        }
+        if(hasBud&&totActExp>totBudExp*1.05)expOver=true;
+        if(y<=new Date().getFullYear()&&!totBudRev)revMissing=true;
+        const status = !hasAct&&!hasBud ? 'empty'
+          : expOver ? 'over'
+          : revMissing ? 'warn'
+          : hasAct&&hasBud ? 'good'
+          : 'partial';
+        const col   = {empty:'#4a5568',over:'#ff6b6b',warn:'#ffb347',good:'#00d4b8',partial:'#a78bfa'}[status];
+        const icon  = {empty:'○',over:'▲',warn:'◐',good:'✓',partial:'◑'}[status];
+        const label = {empty:'No data',over:'Over budget',warn:'Rev missing',good:'On track',partial:'Partial'}[status];
+        const isCur = y===dashY;
+        return `<div onclick="dashY=${y};buildYP();buildDash()" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;
+          border:1px solid ${isCur?col+'60':'var(--border)'};background:${isCur?col+'10':'transparent'};transition:all .2s"
+          onmouseover="this.style.background='${col}15'" onmouseout="this.style.background='${isCur?col+'10':'transparent'}'">
+          <span style="font-size:11px;color:${col};font-weight:700">${icon}</span>
+          <div>
+            <div style="font-family:var(--ff-d);font-size:11px;font-weight:700;color:${isCur?col:'var(--text2)'}">${y}</div>
+            <div style="font-size:8px;color:${col};letter-spacing:.3px">${label}</div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:12px 16px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px">🏥 Budget Health Check</div>
+            <div style="font-size:9px;color:var(--text3)">Click a year to switch · <span style="color:#00d4b8">✓ On track</span> · <span style="color:#a78bfa">◑ Partial</span> · <span style="color:#ffb347">◐ Rev missing</span> · <span style="color:#ff6b6b">▲ Over budget</span></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">${cards}</div>
+        </div>
+      </div>`;
+    })()}
+
+    <!-- ══ OVERSPEND ALERTS ══ -->
+    ${(()=>{
+      const curM = new Date().getMonth();
+      const alerts=[];
+      // Check each expense line YTD pace
+      let ytdLaA=0,ytdOpA=0,ytdPrA=0,ytdLaB=0,ytdOpB=0,ytdPrB=0;
+      for(let m=0;m<=curM;m++){
+        const r=(DATA[dashY]||{})[m]||{};
+        const rooms=getRooms(dashY,m);
+        const b=bud(dashY,m,rooms);
+        ytdLaA+=r.laA||0; ytdOpA+=r.opA||0; ytdPrA+=r.prA||0;
+        ytdLaB+=b.la||0;  ytdOpB+=b.op||0;  ytdPrB+=b.pr||0;
+      }
+      const annLaB=months.reduce((s,d)=>s+d.laB,0);
+      const annOpB=months.reduce((s,d)=>s+d.opB,0);
+      const annPrB=months.reduce((s,d)=>s+d.prB,0);
+      const pace=(ytd,ann)=>ann?Math.round((ytd/ann)*100):0;
+      const expectedPace=Math.round(((curM+1)/12)*100);
+      if(ytdLaB&&pace(ytdLaA,annLaB)>expectedPace+10) alerts.push({line:'🧺 Laundry Supplies',pct:pace(ytdLaA,annLaB),exp:expectedPace,ytd:ytdLaA,ann:annLaB});
+      if(ytdOpB&&pace(ytdOpA,annOpB)>expectedPace+10) alerts.push({line:'⚙️ Operating',pct:pace(ytdOpA,annOpB),exp:expectedPace,ytd:ytdOpA,ann:annOpB});
+      if(ytdPrB&&pace(ytdPrA,annPrB)>expectedPace+10) alerts.push({line:'🖨️ Printing',pct:pace(ytdPrA,annPrB),exp:expectedPace,ytd:ytdPrA,ann:annPrB});
+      // Check if missing recent months
+      const missingRecent=[];
+      for(let m=Math.max(0,curM-2);m<curM;m++){
+        const r=(DATA[dashY]||{})[m]||{};
+        if(!r.roomsSold&&!r.laA) missingRecent.push(MF2[m]);
+      }
+      if(!alerts.length&&!missingRecent.length) return '';
+      const alertHtml = alerts.map(a=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:8px;flex:1;min-width:220px">
+          <span style="font-size:16px">⚠️</span>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#ff6b6b">${a.line} — ${a.pct}% of annual budget used</div>
+            <div style="font-size:10px;color:var(--text2)">Expected pace: ${a.exp}% · You're ${a.pct-a.exp}pp ahead · Annual budget: ${fN(a.ann)}</div>
+          </div>
+        </div>`).join('');
+      const missingHtml = missingRecent.length ? `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,179,71,.06);border:1px solid rgba(255,179,71,.2);border-radius:8px;flex:1;min-width:220px">
+          <span style="font-size:16px">📋</span>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--amber)">Missing data — ${missingRecent.join(', ')}</div>
+            <div style="font-size:10px;color:var(--text2)">Recent months have no actuals entered yet</div>
+          </div>
+        </div>` : '';
+      return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">${alertHtml}${missingHtml}</div>`;
+    })()}
+
     <!-- ══ KPI STRIP ══ -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:18px">
 
@@ -3817,23 +4072,73 @@ function buildDash(){
 
       <div style="background:#1a2236;border:1px solid ${vr>0?'rgba(255,107,107,.3)':'rgba(0,212,184,.3)'};border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${vr>0?'#ff6b6b':'#00d4b8'},transparent)"></div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Variance A-B</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Exp Variance</div>
         <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:${vr>0?'#ff6b6b':'#00d4b8'}">${vr>0?'+':''}${fN(vr)}</div>
         <div style="font-size:10px;color:${vr>0?'#ff6b6b':'#00d4b8'};margin-top:3px">${totB?((vr>0?'+':'')+((vr/totB)*100).toFixed(1)+'% vs budget'):'—'}</div>
       </div>
 
+      <!-- CPOR card with multi-year sparkline -->
       <div style="background:#1a2236;border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#a78bfa,transparent)"></div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">CPOR Actual</div>
-        <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#a78bfa">${cporA?cporA.toFixed(4):'—'}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:3px">${cporB?'Budget: '+cporB.toFixed(4):'—'} · ${pyCpor?((cporA>pyCpor?'▲':'▼')+Math.abs(((cporA-pyCpor)/pyCpor*100)).toFixed(1)+'% YoY'):'—'}</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">CPOR Actual</div>
+        <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#a78bfa">${cporA?cporA.toFixed(4):'—'}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px">${pyCpor?((cporA>pyCpor?'▲':'▼')+Math.abs(((cporA-pyCpor)/pyCpor*100)).toFixed(1)+'% YoY'):'—'}</div>
+        <!-- Multi-year CPOR sparkline -->
+        ${(()=>{
+          const sparkYears = YEARS.filter(y=>y<=dashY).slice(-5);
+          const sparkVals = sparkYears.map(y=>{
+            let tA=0,tR=0;
+            for(let m=0;m<12;m++){const r=(DATA[y]||{})[m]||{};tA+=(r.laA||0)+(r.opA||0)+(r.prA||0);tR+=r.roomsSold||0;}
+            return tR&&tA?tA/tR:0;
+          }).filter(v=>v>0);
+          if(sparkVals.length<2) return '';
+          const max=Math.max(...sparkVals), min=Math.min(...sparkVals);
+          const W2=120,H2=28;
+          const pts = sparkVals.map((v,i)=>{
+            const x=sparkVals.length>1?i/(sparkVals.length-1)*W2:W2/2;
+            const y=H2-2-((v-min)/(max-min||1))*(H2-6);
+            return `${x},${y}`;
+          }).join(' ');
+          const last=sparkVals[sparkVals.length-1];
+          const prev=sparkVals[sparkVals.length-2];
+          const trend=last>prev?'↑':'↓';
+          const trendCol=last>prev?'#ff6b6b':'#00d4b8'; // CPOR up = bad, down = good
+          return `<div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+            <svg width="${W2}" height="${H2}" style="overflow:visible">
+              <polyline points="${pts}" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linejoin="round" opacity=".7"/>
+              ${sparkVals.map((v,i)=>{
+                const x=sparkVals.length>1?i/(sparkVals.length-1)*W2:W2/2;
+                const y=H2-2-((v-min)/(max-min||1))*(H2-6);
+                return `<circle cx="${x}" cy="${y}" r="2" fill="#a78bfa"/>`;
+              }).join('')}
+            </svg>
+            <div style="font-size:9px">
+              <span style="color:${trendCol};font-weight:700">${trend}</span>
+              <span style="color:#4a5568"> ${sparkYears[0]}→${sparkYears[sparkYears.length-1]}</span>
+            </div>
+          </div>`;
+        })()}
       </div>
 
+      <!-- Enhanced KG card -->
       <div style="background:#1a2236;border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#38bdf8,transparent)"></div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">Total KG</div>
-        <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#38bdf8">${totKg.toLocaleString()}</div>
-        <div style="font-size:10px;color:#64748b;margin-top:3px">Cost/KG: ${costKg?costKg.toFixed(2):'—'} · KG/RN: ${kgRn?kgRn.toFixed(2):'—'}</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">KG Efficiency</div>
+        <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#38bdf8">${totKg.toLocaleString()}<span style="font-size:11px;color:#64748b"> KG</span></div>
+        <div style="display:flex;flex-direction:column;gap:2px;margin-top:5px">
+          <div style="display:flex;justify-content:space-between;font-size:9px">
+            <span style="color:#64748b">Cost / KG</span>
+            <span style="font-family:'DM Mono',monospace;color:#38bdf8;font-weight:600">${costKg?'QAR '+costKg.toFixed(3):'—'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px">
+            <span style="color:#64748b">KG / Room Night</span>
+            <span style="font-family:'DM Mono',monospace;color:#a3e635;font-weight:600">${kgRn?kgRn.toFixed(2)+' KG':'—'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px">
+            <span style="color:#64748b">KG / Day (avg)</span>
+            <span style="font-family:'DM Mono',monospace;color:var(--amber);font-weight:600">${totKg&&months.filter(d=>d.kg>0).length?(totKg/365).toFixed(0)+' KG':'—'}</span>
+          </div>
+        </div>
       </div>
 
       <div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
@@ -6027,6 +6332,454 @@ function hNote(el,y,m){
 /* ════════════════════════════════════════
    FEATURE 3: CPOR TRENDS TAB
    ════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   FEATURE 7: SYNC PROJECTION → REVENUE
+   ════════════════════════════════════════ */
+function syncProjToRevenue(){
+  const futureYears = YEARS.filter(y => y > new Date().getFullYear());
+  if(!futureYears.length){ toast('No future years to sync'); return; }
+  let synced = 0;
+  futureYears.forEach(y => {
+    for(let m=0; m<12; m++){
+      const rooms = PROJ[y]?.[m]?.roomsSold || DATA[y]?.[m]?.roomsSold || 0;
+      if(!rooms) return;
+      // Set rooms_src hint in REV_BUD so Revenue Planner knows to use Projection Planner rooms
+      if(!REV_BUD[y]) REV_BUD[y] = {};
+      if(!REV_BUD[y][m]) REV_BUD[y][m] = {};
+      REV_BUD[y][m]._projRooms = rooms;
+      synced++;
+    }
+  });
+  saveAll();
+  // Also switch rp-rooms-src to 'proj' if Revenue tab is open
+  const src = document.getElementById('rp-rooms-src');
+  if(src){ src.value = 'proj'; }
+  // Auto-navigate to Revenue tab
+  const revTab = document.querySelector('.ntab[onclick*="revenue"]');
+  if(revTab) goTab(revTab, 'revenue');
+  toast(`✓ Synced ${synced} months to Revenue Planner — rooms from Projection Planner now active`);
+}
+
+/* ════════════════════════════════════════
+   FEATURE 8: BUDGET SCENARIO COMPARISON
+   ════════════════════════════════════════ */
+let scenarioY = new Date().getFullYear() + 1;
+
+function buildScenarioTab(){
+  // Build year pills
+  const pills = document.getElementById('scenario-year-pills');
+  if(pills){
+    pills.innerHTML = '';
+    YEARS.filter(y=>y>=new Date().getFullYear()).forEach(y=>{
+      const b = document.createElement('button');
+      b.className = 'yr'+(scenarioY===y?' active':'');
+      b.textContent = y;
+      b.onclick = ()=>{ scenarioY=y; buildScenarioTab(); };
+      pills.appendChild(b);
+    });
+  }
+  buildScenarioTable();
+}
+
+function buildScenarioTable(){
+  const el = document.getElementById('scenario-body');
+  if(!el) return;
+  const y = scenarioY;
+  const MF2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Read scenario inputs
+  const getV = id => parseFloat(document.getElementById(id)?.value)||0;
+  const occC  = getV('sc-occ-cons'),  occB = getV('sc-occ-base'),  occO = getV('sc-occ-opt');
+  const cpAdj = getV('sc-cp-adj');
+  const rvAdj = getV('sc-rv-adj');
+
+  const avail = SETT.roomsAvail;
+  const cpor  = cporForYear(y);
+  const baseCPOR = (cpor.la + cpor.op + cpor.pr);
+
+  const scenarios = [
+    {name:'Conservative', icon:'🔵', col:'#38bdf8',  occ: occC||60},
+    {name:'Base',         icon:'🟢', col:'#00d4b8',  occ: occB||68},
+    {name:'Optimistic',   icon:'🟡', col:'#f5c542',  occ: occO||76},
+  ];
+
+  let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:700px">';
+  html += `<thead><tr style="background:var(--bg3)">
+    <th style="padding:9px 12px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);font-family:var(--ff-d)">Month</th>
+    ${scenarios.map(s=>`
+      <th colspan="3" style="padding:9px 12px;text-align:center;font-size:10px;font-weight:700;color:${s.col};font-family:var(--ff-d);border-left:2px solid ${s.col}30">
+        ${s.icon} ${s.name} (${s.occ}% occ)
+      </th>`).join('')}
+  </tr>
+  <tr style="background:var(--bg4)">
+    <th style="padding:5px 12px;font-size:8px;color:var(--text3)"></th>
+    ${scenarios.map(()=>`
+      <th style="padding:5px 8px;text-align:right;font-size:8px;font-weight:700;color:var(--text3);border-left:2px solid rgba(255,255,255,.05)">Rooms</th>
+      <th style="padding:5px 8px;text-align:right;font-size:8px;font-weight:700;color:var(--amber)">Exp Budget</th>
+      <th style="padding:5px 8px;text-align:right;font-size:8px;font-weight:700;color:var(--teal)">Rev Budget</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  let totals = scenarios.map(()=>({rooms:0,exp:0,rev:0}));
+  const baseRPOR = getRevRPOR(y-1, 11);
+
+  for(let m=0; m<12; m++){
+    const days = new Date(y,m+1,0).getDate();
+    const maxRooms = avail * days;
+    const inc = incMult(y, m);
+    html += `<tr style="background:${m%2?'rgba(255,255,255,.015)':'transparent'}">
+      <td style="padding:6px 12px;font-family:var(--ff-d);font-size:11px;font-weight:600;color:var(--text2)">${MF2[m]}</td>`;
+
+    scenarios.forEach((s,si)=>{
+      const rooms = Math.round(maxRooms * s.occ/100);
+      const expBud = baseCPOR * rooms * inc * (1 + cpAdj/100);
+      const revBud = (baseRPOR.rporLa||0) * rooms * (1+rvAdj/100) + (baseRPOR.rporVa||0) * rooms * (1+rvAdj/100);
+      totals[si].rooms += rooms;
+      totals[si].exp   += expBud;
+      totals[si].rev   += revBud;
+      html += `<td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--violet);border-left:2px solid ${s.col}20">${rooms.toLocaleString()}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--amber)">${fN(expBud)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${revBud?fN(revBud):'—'}</td>`;
+    });
+    html += '</tr>';
+  }
+
+  // Totals row
+  html += `<tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+    <td style="padding:9px 12px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>`;
+  scenarios.forEach((s,si)=>{
+    const net = totals[si].rev - totals[si].exp;
+    html += `<td style="padding:9px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:${s.col};border-left:2px solid ${s.col}30">${totals[si].rooms.toLocaleString()}</td>
+      <td style="padding:9px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--amber)">${fN(totals[si].exp)}</td>
+      <td style="padding:9px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--teal)">${totals[si].rev?fN(totals[si].rev):'—'}</td>`;
+  });
+  html += '</tr>';
+
+  // NET row
+  html += `<tr style="background:var(--bg2)">
+    <td style="padding:7px 12px;font-family:var(--ff-d);font-size:10px;font-weight:700;color:var(--text3)">NET (Rev−Exp)</td>`;
+  scenarios.forEach((s,si)=>{
+    const net = totals[si].rev - totals[si].exp;
+    html += `<td colspan="2" style="padding:7px 8px;border-left:2px solid ${s.col}30"></td>
+      <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:${net>=0?'var(--lime)':'var(--coral)'}">
+        ${totals[si].rev?(net>=0?'+':'')+fN(net):'—'}
+      </td>`;
+  });
+  html += '</tr></tbody></table></div>';
+
+  // Apply buttons
+  html += `<div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+    ${scenarios.map((s,si)=>`
+      <button onclick="applyScenario(${si},'${s.name}')" style="padding:8px 18px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid ${s.col}50;color:${s.col};background:${s.col}10;cursor:pointer;transition:all .2s"
+        onmouseover="this.style.background='${s.col}20'" onmouseout="this.style.background='${s.col}10'">
+        ${s.icon} Apply ${s.name} to ${scenarioY} Budget
+      </button>`).join('')}
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+function applyScenario(si, name){
+  const y = scenarioY;
+  const getV = id => parseFloat(document.getElementById(id)?.value)||0;
+  const occs = [getV('sc-occ-cons')||60, getV('sc-occ-base')||68, getV('sc-occ-opt')||76];
+  const cpAdj = getV('sc-cp-adj');
+  const rvAdj = getV('sc-rv-adj');
+  const occ = occs[si];
+  const cpor = cporForYear(y);
+  const baseCPOR = cpor.la + cpor.op + cpor.pr;
+  const baseRPOR = getRevRPOR(y-1, 11);
+
+  if(!confirm(`Apply ${name} scenario (${occ}% occupancy) to ${y} budget? This will overwrite existing budget entries for ${y}.`)) return;
+
+  if(!DATA[y]) DATA[y]={};
+  if(!REV_BUD[y]) REV_BUD[y]={};
+
+  for(let m=0; m<12; m++){
+    const days = new Date(y,m+1,0).getDate();
+    const rooms = Math.round(SETT.roomsAvail * days * occ/100);
+    const inc   = incMult(y,m);
+    const bBase = baseCPOR * inc * (1+cpAdj/100);
+    const bLa   = cpor.la * inc * (1+cpAdj/100) * rooms;
+    const bOp   = cpor.op * rooms;
+    const bPr   = cpor.pr * rooms;
+
+    if(!DATA[y][m]) DATA[y][m]={};
+    if(!DATA[y][m].roomsSold) DATA[y][m].roomsSold = rooms;
+    DATA[y][m].laB = Math.round(bLa*100)/100;
+    DATA[y][m].opB = Math.round(bOp*100)/100;
+    DATA[y][m].prB = Math.round(bPr*100)/100;
+
+    if(!REV_BUD[y][m]) REV_BUD[y][m]={};
+    REV_BUD[y][m].laB  = Math.round((baseRPOR.rporLa||0) * rooms * (1+rvAdj/100)*100)/100;
+    REV_BUD[y][m].valB = Math.round((baseRPOR.rporVa||0) * rooms * (1+rvAdj/100)*100)/100;
+  }
+  saveAll();
+  toast(`✓ ${name} scenario applied to ${y} — ${SETT.roomsAvail} rooms × ${occ}% occ`);
+}
+
+/* ════════════════════════════════════════
+   FEATURE 9: BUDGET WIZARD
+   ════════════════════════════════════════ */
+let _wizY = new Date().getFullYear()+1;
+let _wizStep = 1;
+
+function openBudgetWizard(){
+  _wizY = new Date().getFullYear()+1;
+  _wizStep = 1;
+  document.getElementById('bwiz-overlay').style.display='flex';
+  buildWizStep();
+}
+function closeWizard(){
+  document.getElementById('bwiz-overlay').style.display='none';
+}
+function buildWizStep(){
+  const el = document.getElementById('bwiz-body');
+  const MF2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const cpor = cporForYear(_wizY);
+  const baseRPOR = getRevRPOR(_wizY-1, 11);
+  const steps = ['Year & Rooms','Expense Review','Revenue Review','Confirm & Save'];
+
+  // Step indicator
+  const stepBar = steps.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;flex:1">
+      <div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;
+        background:${i+1===_wizStep?'var(--teal)':i+1<_wizStep?'var(--bg5)':'var(--bg4)'};
+        color:${i+1===_wizStep?'#0b0f1a':i+1<_wizStep?'var(--teal)':'var(--text3)'};
+        border:1px solid ${i+1<=_wizStep?'var(--teal)':'var(--border)'}">${i+1<_wizStep?'✓':i+1}</div>
+      <span style="font-size:10px;font-weight:${i+1===_wizStep?'700':'400'};color:${i+1===_wizStep?'var(--teal)':'var(--text3)'};white-space:nowrap">${s}</span>
+      ${i<steps.length-1?'<div style="flex:1;height:1px;background:var(--border);margin:0 4px"></div>':''}
+    </div>`).join('');
+
+  let body = '';
+
+  if(_wizStep===1){
+    // Step 1: Pick year + review rooms
+    let roomsHtml = '';
+    for(let m=0; m<12; m++){
+      const rooms = getRooms(_wizY, m);
+      const avail = SETT.roomsAvail * new Date(_wizY,m+1,0).getDate();
+      const occ   = rooms&&avail?(rooms/avail*100).toFixed(1)+'%':'—';
+      roomsHtml += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)">
+        <span style="font-size:10px;color:var(--text2);width:30px">${MF2[m]}</span>
+        <input type="text" inputmode="decimal" value="${rooms||''}" placeholder="Enter rooms"
+          data-wm="${m}"
+          oninput="updateWizRooms(this)"
+          style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-family:var(--ff-m);font-size:11px;color:var(--violet);outline:none">
+        <span style="font-size:9px;color:var(--text3);width:50px;text-align:right">${occ}</span>
+        <span style="font-size:9px;color:var(--text3);width:60px;text-align:right">/${avail.toLocaleString()}</span>
+      </div>`;
+    }
+    body = `<div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--ff-d);margin-bottom:4px">Step 1 — Year & Projected Rooms</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Select the budget year and confirm rooms sold per month. These drive all budget calculations.</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        ${YEARS.filter(y=>y>=new Date().getFullYear()).map(y=>`
+          <button onclick="_wizY=${y};buildWizStep()" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);
+            border:1px solid ${_wizY===y?'var(--teal)':'var(--border)'};
+            color:${_wizY===y?'var(--teal)':'var(--text3)'};
+            background:${_wizY===y?'var(--teal-bg)':'transparent'};cursor:pointer">${y}</button>`).join('')}
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;max-height:320px;overflow-y:auto">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Projected Rooms Sold — ${_wizY}</div>
+        ${roomsHtml}
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+          <span style="font-size:10px;color:var(--text2)">Total rooms:</span>
+          <span id="wiz-tot-rooms" style="font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--violet)">
+            ${Array.from({length:12},(_,m)=>getRooms(_wizY,m)).reduce((a,b)=>a+b,0).toLocaleString()}
+          </span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  else if(_wizStep===2){
+    // Step 2: Expense budget review
+    let expRows = '';
+    let totLa=0, totOp=0, totPr=0;
+    for(let m=0; m<12; m++){
+      const rooms = getRooms(_wizY, m);
+      const b = bud(_wizY, m, rooms);
+      totLa+=b.la; totOp+=b.op; totPr+=b.pr;
+      expRows += `<tr style="background:${m%2?'rgba(255,255,255,.015)':'transparent'}">
+        <td style="padding:5px 10px;font-family:var(--ff-d);font-size:10px;color:var(--text2)">${MF2[m]}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--text3)">${rooms?rooms.toLocaleString():'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${b.la?fN(b.la):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--lime)">${b.op?fN(b.op):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--coral)">${b.pr?fN(b.pr):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--text)">${b.tot?fN(b.tot):'—'}</td>
+      </tr>`;
+    }
+    body = `<div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--ff-d);margin-bottom:4px">Step 2 — Expense Budget Review</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Auto-calculated from prior year CPOR × projected rooms × price multiplier. Review and confirm.</div>
+      <div style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap">
+        <div><div style="font-size:9px;color:var(--text3)">CPOR Driver</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--amber)">${(cpor.la+cpor.op+cpor.pr).toFixed(4)}</div></div>
+        <div><div style="font-size:9px;color:var(--text3)">Laundry CPOR</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--teal)">${cpor.la.toFixed(4)}</div></div>
+        <div><div style="font-size:9px;color:var(--text3)">Operating CPOR</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--lime)">${cpor.op.toFixed(4)}</div></div>
+        <div><div style="font-size:9px;color:var(--text3)">Printing CPOR</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--coral)">${cpor.pr.toFixed(4)}</div></div>
+      </div>
+      <div style="overflow-x:auto;max-height:280px;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:500px">
+          <thead><tr style="background:var(--bg3);position:sticky;top:0">
+            <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3)">Month</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--violet)">Rooms</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--teal)">Laundry</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--lime)">Operating</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--coral)">Printing</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--text)">Total</th>
+          </thead><tbody>${expRows}</tbody>
+          <tfoot><tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+            <td style="padding:7px 10px;font-family:var(--ff-d);font-size:10px;font-weight:800;color:var(--text)">TOTAL</td>
+            <td></td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--teal)">${fN(totLa)}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--lime)">${fN(totOp)}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--coral)">${fN(totPr)}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--text)">${fN(totLa+totOp+totPr)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  else if(_wizStep===3){
+    // Step 3: Revenue review
+    let revRows = '', totLaR=0, totVaR=0;
+    for(let m=0; m<12; m++){
+      const rooms = getRooms(_wizY, m);
+      const laR = (baseRPOR.rporLa||0)*rooms;
+      const vaR = pearlActive(_wizY,m)?(baseRPOR.rporVa||0)*rooms:0;
+      totLaR+=laR; totVaR+=vaR;
+      revRows += `<tr style="background:${m%2?'rgba(255,255,255,.015)':'transparent'}">
+        <td style="padding:5px 10px;font-family:var(--ff-d);font-size:10px;color:var(--text2)">${MF2[m]}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--text3)">${rooms?rooms.toLocaleString():'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${laR?fN(laR):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--violet)">${vaR?fN(vaR):pearlActive(_wizY,m)?'—':'N/A'}</td>
+        <td style="padding:5px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--text)">${(laR+vaR)?fN(laR+vaR):'—'}</td>
+      </tr>`;
+    }
+    body = `<div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--ff-d);margin-bottom:4px">Step 3 — Revenue Budget Review</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:12px">Projected from prior year RPOR × rooms. Review before saving.</div>
+      <div style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;gap:20px;flex-wrap:wrap">
+        <div><div style="font-size:9px;color:var(--text3)">RPOR FS Doha</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--teal)">${baseRPOR.rporLa?'QAR '+baseRPOR.rporLa.toFixed(4):'—'}</div></div>
+        <div><div style="font-size:9px;color:var(--text3)">RPOR Pearl Valet</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--violet)">${baseRPOR.rporVa?'QAR '+baseRPOR.rporVa.toFixed(4):'—'}</div></div>
+        <div><div style="font-size:9px;color:var(--text3)">Base Year</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--amber)">${_wizY-1}</div></div>
+      </div>
+      <div style="overflow-x:auto;max-height:280px;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:400px">
+          <thead><tr style="background:var(--bg3);position:sticky;top:0">
+            <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:var(--text3)">Month</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--violet)">Rooms</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--teal)">FS Doha Rev</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--violet)">Pearl Valet</th>
+            <th style="padding:7px 8px;text-align:right;font-size:9px;font-weight:700;color:var(--text)">Total Rev</th>
+          </thead><tbody>${revRows}</tbody>
+          <tfoot><tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+            <td style="padding:7px 10px;font-family:var(--ff-d);font-size:10px;font-weight:800;color:var(--text)">TOTAL</td><td></td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--teal)">${fN(totLaR)}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--violet)">${fN(totVaR)}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--text)">${fN(totLaR+totVaR)}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  else if(_wizStep===4){
+    // Step 4: Confirm & Save
+    let totRooms=0,totExpBud=0,totRevBud=0;
+    for(let m=0;m<12;m++){
+      const rooms=getRooms(_wizY,m);
+      const b=bud(_wizY,m,rooms);
+      const rporLa=(baseRPOR.rporLa||0)*rooms;
+      const rporVa=pearlActive(_wizY,m)?(baseRPOR.rporVa||0)*rooms:0;
+      totRooms+=rooms; totExpBud+=b.tot; totRevBud+=rporLa+rporVa;
+    }
+    body = `<div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);font-family:var(--ff-d);margin-bottom:4px">Step 4 — Confirm &amp; Save</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:16px">Review the summary below, then save to apply this budget to ${_wizY}.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:12px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Year</div>
+          <div style="font-family:var(--ff-d);font-size:20px;font-weight:800;color:var(--violet)">${_wizY}</div>
+        </div>
+        <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:12px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Total Rooms</div>
+          <div style="font-family:var(--ff-m);font-size:18px;font-weight:700;color:var(--violet)">${totRooms.toLocaleString()}</div>
+        </div>
+        <div style="background:rgba(255,179,71,.08);border:1px solid rgba(255,179,71,.2);border-radius:10px;padding:12px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Total Expense Budget</div>
+          <div style="font-family:var(--ff-m);font-size:15px;font-weight:700;color:var(--amber)">${fN(totExpBud)}</div>
+        </div>
+        <div style="background:rgba(0,212,184,.08);border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:12px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Total Revenue Budget</div>
+          <div style="font-family:var(--ff-m);font-size:15px;font-weight:700;color:var(--teal)">${totRevBud?fN(totRevBud):'—'}</div>
+        </div>
+        <div style="background:${totRevBud-totExpBud>=0?'rgba(163,230,53,.08)':'rgba(255,107,107,.08)'};border:1px solid ${totRevBud-totExpBud>=0?'rgba(163,230,53,.2)':'rgba(255,107,107,.2)'};border-radius:10px;padding:12px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Net Budget</div>
+          <div style="font-family:var(--ff-m);font-size:15px;font-weight:700;color:${totRevBud-totExpBud>=0?'var(--lime)':'var(--coral)'}">${totRevBud?fN(totRevBud-totExpBud):'—'}</div>
+        </div>
+      </div>
+      <div class="notice teal"><strong>What will be saved:</strong> Projected rooms → PROJ[${_wizY}], Expense budgets → DATA[${_wizY}][m].laB/opB/prB, Revenue budgets → REV_BUD[${_wizY}]. Existing actuals are NOT touched.</div>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap">${stepBar}</div>
+    ${body}
+    <div style="display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <button onclick="${_wizStep>1?'_wizStep--;buildWizStep()':'closeWizard()'}"
+        style="padding:8px 20px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);border:1px solid var(--border);color:var(--text2);background:transparent;cursor:pointer">
+        ${_wizStep>1?'← Back':'Cancel'}
+      </button>
+      <button onclick="${_wizStep<4?'_wizStep++;buildWizStep()':'saveWizardBudget()'}"
+        style="padding:8px 24px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);
+          border:1px solid ${_wizStep===4?'rgba(163,230,53,.5)':'rgba(0,212,184,.5)'};
+          color:${_wizStep===4?'var(--lime)':'var(--teal)'};
+          background:${_wizStep===4?'rgba(163,230,53,.1)':'rgba(0,212,184,.1)'};cursor:pointer">
+        ${_wizStep<4?'Next →':'🎯 Save Budget for '+_wizY}
+      </button>
+    </div>`;
+}
+
+function updateWizRooms(el){
+  const m = parseInt(el.dataset.wm);
+  const v = parseInt(el.value.replace(/,/g,''))||0;
+  if(!PROJ[_wizY]) PROJ[_wizY]={};
+  if(!PROJ[_wizY][m]) PROJ[_wizY][m]={};
+  if(v) PROJ[_wizY][m].roomsSold=v;
+  else { delete PROJ[_wizY]?.[m]; }
+  const tot = document.getElementById('wiz-tot-rooms');
+  if(tot){
+    const t = Array.from({length:12},(_,mm)=>getRooms(_wizY,mm)).reduce((a,b)=>a+b,0);
+    tot.textContent = t.toLocaleString();
+  }
+}
+
+function saveWizardBudget(){
+  const baseRPOR = getRevRPOR(_wizY-1, 11);
+  if(!DATA[_wizY]) DATA[_wizY]={};
+  if(!REV_BUD[_wizY]) REV_BUD[_wizY]={};
+
+  for(let m=0;m<12;m++){
+    const rooms = getRooms(_wizY,m);
+    if(!rooms) continue;
+    const b = bud(_wizY,m,rooms);
+    if(!DATA[_wizY][m]) DATA[_wizY][m]={};
+    DATA[_wizY][m].laB = b.autoLa;
+    DATA[_wizY][m].opB = b.autoOp;
+    DATA[_wizY][m].prB = b.autoPr;
+    if(!REV_BUD[_wizY][m]) REV_BUD[_wizY][m]={};
+    REV_BUD[_wizY][m].laB  = Math.round((baseRPOR.rporLa||0)*rooms*100)/100;
+    REV_BUD[_wizY][m].valB = pearlActive(_wizY,m)?Math.round((baseRPOR.rporVa||0)*rooms*100)/100:0;
+  }
+  saveAll();
+  closeWizard();
+  toast(`✓ Budget for ${_wizY} saved — expenses + revenue budgets applied`);
+  // Refresh dashboard
+  buildDash();
+}
+
 function buildTrendsTab(){
   const el=document.getElementById('pane-trends');
   if(!el)return;
@@ -11033,7 +11786,67 @@ window.addEventListener('beforeunload',saveAll);
 </div>
 
 
-<div id="pane-backup" class="pane">
+<div id="pane-scenario" class="pane">
+  <div class="main" style="padding-bottom:80px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+      <div>
+        <div class="pt">🎯 Scenario Planner <span>Compare Conservative / Base / Optimistic budgets side by side</span></div>
+      </div>
+      <div id="scenario-year-pills" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- Scenario inputs -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px 20px;margin-bottom:18px">
+      <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px">⚙️ Scenario Parameters</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px">
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">🔵 Conservative Occ %</label>
+          <input id="sc-occ-cons" type="number" value="60" min="0" max="100" oninput="buildScenarioTable()" style="width:100%;background:var(--bg3);border:1px solid rgba(56,189,248,.3);border-radius:7px;color:#38bdf8;font-family:var(--ff-m);font-size:13px;font-weight:600;padding:8px 12px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">🟢 Base Occ %</label>
+          <input id="sc-occ-base" type="number" value="68" min="0" max="100" oninput="buildScenarioTable()" style="width:100%;background:var(--bg3);border:1px solid rgba(0,212,184,.3);border-radius:7px;color:#00d4b8;font-family:var(--ff-m);font-size:13px;font-weight:600;padding:8px 12px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">🟡 Optimistic Occ %</label>
+          <input id="sc-occ-opt" type="number" value="76" min="0" max="100" oninput="buildScenarioTable()" style="width:100%;background:var(--bg3);border:1px solid rgba(245,197,66,.3);border-radius:7px;color:#f5c542;font-family:var(--ff-m);font-size:13px;font-weight:600;padding:8px 12px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">🧺 Expense Adjustment %</label>
+          <input id="sc-cp-adj" type="number" value="0" step="0.5" oninput="buildScenarioTable()" style="width:100%;background:var(--bg3);border:1px solid rgba(255,179,71,.3);border-radius:7px;color:#ffb347;font-family:var(--ff-m);font-size:13px;font-weight:600;padding:8px 12px;outline:none" placeholder="e.g. 5 for +5%">
+          <div style="font-size:9px;color:var(--text3);margin-top:3px">Applied on top of CPOR</div>
+        </div>
+        <div>
+          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">💰 Revenue Growth %</label>
+          <input id="sc-rv-adj" type="number" value="0" step="0.5" oninput="buildScenarioTable()" style="width:100%;background:var(--bg3);border:1px solid rgba(0,212,184,.3);border-radius:7px;color:#00d4b8;font-family:var(--ff-m);font-size:13px;font-weight:600;padding:8px 12px;outline:none" placeholder="e.g. 5 for +5%">
+          <div style="font-size:9px;color:var(--text3);margin-top:3px">Applied on top of RPOR</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario table -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+      <div style="padding:12px 18px;border-bottom:1px solid var(--border)">
+        <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Comparison</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">Rooms / Expense Budget / Revenue Budget per scenario · Use "Apply" to set as active budget</div>
+      </div>
+      <div id="scenario-body" style="padding:0"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BUDGET WIZARD OVERLAY ══ -->
+<div id="bwiz-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+      <div style="font-family:var(--ff-d);font-size:15px;font-weight:800;color:var(--text)">🧙 Budget Builder Wizard</div>
+      <button onclick="closeWizard()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="bwiz-body" style="padding:20px"></div>
+  </div>
+</div>
+
+
   <div class="ph">
     <div class="pt">Backup & Restore <span>Protect your data</span></div>
   </div>
