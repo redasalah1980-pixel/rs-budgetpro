@@ -6344,14 +6344,21 @@ function pulseGetMonthData(y, m){
   const row  = (DATA[y]||{})[m] || {};
   const rev  = (REV[y]||{})[m]  || {};
   const revB = (REV_BUD[y]||{})[m] || {};
-  const b    = bud(y, m);
+  const rooms = getRooms(y, m);
+  const b    = bud(y, m, rooms);
 
   const revA  = (rev.laA||0)+(rev.valA||0)+(rev.othA||0);
   const revBud= (revB.laB||0)+(revB.valB||0)+(revB.othB||0);
   const expA  = (row.laA||0)+(row.opA||0)+(row.prA||0);
   const expBud= b.tot || 0;
 
+  // Individual revenue lines
+  const laRevA = rev.laA||0,  laRevB = revB.laB||0;
+  const valRevA= rev.valA||0, valRevB= revB.valB||0;
+  const othRevA= rev.othA||0, othRevB= revB.othB||0;
+
   return { revA, revBud, expA, expBud,
+           laRevA, laRevB, valRevA, valRevB, othRevA, othRevB,
            hasAct: !!(row.laA||row.opA||row.prA||rev.laA||rev.valA),
            hasBud: !!(expBud||revBud),
            locked: isLocked(y,m) };
@@ -6464,66 +6471,110 @@ function buildPulseMonthGrid(){
   const el = document.getElementById('pulse-month-grid');
   if(!el) return;
   const MF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const now = new Date();
   const curM = new Date().getMonth();
   const curY = new Date().getFullYear();
+
+  // Update legend to show all 5 bars
+  const legEl = el.closest('[style*="overflow:hidden"]')?.querySelector('[style*="display:flex;align-items:center;gap:16px"]');
 
   let html = '';
   for(let m=0; m<12; m++){
     const d = pulseGetMonthData(pulseY, m);
-    const isFuture = pulseY > curY || (pulseY===curY && m > curM);
+    const isFuture  = pulseY > curY || (pulseY===curY && m > curM);
     const isCurrent = pulseY===curY && m===curM;
-    const locked = d.locked;
+    const isPearlOn = pearlActive(pulseY, m);
 
-    // Revenue %
-    const revPct = d.revBud ? Math.round((d.revA/d.revBud)*100) : null;
-    const expPct = d.expBud ? Math.round((d.expA/d.expBud)*100) : null;
-    const revVar = d.revBud ? d.revA - d.revBud : null;
-    const expVar = d.expBud ? d.expBud - d.expA : null; // Finance: budget-actual for exp
-
-    const revVarCol = revVar===null ? '' : revVar>=0 ? 'var(--lime)' : 'var(--coral)';
+    const expVar = d.expBud ? d.expBud - d.expA : null;
     const expVarCol = expVar===null ? '' : expVar>=0 ? 'var(--teal)' : 'var(--coral)';
 
+    // Per-line revenue variances
+    const laVar  = d.laRevB  ? d.laRevA  - d.laRevB  : null;
+    const valVar = d.valRevB ? d.valRevA - d.valRevB : null;
+    const othVar = d.othRevB ? d.othRevA - d.othRevB : null;
+
+    // Bar: shows label + bar + pct inline
+    const miniBar = (label, actual, budget, col, trackAlpha) => {
+      if(!actual && !budget) return `
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+          <div style="font-size:9px;color:var(--text3);width:80px;flex-shrink:0">${label}</div>
+          <div style="flex:1;height:5px;border-radius:3px;background:var(--bg4)"></div>
+          <div style="font-size:9px;color:var(--text3);width:30px;text-align:right">—</div>
+        </div>`;
+      const pct = budget ? Math.min((actual/budget)*100,150) : 0;
+      const over = actual > budget && budget > 0;
+      const fillCol = over
+        ? (col==='exp' ? 'var(--coral)' : 'var(--lime)')
+        : col==='exp' ? 'var(--amber)' : col;
+      const pctNum = budget ? Math.round((actual/budget)*100) : 0;
+      const pctCol = over ? (col==='exp'?'var(--coral)':'var(--lime)') : col;
+      return `
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+          <div style="font-size:9px;color:var(--text2);width:80px;flex-shrink:0;letter-spacing:.2px">${label}</div>
+          <div style="flex:1;position:relative;height:5px;border-radius:3px;background:rgba(${trackAlpha},.12);overflow:visible">
+            <div style="position:absolute;left:0;top:0;height:100%;width:${Math.min(pct,100)}%;background:${fillCol};border-radius:3px;transition:width .5s cubic-bezier(.4,0,.2,1)"></div>
+            ${budget?`<div style="position:absolute;right:0;top:-2px;width:1px;height:9px;background:rgba(255,255,255,.2)"></div>`:''}
+          </div>
+          <div style="font-family:var(--ff-m);font-size:9px;color:${pctCol};width:32px;text-align:right">${budget?pctNum+'%':'—'}</div>
+          <div style="font-family:var(--ff-m);font-size:9px;color:var(--text2);width:86px;text-align:right">${actual?fN(actual):'—'}</div>
+        </div>`;
+    };
+
     html += `
-      <div style="display:grid;grid-template-columns:100px 1fr 1fr 140px 140px;align-items:center;gap:12px;
-        padding:10px 18px;border-bottom:1px solid var(--border);
-        ${isFuture?'opacity:.35':''}
+      <div style="padding:10px 18px;border-bottom:1px solid var(--border);
+        ${isFuture?'opacity:.32':''}
         ${isCurrent?'background:rgba(0,212,184,.03)':''}"
-        onmouseover="this.style.background='rgba(255,255,255,.02)'"
+        onmouseover="if(!${isFuture})this.style.background='rgba(255,255,255,.015)'"
         onmouseout="this.style.background='${isCurrent?'rgba(0,212,184,.03)':'transparent'}'">
 
-        <!-- Month label -->
-        <div style="display:flex;align-items:center;gap:7px">
-          ${isCurrent?`<div style="width:4px;height:4px;border-radius:50%;background:var(--teal);flex-shrink:0"></div>`
-                     :locked?`<div style="font-size:9px">🔒</div>`
-                     :`<div style="width:4px;height:4px;border-radius:50%;background:var(--border2);flex-shrink:0"></div>`}
-          <span style="font-family:var(--ff-d);font-size:12px;font-weight:600;color:${isCurrent?'var(--teal)':d.hasAct?'var(--text)':'var(--text3)'}">${MF[m]}</span>
+        <!-- Month header row -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+          <div style="display:flex;align-items:center;gap:7px">
+            ${isCurrent
+              ?`<div style="width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal)"></div>`
+              :d.locked?`<span style="font-size:10px">🔒</span>`
+              :`<div style="width:5px;height:5px;border-radius:50%;background:var(--border2)"></div>`}
+            <span style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:${isCurrent?'var(--teal)':d.hasAct?'var(--text)':'var(--text3)'}">${MF[m]}</span>
+            ${isCurrent?`<span style="font-size:9px;color:var(--teal);background:rgba(0,212,184,.1);padding:1px 6px;border-radius:8px;border:1px solid rgba(0,212,184,.2)">Current</span>`:''}
+          </div>
+          <div style="display:flex;gap:16px">
+            <div style="text-align:right">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Total Rev</div>
+              <div style="font-family:var(--ff-m);font-size:11px;color:var(--teal)">${d.revA?fN(d.revA):'—'}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Total Exp</div>
+              <div style="font-family:var(--ff-m);font-size:11px;color:var(--amber)">${d.expA?fN(d.expA):'—'}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase">Exp Var</div>
+              <div style="font-family:var(--ff-m);font-size:11px;color:${expVarCol}">${expVar!==null?(expVar>=0?'+':'')+fN(expVar):'—'}</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Revenue bar -->
-        <div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;letter-spacing:.5px;text-transform:uppercase">Revenue</div>
-          ${d.revBud || d.revA ? pulseBar(d.revA, d.revBud, 'rev') : `<div style="height:6px;border-radius:3px;background:var(--bg4)"></div><div style="font-size:9px;color:var(--text3);margin-top:2px">—</div>`}
-        </div>
-
-        <!-- Expenses bar -->
-        <div>
-          <div style="font-size:9px;color:var(--text3);margin-bottom:3px;letter-spacing:.5px;text-transform:uppercase">Expenses</div>
-          ${d.expBud || d.expA ? pulseBar(d.expA, d.expBud, 'exp') : `<div style="height:6px;border-radius:3px;background:var(--bg4)"></div><div style="font-size:9px;color:var(--text3);margin-top:2px">—</div>`}
-        </div>
-
-        <!-- Revenue figures -->
-        <div style="text-align:right">
-          <div style="font-family:var(--ff-m);font-size:11px;color:var(--teal)">${d.revA?fN(d.revA):'—'}</div>
-          ${revVar!==null?`<div style="font-size:9px;color:${revVarCol}">${revVar>=0?'+':''}${fN(revVar)}</div>`
-                         :`<div style="font-size:9px;color:var(--text3)">${d.revBud?'Bud: '+fN(d.revBud):'No budget'}</div>`}
-        </div>
-
-        <!-- Expenses figures -->
-        <div style="text-align:right">
-          <div style="font-family:var(--ff-m);font-size:11px;color:var(--amber)">${d.expA?fN(d.expA):'—'}</div>
-          ${expVar!==null?`<div style="font-size:9px;color:${expVarCol}">${expVar>=0?'+':''}${fN(expVar)}</div>`
-                         :`<div style="font-size:9px;color:var(--text3)">${d.expBud?'Bud: '+fN(d.expBud):'No budget'}</div>`}
+        <!-- Bars grid: left = revenue lines, right = expense -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 24px">
+          <!-- Revenue bars -->
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);margin-bottom:6px;opacity:.7">Revenue (QAR)</div>
+            ${miniBar('🏨 FS Doha', d.laRevA, d.laRevB, 'var(--teal)', '0,212,184')}
+            ${isPearlOn
+              ? miniBar('💎 Pearl Valet', d.valRevA, d.valRevB, 'var(--violet)', '167,139,250')
+              : `<div style="font-size:9px;color:var(--text3);margin-bottom:5px;padding-left:87px;opacity:.5">💎 Pearl — not yet operational</div>`}
+            ${miniBar('📎 Others', d.othRevA, d.othRevB, 'var(--sky)', '56,189,248')}
+          </div>
+          <!-- Expense bars -->
+          <div>
+            <div style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;opacity:.7">Expenses (QAR)</div>
+            ${(()=>{
+              const row  = (DATA[pulseY]||{})[m] || {};
+              const rooms= getRooms(pulseY, m);
+              const b    = bud(pulseY, m, rooms);
+              return miniBar('🧺 Laundry',   row.laA||0, b.la, 'exp', '255,179,71')
+                   + miniBar('⚙️ Operating', row.opA||0, b.op, 'exp', '255,179,71')
+                   + miniBar('🖨 Printing',  row.prA||0, b.pr, 'exp', '255,179,71');
+            })()}
+          </div>
         </div>
       </div>`;
   }
@@ -6542,7 +6593,8 @@ function buildPulseSummaryTable(){
     const row  = (DATA[pulseY]||{})[m] || {};
     const rev  = (REV[pulseY]||{})[m]  || {};
     const revB = (REV_BUD[pulseY]||{})[m] || {};
-    const b    = bud(pulseY, m);
+    const rooms= getRooms(pulseY, m);
+    const b    = bud(pulseY, m, rooms);
     laRevA  += rev.laA  ||0; laRevB  += revB.laB ||0;
     valRevA += rev.valA ||0; valRevB += revB.valB||0;
     othRevA += rev.othA ||0; othRevB += revB.othB||0;
