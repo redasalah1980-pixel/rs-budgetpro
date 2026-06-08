@@ -8747,19 +8747,28 @@ function buildCasualTab(){
   const buildAutoProjectPanel = ()=>{
     // Find prior year KG/days ratio per company
     const py = casualY-1;
-    const pyKg = Object.values(DATA[py]||{}).reduce((s,m)=>s+(m.kg||0),0);
+    const pyKg = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.kg||0),0);
+    const pyRs = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.roomsSold||0),0);
+    const kgPerRnRatio = pyRs && pyKg ? pyKg/pyRs : 0;
     const pyDays = comps.reduce((acc,c)=>{
       acc[c.id]=MF.reduce((_,ms,m)=>_+getCasualActual(py,m,c.id),0); return acc;},{});
     const kgPerDay = {};
     comps.forEach(c=>{ kgPerDay[c.id]=pyDays[c.id]&&pyKg?pyKg/pyDays[c.id]:0; });
-    const projKg = Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.kg||0),0) ||
-                   Object.values(PROJ[casualY]||{}).reduce((s,m)=>s+(m.roomsSold||0)*((SETT.kgPerRn)||1.8),0);
+    // Projected KG: use actual KG if entered, else estimate from projected rooms x prior year KG/RN ratio
+    const projKgPerMonth = MF.map((_,m)=>{
+      const actKg=DATA[casualY]?.[m]?.kg||0; if(actKg) return actKg;
+      const rs=DATA[casualY]?.[m]?.roomsSold||PROJ[casualY]?.[m]?.roomsSold||0;
+      return kgPerRnRatio?Math.round(rs*kgPerRnRatio):0;
+    });
+    const projKg = projKgPerMonth.reduce((s,v)=>s+v,0);
 
     return `<div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
         <div>
-          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--teal)">🤖 Auto-Project Budget from KG</div>
-          <div style="font-size:10px;color:#4a5568;margin-top:2px">Uses prior year KG ÷ actual casual days = KG/day ratio → applies to projected KG for ${casualY}</div>
+          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--teal)">🤖 Auto-Project Budget from Projected Rooms</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:2px">
+            Chain: Projected Rooms (${casualY}) × KG/Room Night (${py} ratio) = Est. KG → ÷ KG/Casual Day (${py} ratio) = Budget Days needed
+          </div>
         </div>
         <button onclick="casualAutoProject(${casualY})" style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer"
           onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">
@@ -8778,11 +8787,16 @@ function buildCasualTab(){
           </div>
           <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
             <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${c.name} KG/Day</div>
-            <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--amber)">${kgPerDay[c.id]?kgPerDay[c.id].toFixed(0):'—'}</div>
+            <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--amber)">${kgPerDay[c.id]?kgPerDay[c.id].toFixed(1)+' KG':'—'}</div>
           </div>`).join('')}
         <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
-          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${casualY} Proj KG</div>
-          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#a78bfa">${projKg?projKg.toLocaleString():'Enter KG data'}</div>
+          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${py} KG per Room Night</div>
+          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#38bdf8">${kgPerRnRatio?kgPerRnRatio.toFixed(3)+' KG':'No data'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
+          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${casualY} Est. Total KG</div>
+          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#a78bfa">${projKg?projKg.toLocaleString():'Enter rooms in Projection Planner'}</div>
+          <div style="font-size:9px;color:#4a5568;margin-top:2px">${kgPerRnRatio?'from projected rooms \xd7 '+kgPerRnRatio.toFixed(3):'—'}</div>
         </div>
       </div>
     </div>`;
@@ -8892,20 +8906,35 @@ function casualAutoProject(y){
   const comps = getCasualCompanies();
   const MF = Array(12).fill(0).map((_,i)=>i);
   const pyKgTotal = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.kg||0),0);
-  if(!pyKgTotal){ toast('No KG data for '+py+' — enter actuals first'); return; }
+  const pyRsTotal = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.roomsSold||0),0);
+  if(!pyKgTotal){ toast('No KG data for '+py+' — enter '+py+' KG in Monthly Entry first'); return; }
 
+  // KG per Room Night from prior year — used to estimate future KG from projected rooms
+  const kgPerRn = pyRsTotal ? pyKgTotal/pyRsTotal : 0;
+
+  // Get projected KG per month for budget year
+  // Priority: actual KG if entered > estimated from projected rooms × kgPerRn ratio
+  const getProjKg = (m) => {
+    const actKg = DATA[y]?.[m]?.kg||0;
+    if(actKg) return actKg;
+    const projRooms = DATA[y]?.[m]?.roomsSold || PROJ[y]?.[m]?.roomsSold || 0;
+    return kgPerRn && projRooms ? Math.round(projRooms * kgPerRn) : 0;
+  };
+
+  let applied=0;
   comps.forEach(c=>{
     const pyDays = MF.reduce((_,m)=>_+getCasualActual(py,m,c.id),0);
-    if(!pyDays) return;
+    if(!pyDays){ toast(c.name+': no '+py+' casual days entered — skipped'); return; }
     const kgPerDay = pyKgTotal/pyDays;
     MF.forEach(m=>{
-      const projKg = DATA[y]?.[m]?.kg || (DATA[y]?.[m]?.roomsSold||(PROJ[y]?.[m]?.roomsSold||0))*1.8;
-      if(projKg) setCasualBudget(y,m,c.id,Math.round(projKg/kgPerDay));
+      const projKg = getProjKg(m);
+      if(projKg){ setCasualBudget(y,m,c.id,Math.round(projKg/kgPerDay)); applied++; }
     });
   });
   saveAll();
   buildCasualTab();
-  toast('Budget projected from KG/day ratio ✓');
+  if(applied) toast('Budget projected for '+y+' using '+py+' KG/day ratio ✓');
+  else toast('Nothing projected — check '+py+' casual days and '+y+' projected rooms');
 }
 
 function casualClearBudget(y){
