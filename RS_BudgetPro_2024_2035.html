@@ -3007,7 +3007,7 @@ function makeCard(y,m){
       <!-- Laundry Supplies -->
       <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:3px solid var(--amber)">
         <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);margin-bottom:6px">
-          🧴 Laundry Supplies${hasInc?" <span style='color:var(--amber);font-size:9px'>▲ Inc</span>":''}
+          \uD83E\uDDF4 Laundry Supplies${hasInc?" <span style='color:var(--amber);font-size:9px'>▲ Inc</span>":''}
         </div>
         <div class="fg">
           <div class="fld fl">
@@ -3070,7 +3070,7 @@ function makeCard(y,m){
         <!-- Printing -->
         <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;border-left:3px solid var(--coral)">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--coral);margin-bottom:6px">
-            🖨️ Printing
+            \uD83D\uDDA8️ Printing
           </div>
           <div class="fld fp" style="margin-bottom:5px">
             <label><span class="ld" style="background:var(--coral)"></span>Actual</label>
@@ -3105,7 +3105,7 @@ function makeCard(y,m){
       ${b.tot>0&&totA>0?`<div class="mprog"><div class="mbar" style="width:${Math.min(100,pct)}%;background:${barCol}"></div></div><div class="mpct">${pct.toFixed(0)}% of budget</div>`:''}
 
       <div class="note-field">
-        <textarea rows="2" placeholder="📝 Notes / remarks for this month…"
+        <textarea rows="2" placeholder="\uD83D\uDCDD Notes / remarks for this month…"
           data-f="notes" data-y="${y}" data-m="${m}"
           oninput="hNote(this,${y},${m})"
           style="width:100%;background:#0f1a2e;border:1px dashed #2a3550;border-radius:6px;color:#94a3b8;font-family:Outfit,sans-serif;font-size:11px;padding:7px 9px;resize:none;line-height:1.5;box-sizing:border-box;display:block"
@@ -3998,9 +3998,9 @@ function buildDash(){
             </div>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'entry\\']'),'entry')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(0,212,184,.3);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer">📋 Entry</button>
+            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'entry\\']'),'entry')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(0,212,184,.3);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer">\uD83D\uDCCB Entry</button>
             <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'pulse\\']'),'pulse')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(167,139,250,.3);color:var(--violet);background:rgba(167,139,250,.08);cursor:pointer">⚡ Pulse</button>
-            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'smart\\']'),'smart')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">🧠 Insights</button>
+            <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'smart\\']'),'smart')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">\uD83E\uDDE0 Insights</button>
           </div>
         </div>
 
@@ -4008,9 +4008,9 @@ function buildDash(){
         <div style="border-left:1px solid var(--border);padding-left:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:2px">Quick Actions</div>
           <button onclick="openQME()" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(0,212,184,.18)'" onmouseout="this.style.background='rgba(0,212,184,.08)'">⚡ Quick Entry</button>
-          <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'project\\']'),'project')" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(245,197,66,.4);color:var(--gold);background:rgba(245,197,66,.08);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(245,197,66,.18)'" onmouseout="this.style.background='rgba(245,197,66,.08)'">🔮 Projection Planner</button>
-          <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'report\\']'),'report')" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(255,107,107,.15)'" onmouseout="this.style.background='rgba(255,107,107,.06)'">📄 Budget Report</button>
-          <button onclick="openBudgetWizard()" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.4);color:var(--lime);background:rgba(163,230,53,.06);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(163,230,53,.15)'" onmouseout="this.style.background='rgba(163,230,53,.06)'">🧙 Budget Wizard</button>
+          <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'project\\']'),'project')" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(245,197,66,.4);color:var(--gold);background:rgba(245,197,66,.08);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(245,197,66,.18)'" onmouseout="this.style.background='rgba(245,197,66,.08)'">\uD83D\uDD2E Projection Planner</button>
+          <button onclick="goTab(document.querySelector('.ntab[onclick*=\\'report\\']'),'report')" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(255,107,107,.15)'" onmouseout="this.style.background='rgba(255,107,107,.06)'">\uD83D\uDCC4 Budget Report</button>
+          <button onclick="openBudgetWizard()" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.4);color:var(--lime);background:rgba(163,230,53,.06);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(163,230,53,.15)'" onmouseout="this.style.background='rgba(163,230,53,.06)'">\uD83E\uDDD9 Budget Wizard</button>
         </div>
       </div>`;
     })()}
@@ -4057,7 +4057,7 @@ function buildDash(){
       return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:12px 16px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
           <div>
-            <div style="font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px">🏥 Budget Health Check</div>
+            <div style="font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px">\uD83C\uDFE5 Budget Health Check</div>
             <div style="font-size:9px;color:var(--text3)">Click a year to switch · <span style="color:#00d4b8">✓ On track</span> · <span style="color:#a78bfa">◑ Partial</span> · <span style="color:#ffb347">◐ Rev missing</span> · <span style="color:#ff6b6b">▲ Over budget</span></div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">${cards}</div>
@@ -5575,75 +5575,13 @@ function exportReportExcel(){
   addLine('Operating Supplies','opA','opB',true);
   addLine('Printing & Stationery','prA','prB',true);
   addLine('TOTAL EXPENSES','totExpA','totExpB',true);
-  const csv=rows.map(r=>r.map(c=>{const s=String(c??'');return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`':s;}).join(',')).join('\n');
+  const csv=rows.map(r=>r.map(c=>{const s=String(c==null?'':c);return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
   a.download=`RS_BudgetReport_${y}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   toast('Excel file exported ✓');
 }
-
-
-  const y=rptYear,py=y-1;
-  const yd=getYearData(y);
-  const pyd=py>=2024?getYearData(py):null;
-  const now=new Date().toLocaleDateString('en-US');
-
-  const rows=[];
-  const hdr1=['Description',...MS.flatMap(m=>[m,'','']),  'Year Total','','','Prior Year'];
-  const hdr2=['',           ...Array(12).fill(['Actual','Budget','Variance']).flat(),'Actual','Budget','Variance',`${py} Actual`];
-  rows.push(hdr1,hdr2);
-
-  // metric rows
-  rows.push(['Rooms Sold',       ...yd.months.flatMap(mo=>[mo.rooms,'','']),yd.totRs,'','','']);
-  rows.push(['Occupancy %',      ...yd.months.flatMap(mo=>[mo.occ?mo.occ.toFixed(1)+'%':'—','','']),yd.occ.toFixed(1)+'%','','','']);
-  rows.push(['Total KG',         ...yd.months.flatMap(mo=>[mo.kg||0,'','']),yd.totKg,'','','']);
-  rows.push(['CPOR Actual',      ...yd.months.flatMap(mo=>[mo.rooms&&mo.totExpA?(mo.totExpA/mo.rooms).toFixed(4):0,'','']),yd.cporA?yd.cporA.toFixed(4):0,'','','']);
-
-  function addLine(label,keyA,keyB){
-    let ytdA=0,ytdB=0,ytdPy=0;
-    const cells=yd.months.flatMap(mo=>{
-      const a=mo[keyA]||0,b=mo[keyB]||0;
-      const pyV=pyd?pyd.months[mo.m][keyA]||0:0;
-      ytdA+=a;ytdB+=b;ytdPy+=pyV;
-      return[a,b,a-b];
-    });
-    rows.push([label,...cells,ytdA,ytdB,ytdA-ytdB,pyd?ytdPy:'—']);
-  }
-  function addTotal(label,keyA,keyB){
-    let ytdA=0,ytdB=0,ytdPy=0;
-    const cells=yd.months.flatMap(mo=>{
-      const a=mo[keyA]||0,b=mo[keyB]||0;
-      const pyV=pyd?pyd.months[mo.m][keyA]||0:0;
-      ytdA+=a;ytdB+=b;ytdPy+=pyV;
-      return[a,b,a-b];
-    });
-    rows.push([label,...cells,ytdA,ytdB,ytdA-ytdB,pyd?ytdPy:'—']);
-  }
-
-  rows.push(['--- REVENUE ---']);
-  addLine('Laundry Revenue','revLaA','revLaB');
-  addLine('Pearl Valet Revenue — FS Pearl','revVaA','revVaB');
-  addTotal('TOTAL REVENUE','totRevA','totRevB');
-  rows.push(['--- OPERATING EXPENSES ---']);
-  addLine('Laundry Supplies','laA','laB');
-  addLine('Operating Supplies','opA','opB');
-  addLine('Printing & Stationery','prA','prB');
-  addTotal('TOTAL EXPENSES','totExpA','totExpB');
-
-  const csv=rows.map(r=>r.map(c=>{
-    const s=String(c??'');
-    return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:s;
-  }).join(',')).join('\n');
-
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`RS_BudgetReport_${y}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  toast('Excel file exported ✓');
-}
-
-
 
 /* ════════════════════════════════════════
    SPECIAL / ONE-TIME ITEMS
@@ -5916,7 +5854,7 @@ function updateRevProj(){
         ${hasBud?'<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:#4a9a8a"><div style="width:9px;height:9px;border-radius:2px;background:#4a9a8a"></div>Saved Budget (for comparison)</div>':''}
       </div>
       <div style="font-size:10px;color:${hasBud?'var(--teal)':'#f5c542'};font-style:italic">
-        ${hasBud?'✓ Saved budget shown for comparison — click Apply to update':'💡 No budget saved yet — review then click Apply as Budget below'}
+        ${hasBud?'✓ Saved budget shown for comparison — click Apply to update':'\uD83D\uDCA1 No budget saved yet — review then click Apply as Budget below'}
       </div>
     </div>
     <div style="overflow-x:auto">
@@ -6142,7 +6080,7 @@ function exportRevProjPDF(){
     <div class="step-line"></div>
     <div class="step"><div class="step-num" style="background:#2a3550;color:#94a3b8">4</div><span style="color:#94a3b8">Apply as Budget</span></div>
     <div style="margin-left:auto;font-size:9px;color:#94a3b8;font-style:italic">
-      ${hasBud?'✓ Saved budget shown for comparison':'💡 Budget not yet applied — click Apply as Budget in the system'}
+      ${hasBud?'✓ Saved budget shown for comparison':'\uD83D\uDCA1 Budget not yet applied — click Apply as Budget in the system'}
     </div>
   </div>
 
@@ -6150,9 +6088,9 @@ function exportRevProjPDF(){
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-l">Budget Year</div><div class="kpi-v" style="color:#1e3a5f">${projYear}</div><div style="font-size:8px;color:#64748b">Base: ${baseYear}</div></div>
     <div class="kpi"><div class="kpi-l">Total Rooms Projected</div><div class="kpi-v" style="color:#7c3aed">${totRooms.toLocaleString()}</div></div>
-    <div class="kpi" style="border-color:#0369a1"><div class="kpi-l">🏨 Laundry Projected</div><div class="kpi-v" style="color:#0369a1">QAR ${q(totProjLa)}</div><div style="font-size:8px;color:#64748b">RPOR: ${rporLaAdj.toFixed(4)}</div></div>
-    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">💎 Pearl Projected</div><div class="kpi-v" style="color:#7c3aed">QAR ${q(totProjVa)}</div><div style="font-size:8px;color:#64748b">RPOR: ${rporVaAdj.toFixed(4)}</div></div>
-    <div class="kpi" style="border-color:#92400e;background:#fffbeb"><div class="kpi-l">📊 Total Projected</div><div class="kpi-v" style="color:#92400e">QAR ${q(totProj)}</div></div>
+    <div class="kpi" style="border-color:#0369a1"><div class="kpi-l">\uD83C\uDFE8 Laundry Projected</div><div class="kpi-v" style="color:#0369a1">QAR ${q(totProjLa)}</div><div style="font-size:8px;color:#64748b">RPOR: ${rporLaAdj.toFixed(4)}</div></div>
+    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">\uD83D\uDC8E Pearl Projected</div><div class="kpi-v" style="color:#7c3aed">QAR ${q(totProjVa)}</div><div style="font-size:8px;color:#64748b">RPOR: ${rporVaAdj.toFixed(4)}</div></div>
+    <div class="kpi" style="border-color:#92400e;background:#fffbeb"><div class="kpi-l">\uD83D\uDCCA Total Projected</div><div class="kpi-v" style="color:#92400e">QAR ${q(totProj)}</div></div>
     <div class="kpi" style="border-color:${hasBud?'#0f766e':'#e2e8f0'}"><div class="kpi-l">vs Saved Budget</div><div class="kpi-v" style="color:${hasBud?totVr>=0?'#16a34a':'#dc2626':'#94a3b8'}">${hasBud?(totVr>=0?'+':'')+q(totVr):'Not set yet'}</div></div>
   </div>
 
@@ -6164,11 +6102,11 @@ function exportRevProjPDF(){
       <tr>
         <th class="left" style="background:#1e293b">Month</th>
         <th style="background:#1e293b">Rooms</th>
-        <th style="background:#1e40af">🏨 Laundry Projected</th>
+        <th style="background:#1e40af">\uD83C\uDFE8 Laundry Projected</th>
         ${hasBud?'<th style="background:#0f766e">Saved Budget</th><th style="background:#0f766e">Variance</th>':''}
-        <th style="background:#5b21b6">💎 Pearl Projected</th>
+        <th style="background:#5b21b6">\uD83D\uDC8E Pearl Projected</th>
         ${hasBud?'<th style="background:#3b0764">Saved Budget</th><th style="background:#3b0764">Variance</th>':''}
-        <th style="background:#92400e">📊 Total Projected</th>
+        <th style="background:#92400e">\uD83D\uDCCA Total Projected</th>
       </tr>
     </thead>
     <tbody>${tableRows}</tbody>
@@ -6552,11 +6490,11 @@ function buildBudgetModalTable(){
       <th style="text-align:left;padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;
         font-weight:700;letter-spacing:.5px;color:#64748b;border-radius:6px 0 0 0">Month</th>
       <th style="padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
-        letter-spacing:.5px;color:var(--amber);text-align:center">🧴 Laundry Supplies</th>
+        letter-spacing:.5px;color:var(--amber);text-align:center">\uD83E\uDDF4 Laundry Supplies</th>
       <th style="padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
         letter-spacing:.5px;color:var(--lime);text-align:center">⚙️ Operating Supplies</th>
       <th style="padding:8px 10px;background:#1a2236;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
-        letter-spacing:.5px;color:var(--coral);text-align:center;border-radius:0 6px 0 0">🖨️ Printing & Stationery</th>
+        letter-spacing:.5px;color:var(--coral);text-align:center;border-radius:0 6px 0 0">\uD83D\uDDA8️ Printing & Stationery</th>
     </tr>
   </thead><tbody>`;
 
@@ -6739,9 +6677,9 @@ function buildScenarioTable(){
   let html = driverInfo.banner;
 
   const scenarios = [
-    {name:'Conservative', icon:'🔵', col:'#38bdf8',  occ: occC||60},
-    {name:'Base',         icon:'🟢', col:'#00d4b8',  occ: occB||68},
-    {name:'Optimistic',   icon:'🟡', col:'#f5c542',  occ: occO||76},
+    {name:'Conservative', icon:'[C]', col:'#38bdf8',  occ: occC||60},
+    {name:'Base',         icon:'[B]', col:'#00d4b8',  occ: occB||68},
+    {name:'Optimistic',   icon:'[O]', col:'#f5c542',  occ: occO||76},
   ];
 
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:700px">';
@@ -7074,7 +7012,7 @@ function buildWizStep(){
           border:1px solid ${_wizStep===4?'rgba(163,230,53,.5)':'rgba(0,212,184,.5)'};
           color:${_wizStep===4?'var(--lime)':'var(--teal)'};
           background:${_wizStep===4?'rgba(163,230,53,.1)':'rgba(0,212,184,.1)'};cursor:pointer">
-        ${_wizStep<4?'Next →':'🎯 Save Budget for '+_wizY}
+        ${_wizStep<4?'Next →':'\uD83C\uDFAF Save Budget for '+_wizY}
       </button>
     </div>`;
 }
@@ -7275,22 +7213,22 @@ function buildTrendsTab(){
 
     <!-- ══ KPI STRIP ══ -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px">
-      ${kpiCard('CPOR Actual '+latest.y, latest.cporA.toFixed(4), chgStr(latest.cporA,prev?.cporA,true),'#a78bfa',null,'📊')}
+      ${kpiCard('CPOR Actual '+latest.y, latest.cporA.toFixed(4), chgStr(latest.cporA,prev?.cporA,true),'#a78bfa',null,'\uD83D\uDCCA')}
       ${kpiCard('CPOR Budget '+latest.y, latest.cporB.toFixed(4),
         latest.cporA<=latest.cporB?
           '<span style="color:#00d4b8">✓ Under budget by '+(latest.cporB-latest.cporA).toFixed(4)+'</span>':
           '<span style="color:#ff6b6b">▲ Over budget by '+(latest.cporA-latest.cporB).toFixed(4)+'</span>',
-        '#ffb347',null,'🎯')}
-      ${kpiCard('Total Expenses', 'QAR '+latest.totExp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}), chgStr(latest.totExp,prev?.totExp,true),'#00d4b8',null,'💰')}
+        '#ffb347',null,'\uD83C\uDFAF')}
+      ${kpiCard('Total Expenses', 'QAR '+latest.totExp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}), chgStr(latest.totExp,prev?.totExp,true),'#00d4b8',null,'\uD83D\uDCB0')}
       ${kpiCard('Cost per KG', 'QAR '+latest.costKg.toFixed(2), chgStr(latest.costKg,prev?.costKg,true),'#38bdf8',null,'⚖️')}
-      ${kpiCard('KG per Room Night', latest.kgRn.toFixed(2)+' KG', chgStr(latest.kgRn,prev?.kgRn,false),'#a3e635',null,'📦')}
-      ${kpiCard('Occupancy', latest.occ.toFixed(1)+'%', chgStr(latest.occ,prev?.occ,false),'#ffb347',null,'🏨')}
+      ${kpiCard('KG per Room Night', latest.kgRn.toFixed(2)+' KG', chgStr(latest.kgRn,prev?.kgRn,false),'#a3e635',null,'\uD83D\uDCE6')}
+      ${kpiCard('Occupancy', latest.occ.toFixed(1)+'%', chgStr(latest.occ,prev?.occ,false),'#ffb347',null,'\uD83C\uDFE8')}
     </div>
 
     <!-- ══ MAIN CPOR CHART ══ -->
     <div style="margin-bottom:14px">
       ${card(
-        '📊 CPOR — Actual vs Budget (QAR per Room Night)',
+        '\uD83D\uDCCA CPOR — Actual vs Budget (QAR per Room Night)',
         '#a78bfa',
         svgChart(W,H,PL,PB,cporItems,f4,['#a78bfa','rgba(255,179,71,.8)'],true),
         W,H,
@@ -7301,7 +7239,7 @@ function buildTrendsTab(){
 
     <!-- ══ LINE BREAKDOWN CPOR ══ -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
-      ${card('🧴 Laundry Supplies CPOR','#00d4b8',
+      ${card('\uD83E\uDDF4 Laundry Supplies CPOR','#00d4b8',
         svgChart(W,160,PL,PB,laItems,f4,['#00d4b8','rgba(0,212,184,.5)'],true),W,160,
         `Act: <strong style="color:#00d4b8">${latest.cporALa.toFixed(4)}</strong> · Bud: <strong style="color:#4a9a8a">${latest.cporBLa.toFixed(4)}</strong>`,
         leg('#00d4b8','Actual')+leg('rgba(0,212,184,.5)','Budget'))}
@@ -7309,7 +7247,7 @@ function buildTrendsTab(){
         svgChart(W,160,PL,PB,opItems,f4,['#a3e635','rgba(163,230,53,.5)'],true),W,160,
         `Act: <strong style="color:#a3e635">${latest.cporAOp.toFixed(4)}</strong> · Bud: <strong style="color:#658c1e">${latest.cporBOp.toFixed(4)}</strong>`,
         leg('#a3e635','Actual')+leg('rgba(163,230,53,.5)','Budget'))}
-      ${card('🖨️ Printing & Stationery CPOR','#ff6b6b',
+      ${card('\uD83D\uDDA8️ Printing & Stationery CPOR','#ff6b6b',
         svgChart(W,160,PL,PB,prItems,f4,['#ff6b6b','rgba(255,107,107,.5)'],true),W,160,
         `Act: <strong style="color:#ff6b6b">${latest.cporAPr.toFixed(4)}</strong> · Bud: <strong style="color:#9a3030">${latest.cporBPr.toFixed(4)}</strong>`,
         leg('#ff6b6b','Actual')+leg('rgba(255,107,107,.5)','Budget'))}
@@ -7321,7 +7259,7 @@ function buildTrendsTab(){
         svgChart(W,H,PL,PB,costItems,f2,['#38bdf8'],false),W,H,
         `Latest: <strong style="color:#38bdf8">QAR ${latest.costKg.toFixed(2)}</strong> per KG processed`,
         leg('#38bdf8','Cost per KG'))}
-      ${card('📦 KG per Room Night','#a3e635',
+      ${card('\uD83D\uDCE6 KG per Room Night','#a3e635',
         svgChart(W,H,PL,PB,kgRnItems,v=>v.toFixed(2),['#a3e635'],false),W,H,
         `Latest: <strong style="color:#a3e635">${latest.kgRn.toFixed(2)}</strong> KG per occupied room`,
         leg('#a3e635','KG per Room Night'))}
@@ -7329,14 +7267,14 @@ function buildTrendsTab(){
 
     <!-- ══ OCCUPANCY + EXPENSES ══ -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
-      ${card('🏨 Occupancy % — Year on Year','#ffb347',
+      ${card('\uD83C\uDFE8 Occupancy % — Year on Year','#ffb347',
         svgChart(W,H,PL,PB,occItems,v=>v.toFixed(1)+'%',
           ydata.map(d=>d.occ>60?'#00d4b8':d.occ>40?'#ffb347':'#ff6b6b').length>0?
           [ydata.map(d=>d.occ>60?'#00d4b8':d.occ>40?'#ffb347':'#ff6b6b')[0],'']:['#ffb347',''],
           false),W,H,
-        `Latest: <strong>${latest.occ.toFixed(1)}%</strong> · 🟢>60% 🟡40-60% 🔴<40%`,
+        `Latest: <strong>${latest.occ.toFixed(1)}%</strong> · \uD83D\uDFE2>60% \uD83D\uDFE140-60% \uD83D\uDD34<40%`,
         leg('#00d4b8','>60%')+leg('#ffb347','40-60%')+leg('#ff6b6b','<40%'))}
-      ${card('💰 Total Expenses — Year on Year','#00d4b8',
+      ${card('\uD83D\uDCB0 Total Expenses — Year on Year','#00d4b8',
         svgChart(W,H,PL,PB,expItems,fQ,['#00d4b8'],false),W,H,
         `Latest: <strong style="color:#00d4b8">QAR ${latest.totExp.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>`,
         leg('#00d4b8','Total Expenses'))}
@@ -7345,7 +7283,7 @@ function buildTrendsTab(){
     <!-- ══ FULL TREND SUMMARY TABLE ══ -->
     <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px">
       <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-        <span>📋 Full Trend Summary</span>
+        <span>\uD83D\uDCCB Full Trend Summary</span>
         <span style="font-size:10px;color:#64748b;font-weight:400">All years with data · CPOR Actual vs Budget · YoY change</span>
       </div>
       <div style="overflow-x:auto">
@@ -7530,7 +7468,7 @@ function printPulsePDF(){
 
     return `<tr style="background:${bg};${d.isFuture?'opacity:.5':''}">
       <td style="padding:7px 10px;font-size:10px;font-weight:700;color:${d.isFuture?'#9ca3af':d.hasData?'#1e293b':'#9ca3af'};white-space:nowrap;border-right:2px solid #f1f5f9">
-        ${d.locked?'🔒 ':''}<span style="font-weight:800">${MS[d.m]}</span>
+        ${d.locked?'\uD83D\uDD12 ':''}<span style="font-weight:800">${MS[d.m]}</span>
         ${d.isFuture?'<br><span style="font-size:8px;color:#94a3b8">Forecast</span>':''}
       </td>
       <td style="padding:7px 8px;text-align:center;font-size:9px;color:#6b7280">${d.rooms?d.rooms.toLocaleString():'—'}</td>
@@ -7606,11 +7544,11 @@ function printPulsePDF(){
   <div style="margin:0 0 16px;padding:0 2px">
     <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:8px">YTD SUMMARY${isCurrentYear?' (Jan – '+MS[ytdLimit]+')':' (Full Year)'}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      ${kpiCard('💰','YTD Revenue',ytdRevA.toLocaleString('en-US',{minimumFractionDigits:2}),ytdRevB?ytdRevB.toLocaleString('en-US',{minimumFractionDigits:2}):null,ytdRevPct,'#0d9488',ytdRevB?ytdRevA-ytdRevB:null)}
-      ${kpiCard('🔥','YTD Expenses',ytdExpA.toLocaleString('en-US',{minimumFractionDigits:2}),ytdExpB?ytdExpB.toLocaleString('en-US',{minimumFractionDigits:2}):null,ytdExpPct,'#d97706',ytdExpB?ytdExpB-ytdExpA:null)}
-      ${kpiCard('📊','YTD Net',(ytdNetA).toLocaleString('en-US',{minimumFractionDigits:2}),ytdNetB?(ytdNetB).toLocaleString('en-US',{minimumFractionDigits:2}):null,null,ytdNetA>=0?'#059669':'#dc2626',ytdNetB?ytdNetA-ytdNetB:null)}
-      ${kpiCard('📋','Full Year Budget Rev',totRevB?totRevB.toLocaleString('en-US',{minimumFractionDigits:2}):'Not set',null,null,'#7c3aed',null)}
-      ${kpiCard('📋','Full Year Budget Exp',totExpB?totExpB.toLocaleString('en-US',{minimumFractionDigits:2}):'Not set',null,null,'#d97706',null)}
+      ${kpiCard('\uD83D\uDCB0','YTD Revenue',ytdRevA.toLocaleString('en-US',{minimumFractionDigits:2}),ytdRevB?ytdRevB.toLocaleString('en-US',{minimumFractionDigits:2}):null,ytdRevPct,'#0d9488',ytdRevB?ytdRevA-ytdRevB:null)}
+      ${kpiCard('\uD83D\uDD25','YTD Expenses',ytdExpA.toLocaleString('en-US',{minimumFractionDigits:2}),ytdExpB?ytdExpB.toLocaleString('en-US',{minimumFractionDigits:2}):null,ytdExpPct,'#d97706',ytdExpB?ytdExpB-ytdExpA:null)}
+      ${kpiCard('\uD83D\uDCCA','YTD Net',(ytdNetA).toLocaleString('en-US',{minimumFractionDigits:2}),ytdNetB?(ytdNetB).toLocaleString('en-US',{minimumFractionDigits:2}):null,null,ytdNetA>=0?'#059669':'#dc2626',ytdNetB?ytdNetA-ytdNetB:null)}
+      ${kpiCard('\uD83D\uDCCB','Full Year Budget Rev',totRevB?totRevB.toLocaleString('en-US',{minimumFractionDigits:2}):'Not set',null,null,'#7c3aed',null)}
+      ${kpiCard('\uD83D\uDCCB','Full Year Budget Exp',totExpB?totExpB.toLocaleString('en-US',{minimumFractionDigits:2}):'Not set',null,null,'#d97706',null)}
     </div>
   </div>
 
@@ -7681,16 +7619,16 @@ function printPulsePDF(){
         </thead>
         <tbody>
           <tr><td colspan="5" class="section-label">REVENUE</td></tr>
-          ${sumRow('🏨','Laundry Revenue (FS Doha)',totLaRevA,totLaRevB,true)}
-          ${sumRow('💎','Pearl Valet Revenue',totValRevA,totValRevB,true)}
-          ${sumRow('📎','Others Revenue',totOthRevA,totOthRevB,true)}
+          ${sumRow('\uD83C\uDFE8','Laundry Revenue (FS Doha)',totLaRevA,totLaRevB,true)}
+          ${sumRow('\uD83D\uDC8E','Pearl Valet Revenue',totValRevA,totValRevB,true)}
+          ${sumRow('\uD83D\uDCCE','Others Revenue',totOthRevA,totOthRevB,true)}
           ${sumRow('','TOTAL REVENUE',totRevA,totRevB,true,true)}
           <tr><td colspan="5" class="section-label">EXPENSES</td></tr>
-          ${sumRow('🧺','Laundry Supplies',totLaExpA,totLaExpB,false)}
+          ${sumRow('\uD83E\uDDFA','Laundry Supplies',totLaExpA,totLaExpB,false)}
           ${sumRow('⚙️','Operating Expenses',totOpExpA,totOpExpB,false)}
-          ${sumRow('🖨','Printing Expenses',totPrExpA,totPrExpB,false)}
+          ${sumRow('\uD83D\uDDA8','Printing Expenses',totPrExpA,totPrExpB,false)}
           ${sumRow('','TOTAL EXPENSES',totExpA,totExpB,false,true)}
-          ${sumRow('📊','NET (Revenue − Expenses)',netYrA,netYrB,true,false,true)}
+          ${sumRow('\uD83D\uDCCA','NET (Revenue − Expenses)',netYrA,netYrB,true,false,true)}
         </tbody>
       </table>
     </div>
@@ -7813,19 +7751,19 @@ function buildPulseKPI(){
 
   const kpis = [
     {
-      icon:'💰', label:'YTD Revenue',
+      icon:'\uD83D\uDCB0', label:'YTD Revenue',
       val: fN(ytdRevA), sub: ytdRevB ? `Budget: ${fN(ytdRevB)}` : 'No budget set',
       pct: revPct, type:'rev',
       color:'var(--teal)', bg:'rgba(0,212,184,.06)', border:'rgba(0,212,184,.2)'
     },
     {
-      icon:'🔥', label:'YTD Expenses',
+      icon:'\uD83D\uDD25', label:'YTD Expenses',
       val: fN(ytdExpA), sub: ytdExpB ? `Budget: ${fN(ytdExpB)}` : 'No budget set',
       pct: expPct, type:'exp',
       color:'var(--amber)', bg:'rgba(255,179,71,.06)', border:'rgba(255,179,71,.2)'
     },
     {
-      icon:'📊', label:'YTD Net',
+      icon:'\uD83D\uDCCA', label:'YTD Net',
       val: fN(netA), sub: netB ? `Budget Net: ${fN(netB)}` : 'No budget set',
       pct: null,
       varVal: netVar,
@@ -7834,7 +7772,7 @@ function buildPulseKPI(){
       border: netA>=0?'rgba(163,230,53,.2)':'rgba(255,107,107,.2)'
     },
     {
-      icon:'📅', label: MF[cm] + (isCurrentYear?' (Current)':' (Last)'),
+      icon:'\uD83D\uDCC5', label: MF[cm] + (isCurrentYear?' (Current)':' (Last)'),
       val: cmD.revA ? fN(cmD.revA) : '—',
       sub: cmD.expA ? `Exp: ${fN(cmD.expA)}` : 'No data',
       pct: null,
@@ -7929,7 +7867,7 @@ function buildPulseMonthGrid(){
           <div style="display:flex;align-items:center;gap:7px">
             ${isCurrent
               ?`<div style="width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal)"></div>`
-              :d.locked?`<span style="font-size:10px">🔒</span>`
+              :d.locked?`<span style="font-size:10px">\uD83D\uDD12</span>`
               :`<div style="width:5px;height:5px;border-radius:50%;background:var(--border2)"></div>`}
             <span style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:${isCurrent?'var(--teal)':d.hasAct?'var(--text)':'var(--text3)'}">${MF[m]}</span>
             ${isCurrent?`<span style="font-size:9px;color:var(--teal);background:rgba(0,212,184,.1);padding:1px 6px;border-radius:8px;border:1px solid rgba(0,212,184,.2)">Current</span>`:''}
@@ -7955,11 +7893,11 @@ function buildPulseMonthGrid(){
           <!-- Revenue bars -->
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);margin-bottom:6px;opacity:.7">Revenue (QAR)</div>
-            ${miniBar('🏨 FS Doha', d.laRevA, d.laRevB, 'var(--teal)', '0,212,184')}
+            ${miniBar('\uD83C\uDFE8 FS Doha', d.laRevA, d.laRevB, 'var(--teal)', '0,212,184')}
             ${isPearlOn
-              ? miniBar('💎 Pearl Valet', d.valRevA, d.valRevB, 'var(--violet)', '167,139,250')
-              : `<div style="font-size:9px;color:var(--text3);margin-bottom:5px;padding-left:87px;opacity:.5">💎 Pearl — not yet operational</div>`}
-            ${miniBar('📎 Others', d.othRevA, d.othRevB, 'var(--sky)', '56,189,248')}
+              ? miniBar('\uD83D\uDC8E Pearl Valet', d.valRevA, d.valRevB, 'var(--violet)', '167,139,250')
+              : `<div style="font-size:9px;color:var(--text3);margin-bottom:5px;padding-left:87px;opacity:.5">\uD83D\uDC8E Pearl — not yet operational</div>`}
+            ${miniBar('\uD83D\uDCCE Others', d.othRevA, d.othRevB, 'var(--sky)', '56,189,248')}
           </div>
           <!-- Expense bars -->
           <div>
@@ -7968,9 +7906,9 @@ function buildPulseMonthGrid(){
               const row  = (DATA[pulseY]||{})[m] || {};
               const rooms= getRooms(pulseY, m);
               const b    = bud(pulseY, m, rooms);
-              return miniBar('🧺 Laundry',   row.laA||0, b.la, 'exp', '255,179,71')
+              return miniBar('\uD83E\uDDFA Laundry',   row.laA||0, b.la, 'exp', '255,179,71')
                    + miniBar('⚙️ Operating', row.opA||0, b.op, 'exp', '255,179,71')
-                   + miniBar('🖨 Printing',  row.prA||0, b.pr, 'exp', '255,179,71');
+                   + miniBar('\uD83D\uDDA8 Printing',  row.prA||0, b.pr, 'exp', '255,179,71');
             })()}
           </div>
         </div>
@@ -8058,16 +7996,16 @@ function buildPulseSummaryTable(){
       </thead>
       <tbody>
         <tr><td colspan="5" style="padding:8px 18px 4px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);background:var(--bg3)">REVENUE</td></tr>
-        ${row('Laundry Revenue',  laRevA, laRevB,  true,  false, false, '🏨')}
-        ${row('Pearl Valet',      valRevA,valRevB,  true,  false, false, '💎')}
-        ${row('Others',           othRevA,othRevB,  true,  false, false, '📎')}
+        ${row('Laundry Revenue',  laRevA, laRevB,  true,  false, false, '\uD83C\uDFE8')}
+        ${row('Pearl Valet',      valRevA,valRevB,  true,  false, false, '\uD83D\uDC8E')}
+        ${row('Others',           othRevA,othRevB,  true,  false, false, '\uD83D\uDCCE')}
         ${row('TOTAL REVENUE',    totRevA,totRevB,  true,  true,  false, '')}
         <tr><td colspan="5" style="padding:8px 18px 4px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);background:var(--bg3)">EXPENSES</td></tr>
-        ${row('Laundry Supplies', laExpA, laExpB,  false, false, false, '🧺')}
+        ${row('Laundry Supplies', laExpA, laExpB,  false, false, false, '\uD83E\uDDFA')}
         ${row('Operating',        opExpA, opExpB,  false, false, false, '⚙️')}
-        ${row('Printing',         prExpA, prExpB,  false, false, false, '🖨')}
+        ${row('Printing',         prExpA, prExpB,  false, false, false, '\uD83D\uDDA8')}
         ${row('TOTAL EXPENSES',   totExpA,totExpB, false, true,  false, '')}
-        ${row('NET (Rev − Exp)',   netA,   netB,    true,  false, true,  '📊')}
+        ${row('NET (Rev − Exp)',   netA,   netB,    true,  false, true,  '\uD83D\uDCCA')}
       </tbody>
     </table>`;
 }
@@ -8091,7 +8029,7 @@ function buildGuideTab(){
   const tip = (txt) =>
     `<div style="margin-top:10px;background:rgba(245,197,66,.06);border-left:3px solid rgba(245,197,66,.5);
       border-radius:0 8px 8px 0;padding:9px 13px;font-size:11px;color:#94a3b8;line-height:1.7">
-      <strong style="color:#f5c542">💡 Remember: </strong>${txt}
+      <strong style="color:#f5c542">\uD83D\uDCA1 Remember: </strong>${txt}
     </div>`;
 
   const warn = (txt) =>
@@ -8179,12 +8117,12 @@ function buildGuideTab(){
     </p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:4px">
       ${[
-        ['#00d4b8','📋','Track actuals','Enter what you really spent each month'],
-        ['#f5c542','🔮','Plan budgets','Auto-calculates next year from prior year data'],
-        ['#a78bfa','📊','Compare','Actual vs Budget with color-coded variance'],
-        ['#ff6b6b','📄','Report','Print Finance-ready PDFs for meetings'],
-        ['#38bdf8','💾','Stay safe','Firebase cloud saves everything automatically'],
-        ['#a3e635','🧙','Save time','Budget Wizard builds a full year in 4 clicks'],
+        ['#00d4b8','\uD83D\uDCCB','Track actuals','Enter what you really spent each month'],
+        ['#f5c542','\uD83D\uDD2E','Plan budgets','Auto-calculates next year from prior year data'],
+        ['#a78bfa','\uD83D\uDCCA','Compare','Actual vs Budget with color-coded variance'],
+        ['#ff6b6b','\uD83D\uDCC4','Report','Print Finance-ready PDFs for meetings'],
+        ['#38bdf8','\uD83D\uDCBE','Stay safe','Firebase cloud saves everything automatically'],
+        ['#a3e635','\uD83E\uDDD9','Save time','Budget Wizard builds a full year in 4 clicks'],
       ].map(([col,icon,title,desc])=>`
         <div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;border-left:3px solid ${col}">
           <div style="font-size:16px;margin-bottom:5px">${icon}</div>
@@ -8210,7 +8148,7 @@ function buildGuideTab(){
           <strong style="color:#94a3b8">Only enter here after the month has closed.</strong></div>
       </div>
       <div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2);border-radius:8px;padding:14px">
-        <div style="font-size:12px;font-weight:700;color:#f5c542;margin-bottom:6px">🔮 FORECASTS go in Projection Planner</div>
+        <div style="font-size:12px;font-weight:700;color:#f5c542;margin-bottom:6px">\uD83D\uDD2E FORECASTS go in Projection Planner</div>
         <div style="font-size:11px;color:#64748b;line-height:1.7">Future estimated rooms. What you think will happen.
           Projected rooms for next month or next year.
           <strong style="color:#94a3b8">Only enter here for future months.</strong></div>
@@ -8252,7 +8190,7 @@ function buildGuideTab(){
   <!-- ════ PART 4: DAILY USE ════ -->
   ${section('Part 4 — What to do every month','Your regular routine. Takes about 10 minutes per month.')}
 
-  ${card('📋','Step 1 — Enter this month\'s actuals','Do this as soon as the month closes','#00d4b8',`
+  ${card('\uD83D\uDCCB','Step 1 — Enter this month\'s actuals','Do this as soon as the month closes','#00d4b8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       At the start of each month, you enter last month's confirmed numbers. There are two ways to do this —
       use whichever feels easier.
@@ -8265,7 +8203,7 @@ function buildGuideTab(){
       ${step(3,'#00d4b8','Fill in <strong style="color:#a78bfa">Rooms Sold</strong> and <strong style="color:#38bdf8">KG Processed</strong>')}
       ${step(4,'#00d4b8','Fill in the 3 expense actuals: <strong style="color:#00d4b8">Laundry Supplies</strong>, <strong style="color:#a3e635">Operating</strong>, <strong style="color:#ff6b6b">Printing</strong>')}
       ${step(5,'#00d4b8','Fill in revenue: <strong>Laundry Revenue</strong>, <strong style="color:#a78bfa">Pearl Valet</strong>, <strong style="color:#38bdf8">Others</strong>')}
-      ${step(6,'#00d4b8','Click <strong>💾 Save &amp; Next Month →</strong> to save and jump to the next month automatically')}
+      ${step(6,'#00d4b8','Click <strong>\uD83D\uDCBE Save &amp; Next Month →</strong> to save and jump to the next month automatically')}
     </div>
 
     <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;margin-bottom:12px">
@@ -8281,24 +8219,24 @@ function buildGuideTab(){
     ${warn('Only enter numbers that Finance has confirmed. Do not enter estimates or future months here — those go in Projection Planner.')}
   `)}
 
-  ${card('🔒','Step 2 — Lock the month after Finance confirms','Prevent accidental changes to submitted data','#f5c542',`
+  ${card('\uD83D\uDD12','Step 2 — Lock the month after Finance confirms','Prevent accidental changes to submitted data','#f5c542',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Once you have submitted a month to Finance and they confirm the numbers, lock it so nobody can accidentally change it.
     </p>
     ${step(1,'#f5c542','Go to <strong>Monthly Entry</strong> tab')}
     ${step(2,'#f5c542','Find the month card you want to lock')}
-    ${step(3,'#f5c542','Click the <strong style="color:#f5c542">🔒 Lock</strong> button on that card')}
+    ${step(3,'#f5c542','Click the <strong style="color:#f5c542">\uD83D\uDD12 Lock</strong> button on that card')}
     ${step(4,'#f5c542','The card turns slightly faded and all fields become read-only')}
-    ${step(5,'#f5c542','To lock the whole year at once, use the <strong>🔒 Lock Year</strong> button in the tab header')}
-    ${tip('You can unlock any time with the 🔓 Unlock button. Locking is just a protection — it does not affect any calculations.')}
+    ${step(5,'#f5c542','To lock the whole year at once, use the <strong>\uD83D\uDD12 Lock Year</strong> button in the tab header')}
+    ${tip('You can unlock any time with the \uD83D\uDD13 Unlock button. Locking is just a protection — it does not affect any calculations.')}
   `)}
 
-  ${card('💰','Step 3 — Enter revenue actuals','Track what each property actually earned','#38bdf8',`
+  ${card('\uD83D\uDCB0','Step 3 — Enter revenue actuals','Track what each property actually earned','#38bdf8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Revenue is tracked separately from expenses. Go to the <strong>Revenue</strong> tab to enter monthly revenue figures.
     </p>
     ${step(1,'#38bdf8','Click the <strong>Revenue</strong> tab')}
-    ${step(2,'#38bdf8','Each month has a card with 3 rows: <strong style="color:#00d4b8">🏨 Laundry Revenue</strong> (FS Doha), <strong style="color:#a78bfa">💎 Pearl Valet</strong>, <strong style="color:#38bdf8">📎 Others</strong>')}
+    ${step(2,'#38bdf8','Each month has a card with 3 rows: <strong style="color:#00d4b8">\uD83C\uDFE8 Laundry Revenue</strong> (FS Doha), <strong style="color:#a78bfa">\uD83D\uDC8E Pearl Valet</strong>, <strong style="color:#38bdf8">\uD83D\uDCCE Others</strong>')}
     ${step(3,'#38bdf8','Enter the <strong>Actual</strong> amount and the <strong>Budget</strong> amount side by side')}
     ${step(4,'#38bdf8','Variance calculates automatically — teal = above budget (good), red = below budget')}
     ${step(5,'#38bdf8','Pearl Valet only appears from August 2024 onwards — this is correct, Pearl opened then')}
@@ -8308,12 +8246,12 @@ function buildGuideTab(){
   <!-- ════ PART 5: BUDGET PLANNING ════ -->
   ${section('Part 5 — Planning next year\'s budget','The most important thing you do all year. Usually done in August.')}
 
-  ${card('🧙','The easiest way — Budget Wizard','4 steps, about 5 minutes, covers everything','#a3e635',`
+  ${card('\uD83E\uDDD9','The easiest way — Budget Wizard','4 steps, about 5 minutes, covers everything','#a3e635',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       The Budget Wizard guides you through building a complete budget for any future year.
       It calculates expenses and revenue budgets automatically — you just review and confirm.
     </p>
-    ${step(1,'#a3e635','Go to <strong>Dashboard</strong> tab → look at the Today Panel → click <strong style="color:#a3e635">🧙 Budget Wizard</strong>')}
+    ${step(1,'#a3e635','Go to <strong>Dashboard</strong> tab → look at the Today Panel → click <strong style="color:#a3e635">\uD83E\uDDD9 Budget Wizard</strong>')}
     ${step(2,'#a3e635','<strong>Step 1 of wizard:</strong> Select the year (e.g. 2027). Review the projected rooms per month. Change any room number by clicking it and typing.')}
     ${step(3,'#a3e635','<strong>Step 2 of wizard:</strong> The system shows you the auto-calculated expense budget for every month based on CPOR × rooms. Review it — if it looks right, click Next.')}
     ${step(4,'#a3e635','<strong>Step 3 of wizard:</strong> The system shows the revenue budget based on RPOR × rooms. Review it. Click Next.')}
@@ -8321,7 +8259,7 @@ function buildGuideTab(){
     ${tip('The wizard does not overwrite any actual data you have entered. It only writes the budget fields (laB, opB, prB, laRB, valRB).')}
   `)}
 
-  ${card('🎯','Compare scenarios before deciding','Run 3 occupancy options side by side','#a3e635',`
+  ${card('\uD83C\uDFAF','Compare scenarios before deciding','Run 3 occupancy options side by side','#a3e635',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Before committing to a budget, use the Scenario Planner to see what the numbers look like
       under conservative, base, and optimistic occupancy assumptions.
@@ -8335,7 +8273,7 @@ function buildGuideTab(){
     ${tip('Use this when presenting budget options to management. Show all 3 — let them choose which one to submit to Finance.')}
   `)}
 
-  ${card('🔮','The August workflow — Year Completion Forecast','How to prepare next year budget mid-year','#f5c542',`
+  ${card('\uD83D\uDD2E','The August workflow — Year Completion Forecast','How to prepare next year budget mid-year','#f5c542',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       In August, you have 7 months of real data (Jan–Jul) but 5 months still to go (Aug–Dec).
       The system handles this automatically — it blends your real data with projected remaining months
@@ -8351,14 +8289,14 @@ function buildGuideTab(){
     ${tip('You do not need to wait until December to start next year\'s budget. The Year Completion Forecast gives you an accurate estimate even in August.')}
   `)}
 
-  ${card('🔗','Link rooms to revenue planning','One entry, used everywhere','#00d4b8',`
+  ${card('\uD83D\uDD17','Link rooms to revenue planning','One entry, used everywhere','#00d4b8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Once you have projected rooms in the Projection Planner, you do not need to enter them again
       for the revenue budget. Use the Sync button to connect them automatically.
     </p>
     ${step(1,'#00d4b8','Go to <strong>Projection Planner</strong> tab')}
     ${step(2,'#00d4b8','Enter your projected rooms for future years in the table')}
-    ${step(3,'#00d4b8','Click the <strong style="color:#00d4b8">🔗 Sync Rooms → Revenue Planner</strong> button in the legend area')}
+    ${step(3,'#00d4b8','Click the <strong style="color:#00d4b8">\uD83D\uDD17 Sync Rooms → Revenue Planner</strong> button in the legend area')}
     ${step(4,'#00d4b8','The system takes you to the Revenue tab automatically with your rooms already loaded')}
     ${step(5,'#00d4b8','The revenue projection now uses those exact rooms — no double entry')}
   `)}
@@ -8380,7 +8318,7 @@ function buildGuideTab(){
     ${tip('If you have two increases stacking (e.g. 5% in Jan and 3.5% in April), add them separately. The system multiplies them: 1.05 × 1.035 = 8.675% total. This is exactly how real supplier contracts work.')}
   `)}
 
-  ${card('📌','Adding a special fixed item','A one-off cost that is added to a specific month','#a78bfa',`
+  ${card('\uD83D\uDCCC','Adding a special fixed item','A one-off cost that is added to a specific month','#a78bfa',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Sometimes there is a fixed cost that does not follow the CPOR formula — like an annual equipment
       service or a one-time purchase. Add it as a Special Item.
@@ -8396,7 +8334,7 @@ function buildGuideTab(){
   <!-- ════ PART 7: ANALYSIS TABS ════ -->
   ${section('Part 7 — Viewing your data','The analysis tabs — use these to understand what\'s happening')}
 
-  ${card('🎯','Dashboard','Your home screen — see everything at a glance','#ff6b6b',`
+  ${card('\uD83C\uDFAF','Dashboard','Your home screen — see everything at a glance','#ff6b6b',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       The Dashboard is the best place to start every day. It shows you instantly what is happening,
       what needs attention, and how the year is tracking.
@@ -8424,24 +8362,24 @@ function buildGuideTab(){
     ${step(4,'#00d4b8','The <strong>Monthly Progress Grid</strong> shows each month with progress bars — one for each revenue line (FS Doha, Pearl, Others) and one for each expense line (Laundry, Operating, Printing)')}
     ${step(5,'#00d4b8','Each bar fills up as a percentage of budget — 100% means exactly on budget, above 100% means over budget (red), below means under (good colors)')}
     ${step(6,'#00d4b8','The <strong>Year Summary Table</strong> at the bottom is Finance-standard format: Actual / Budget / Variance / % Achieved for every single line')}
-    ${step(7,'#00d4b8','Click <strong style="color:#ff6b6b">🖨 Print PDF Report</strong> for a colored A3 landscape PDF — perfect for Finance meeting presentations')}
+    ${step(7,'#00d4b8','Click <strong style="color:#ff6b6b">\uD83D\uDDA8 Print PDF Report</strong> for a colored A3 landscape PDF — perfect for Finance meeting presentations')}
     ${tip('The PDF includes everything: KPI cards, monthly progress table with all bars, and the year summary table. Print it and bring it to your Finance meeting.')}
   `)}
 
-  ${card('📊','Multi-Year Overview','See all 12 years in one table','#a78bfa',`
+  ${card('\uD83D\uDCCA','Multi-Year Overview','See all 12 years in one table','#a78bfa',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Shows every year from 2024 to 2035 in a single table — useful for showing long-term trends
       and for the formal annual budget submission.
     </p>
     ${step(1,'#a78bfa','Click the <strong>Multi-Year</strong> tab')}
     ${step(2,'#a78bfa','The table shows: Year / Rooms / Occ% / Laundry (Actual + Budget) / Operating / Printing / Total / CPOR')}
-    ${step(3,'#a78bfa','Select a year using the year dropdown → click <strong style="color:#ff6b6b">🖨 Budget PDF</strong> for the formal annual budget document')}
+    ${step(3,'#a78bfa','Select a year using the year dropdown → click <strong style="color:#ff6b6b">\uD83D\uDDA8 Budget PDF</strong> for the formal annual budget document')}
     ${step(4,'#a78bfa','The Budget PDF is specifically designed for Finance submission — it has KPI summary, price increases, monthly breakdown, and year vs prior year')}
-    ${step(5,'#a78bfa','Click <strong style="color:#a3e635">📊 Budget Excel</strong> for an Excel/CSV version')}
+    ${step(5,'#a78bfa','Click <strong style="color:#a3e635">\uD83D\uDCCA Budget Excel</strong> for an Excel/CSV version')}
     ${tip('Use the Budget PDF in your August Finance meeting when you present next year\'s proposed budget.')}
   `)}
 
-  ${card('📄','Budget Report','Full P&L — all 12 months side by side','#a78bfa',`
+  ${card('\uD83D\uDCC4','Budget Report','Full P&L — all 12 months side by side','#a78bfa',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       The Budget Report is a detailed Finance-format table showing all 12 months as columns,
       with actual vs budget vs prior year for every expense line.
@@ -8450,11 +8388,11 @@ function buildGuideTab(){
     ${step(2,'#a78bfa','Select the year using the year buttons')}
     ${step(3,'#a78bfa','Each expense line shows 3 rows: <strong style="color:#00d4b8">Actual</strong>, <strong style="color:#ffb347">Budget</strong>, <strong>Variance</strong>')}
     ${step(4,'#a78bfa','Teal numbers = under budget (good). Red numbers = over budget.')}
-    ${step(5,'#a78bfa','Click <strong>📄 Print PDF</strong> for A3 landscape Finance format')}
-    ${step(6,'#a78bfa','Click <strong>📊 Export Excel</strong> for spreadsheet')}
+    ${step(5,'#a78bfa','Click <strong>\uD83D\uDCC4 Print PDF</strong> for A3 landscape Finance format')}
+    ${step(6,'#a78bfa','Click <strong>\uD83D\uDCCA Export Excel</strong> for spreadsheet')}
   `)}
 
-  ${card('📈','Trends & Efficiency','How CPOR and KG are moving over the years','#38bdf8',`
+  ${card('\uD83D\uDCC8','Trends & Efficiency','How CPOR and KG are moving over the years','#38bdf8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Trends shows you the multi-year story — whether costs are going up, down, or staying stable.
       Use this when Finance asks why CPOR is rising.
@@ -8466,17 +8404,17 @@ function buildGuideTab(){
     ${step('→','#38bdf8','Full Trend Summary Table with every metric for every year')}
   `)}
 
-  ${card('🧠','Smart Insights','The system spots problems and opportunities for you','#f5c542',`
+  ${card('\uD83E\uDDE0','Smart Insights','The system spots problems and opportunities for you','#f5c542',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Smart Insights analyses your data and surfaces the things that need your attention — automatically.
       Open it after entering any month's actuals.
     </p>
-    ${step('→','#f5c542','<strong>🚨 Alerts</strong> — over budget warning, missing data, budget season reminder (auto-triggered in August)')}
-    ${step('→','#f5c542','<strong>🔮 Full-Year Forecast</strong> — projects where each expense line will end the year if current pace continues')}
-    ${step('→','#f5c542','<strong>📋 Budget Season Assistant</strong> — recommends next year budget amounts per line based on your current CPOR')}
-    ${step('→','#f5c542','<strong>🏨 Occupancy Analysis</strong> — which months have high cost but low occupancy (biggest inefficiency)')}
-    ${step('→','#f5c542','<strong>📈 Price Increase Impact</strong> — how much QAR your supplier increases are adding to the budget')}
-    ${step('→','#f5c542','<strong>📝 Missing Data</strong> — which past months still have no actuals entered, with one-click link to go fix them')}
+    ${step('→','#f5c542','<strong>\uD83D\uDEA8 Alerts</strong> — over budget warning, missing data, budget season reminder (auto-triggered in August)')}
+    ${step('→','#f5c542','<strong>\uD83D\uDD2E Full-Year Forecast</strong> — projects where each expense line will end the year if current pace continues')}
+    ${step('→','#f5c542','<strong>\uD83D\uDCCB Budget Season Assistant</strong> — recommends next year budget amounts per line based on your current CPOR')}
+    ${step('→','#f5c542','<strong>\uD83C\uDFE8 Occupancy Analysis</strong> — which months have high cost but low occupancy (biggest inefficiency)')}
+    ${step('→','#f5c542','<strong>\uD83D\uDCC8 Price Increase Impact</strong> — how much QAR your supplier increases are adding to the budget')}
+    ${step('→','#f5c542','<strong>\uD83D\uDCDD Missing Data</strong> — which past months still have no actuals entered, with one-click link to go fix them')}
     ${tip('Select the year from the dropdown at the top right. Click ↺ Refresh after entering new data.')}
   `)}
 
@@ -8505,12 +8443,12 @@ function buildGuideTab(){
       font-size:13px;font-weight:700;color:#e2e8f0">Which PDF should I print?</div>
     <div style="padding:0">
       ${[
-        ['Finance asks for this month\'s actual vs budget','Budget Report → select current year → 📄 Print PDF','#a78bfa'],
-        ['Monthly Finance meeting presentation','⚡ Pulse tab → 🖨 Print PDF Report → full colored report','#00d4b8'],
-        ['Annual budget submission (August)','Multi-Year → select next year → 🖨 Budget PDF','#a78bfa'],
-        ['GM asks how we are doing','Dashboard → 🖨 Print Dashboard','#ff6b6b'],
-        ['Finance wants revenue breakdown','Revenue tab → Revenue P&L → 🖨 Print PDF','#38bdf8'],
-        ['Need Excel for Finance spreadsheet','Budget Report → 📊 Export Excel','#a3e635'],
+        ['Finance asks for this month\'s actual vs budget','Budget Report → select current year → \uD83D\uDCC4 Print PDF','#a78bfa'],
+        ['Monthly Finance meeting presentation','⚡ Pulse tab → \uD83D\uDDA8 Print PDF Report → full colored report','#00d4b8'],
+        ['Annual budget submission (August)','Multi-Year → select next year → \uD83D\uDDA8 Budget PDF','#a78bfa'],
+        ['GM asks how we are doing','Dashboard → \uD83D\uDDA8 Print Dashboard','#ff6b6b'],
+        ['Finance wants revenue breakdown','Revenue tab → Revenue P&L → \uD83D\uDDA8 Print PDF','#38bdf8'],
+        ['Need Excel for Finance spreadsheet','Budget Report → \uD83D\uDCCA Export Excel','#a3e635'],
       ].map(([situation,action,col],i)=>`
         <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
           padding:12px 20px;border-bottom:1px solid #1e2d45;background:${i%2?'rgba(255,255,255,.01)':'transparent'}">
@@ -8523,23 +8461,23 @@ function buildGuideTab(){
   <!-- ════ PART 10: DATA SAFETY ════ -->
   ${section('Part 10 — Keeping your data safe','How saving works and what to do if something goes wrong')}
 
-  ${card('💾','How saving works','You should never lose data','#a3e635',`
+  ${card('\uD83D\uDCBE','How saving works','You should never lose data','#a3e635',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       The system saves automatically every time you change something. You do not need to click save after
       every field. But there are two layers of saving — understanding them helps if something ever goes wrong.
     </p>
     ${step('→','#a3e635','<strong>Firebase (cloud)</strong> — the main storage. Every change saves to Firebase within a second. This is the real source of truth. Data is safe even if you close the browser, turn off the computer, or switch devices.')}
     ${step('→','#a3e635','<strong>localStorage (offline backup)</strong> — a copy saved in your browser. Used if Firebase is temporarily unavailable. Gets updated whenever Firebase saves.')}
-    ${step('→','#a3e635','<strong>🔥 LIVE indicator</strong> in the header — green means connected to Firebase. Orange flame means saving. ⚡ OFFLINE means only using local cache.')}
-    ${step('→','#a3e635','<strong>💾 Save Now button</strong> at the bottom of every page — click this if you want to force an immediate save to both Firebase and local.')}
+    ${step('→','#a3e635','<strong>\uD83D\uDD25 LIVE indicator</strong> in the header — green means connected to Firebase. Orange flame means saving. ⚡ OFFLINE means only using local cache.')}
+    ${step('→','#a3e635','<strong>\uD83D\uDCBE Save Now button</strong> at the bottom of every page — click this if you want to force an immediate save to both Firebase and local.')}
     ${tip('Even if the page shows ⚡ OFFLINE, your data is still saved locally and will sync to Firebase the next time you have connection.')}
   `)}
 
-  ${card('🗄','Backup & Restore tab','Export your data and restore it if needed','#a3e635',`
+  ${card('\uD83D\uDDC4','Backup & Restore tab','Export your data and restore it if needed','#a3e635',`
     ${step(1,'#a3e635','Click the <strong>Backup</strong> tab (in the SYSTEM group)')}
-    ${step(2,'#a3e635','Click <strong>💾 Export Full Backup (.json)</strong> — downloads a file with all your data to your computer')}
+    ${step(2,'#a3e635','Click <strong>\uD83D\uDCBE Export Full Backup (.json)</strong> — downloads a file with all your data to your computer')}
     ${step(3,'#a3e635','Store this file somewhere safe (email it to yourself, save in Google Drive)')}
-    ${step(4,'#a3e635','To restore: click <strong>📂 Restore from Backup</strong> → select the .json file → all data comes back')}
+    ${step(4,'#a3e635','To restore: click <strong>\uD83D\uDCC2 Restore from Backup</strong> → select the .json file → all data comes back')}
     ${step(5,'#a3e635','To update the app with a new version: upload the new HTML to GitHub Pages — your Firebase data is completely separate and is never affected by app updates')}
     ${warn('Always export a backup before restoring. Restoring overwrites everything in Firebase with the backup file.')}
   `)}
@@ -8550,7 +8488,7 @@ function buildGuideTab(){
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
     ${[
       ['I logged in and some data is missing — what happened?',
-        'The Firebase connection may not have loaded in time. Look at the top header — does it say 🔥 LIVE or ⚡ OFFLINE? If OFFLINE, click Backup tab → Sync Now. If it still does not load, try signing out and back in.'],
+        'The Firebase connection may not have loaded in time. Look at the top header — does it say \uD83D\uDD25 LIVE or ⚡ OFFLINE? If OFFLINE, click Backup tab → Sync Now. If it still does not load, try signing out and back in.'],
       ['The budget shows 0 for a month even though I entered rooms — why?',
         'The budget auto-calculates from CPOR × rooms. If CPOR is 0, the budget will be 0. Go to Settings & Base Data and check that the 2024 actual expenses and rooms sold are entered correctly. Once entered, all budgets recalculate automatically.'],
       ['I entered a number but the field shows blank — why?',
@@ -8568,7 +8506,7 @@ function buildGuideTab(){
       ['Can I use this on my phone or tablet?',
         'Yes — the system is designed to work in any modern browser including mobile. Quick Entry is especially useful on mobile as it fits in one window. The tab bar scrolls horizontally on smaller screens.'],
       ['I need to send the monthly report by email — how?',
-        'Print the Performance Pulse PDF (⚡ Pulse → 🖨 Print PDF Report) or the Budget Report PDF, then attach to email. Alternatively export the Excel version from Budget Report tab for Finance to work with in a spreadsheet.'],
+        'Print the Performance Pulse PDF (⚡ Pulse → \uD83D\uDDA8 Print PDF Report) or the Budget Report PDF, then attach to email. Alternatively export the Excel version from Budget Report tab for Finance to work with in a spreadsheet.'],
     ].map(([q,a])=>`
       <div style="background:#1a2236;border:1px solid #253550;border-radius:10px;overflow:hidden">
         <div style="padding:12px 18px;background:#1e2d45;font-size:12px;font-weight:700;color:#e2e8f0;
@@ -8632,7 +8570,7 @@ function buildBackupTab(){
         <div>
           <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
             color:${isLive?'#00d4b8':'#ff6b6b'}">
-            ${isLive?'🔥 Firebase Connected — Data is syncing to cloud':'⚡ Firebase Offline — Saving to local cache only'}
+            ${isLive?'\uD83D\uDD25 Firebase Connected — Data is syncing to cloud':'⚡ Firebase Offline — Saving to local cache only'}
           </div>
           <div style="font-size:10px;color:#64748b;margin-top:2px">
             ${isLive?'Project: rs-budgetpro · Singapore (asia-southeast1) · Last sync: '+lastSync:'Data is safe locally but not backed up to cloud until reconnected'}
@@ -8654,7 +8592,7 @@ function buildBackupTab(){
       <div style="background:linear-gradient(135deg,rgba(0,212,184,.08),rgba(0,212,184,.04));
         padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,212,184,.15);
-          border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:16px">📊</div>
+          border:1px solid rgba(0,212,184,.3);display:flex;align-items:center;justify-content:center;font-size:16px">\uD83D\uDCCA</div>
         <div>
           <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#00d4b8">Current Data Summary</div>
           <div style="font-size:10px;color:#64748b;margin-top:1px">What's stored in your system right now</div>
@@ -8679,7 +8617,7 @@ function buildBackupTab(){
             </div>`).join('')}
         </div>
         <div style="background:#0f1a2e;border-radius:8px;padding:10px 14px;font-size:11px;color:#64748b;line-height:1.5">
-          💡 <strong style="color:#94a3b8">Storage:</strong> Data is saved in two places —
+          \uD83D\uDCA1 <strong style="color:#94a3b8">Storage:</strong> Data is saved in two places —
           <span style="color:#a78bfa">Browser local storage</span> (instant, on this device) and
           <span style="color:#00d4b8">Firebase cloud</span> (syncs when online, accessible from any device).
           Both update every time you click Save.
@@ -8712,7 +8650,7 @@ function buildBackupTab(){
               border-radius:8px;color:#38bdf8;padding:12px;font-family:'Syne',sans-serif;font-size:13px;
               font-weight:700;cursor:pointer;transition:all .2s;width:100%;text-align:left;display:flex;align-items:center;gap:10px"
               onmouseover="this.style.background='rgba(56,189,248,.2)'" onmouseout="this.style.background='rgba(56,189,248,.12)'">
-              <span style="font-size:18px">💾</span>
+              <span style="font-size:18px">\uD83D\uDCBE</span>
               <div>
                 <div>Export Full Backup (.json)</div>
                 <div style="font-size:10px;font-weight:400;color:#64748b;margin-top:1px">Complete data · Recommended</div>
@@ -8722,7 +8660,7 @@ function buildBackupTab(){
               border-radius:8px;color:#a3e635;padding:12px;font-family:'Syne',sans-serif;font-size:13px;
               font-weight:700;cursor:pointer;transition:all .2s;width:100%;text-align:left;display:flex;align-items:center;gap:10px"
               onmouseover="this.style.background='rgba(163,230,53,.2)'" onmouseout="this.style.background='rgba(163,230,53,.1)'">
-              <span style="font-size:18px">📊</span>
+              <span style="font-size:18px">\uD83D\uDCCA</span>
               <div>
                 <div>Export CSV (Excel)</div>
                 <div style="font-size:10px;font-weight:400;color:#64748b;margin-top:1px">Spreadsheet format · For Finance</div>
@@ -8754,7 +8692,7 @@ function buildBackupTab(){
             font-weight:700;cursor:pointer;transition:all .2s;width:100%;display:flex;align-items:center;gap:10px;
             box-sizing:border-box;margin-bottom:8px"
             onmouseover="this.style.background='rgba(255,179,71,.22)'" onmouseout="this.style.background='rgba(255,179,71,.12)'">
-            <span style="font-size:18px">📂</span>
+            <span style="font-size:18px">\uD83D\uDCC2</span>
             <div>
               <div>Choose Backup File (.json)</div>
               <div style="font-size:10px;font-weight:400;color:#64748b;margin-top:1px">Click to browse for your backup</div>
@@ -8775,7 +8713,7 @@ function buildBackupTab(){
       <div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(167,139,250,.04));
         padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:8px;background:rgba(167,139,250,.15);
-          border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:16px">🌐</div>
+          border:1px solid rgba(167,139,250,.3);display:flex;align-items:center;justify-content:center;font-size:16px">\uD83C\uDF10</div>
         <div>
           <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#a78bfa">System Access — GitHub Pages</div>
           <div style="font-size:10px;color:#64748b;margin-top:1px">Open from any device, anywhere, no VS Code needed</div>
@@ -8794,7 +8732,7 @@ function buildBackupTab(){
               font-family:'Syne',sans-serif;border:1px solid rgba(167,139,250,.3);color:#a78bfa;
               background:rgba(167,139,250,.1);cursor:pointer;transition:all .2s"
               onmouseover="this.style.background='rgba(167,139,250,.2)'" onmouseout="this.style.background='rgba(167,139,250,.1)'">
-              🔗 Open Live URL
+              \uD83D\uDD17 Open Live URL
             </button>
           </div>
           <div>
@@ -8832,7 +8770,7 @@ function buildBackupTab(){
           border-radius:8px;color:#ff6b6b;padding:11px 20px;font-family:'Syne',sans-serif;font-size:13px;
           font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0"
           onmouseover="this.style.background='rgba(255,107,107,.18)'" onmouseout="this.style.background='rgba(255,107,107,.08)'">
-          🗑 Clear All Data
+          \uD83D\uDDD1 Clear All Data
         </button>
       </div>
     </div>
@@ -8945,7 +8883,7 @@ function toggleArabic(){
   _isArabic=!_isArabic;
   const btn=document.getElementById('ar-btn');
   document.body.classList.toggle('ar-mode',_isArabic);
-  btn.textContent=_isArabic?'🌐 English':'🌐 عربي';
+  btn.textContent=_isArabic?'\uD83C\uDF10 English':'\uD83C\uDF10 عربي';
   btn.style.color=_isArabic?'var(--teal)':'var(--violet)';
   btn.style.borderColor=_isArabic?'rgba(0,212,184,.4)':'rgba(167,139,250,.4)';
 
@@ -8968,18 +8906,18 @@ function toggleArabic(){
 function buildNavTabs(){
   // Rebuild nav tabs with correct current English names
   const tabs=[
-    ['entry','📋 Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px">ACT</span>'],
-    ['project','🔮 Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:6px;padding:1px 5px;margin-left:3px">FCST</span>'],
-    ['overview','📊 Multi-Year Overview'],
+    ['entry','\uD83D\uDCCB Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:6px;padding:1px 5px;margin-left:3px">ACT</span>'],
+    ['project','\uD83D\uDD2E Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:6px;padding:1px 5px;margin-left:3px">FCST</span>'],
+    ['overview','\uD83D\uDCCA Multi-Year Overview'],
     ['increases','⚙ Budget Adjustments'],
     ['settings','⚙️ Settings & Base Data'],
-    ['revenue','💰 Revenue'],
-    ['dashboard','🎯 Dashboard'],
-    ['report','📄 Budget Report'],
-    ['trends','📈 Trends & Efficiency'],
-    ['smart','🧠 Smart Insights'],
-    ['backup','🗄 Backup & Restore'],
-    ['guide','📖 User Guide']
+    ['revenue','\uD83D\uDCB0 Revenue'],
+    ['dashboard','\uD83C\uDFAF Dashboard'],
+    ['report','\uD83D\uDCC4 Budget Report'],
+    ['trends','\uD83D\uDCC8 Trends & Efficiency'],
+    ['smart','\uD83E\uDDE0 Smart Insights'],
+    ['backup','\uD83D\uDDC4 Backup & Restore'],
+    ['guide','\uD83D\uDCD6 User Guide']
   ];
   const nav=document.querySelector('.nav');
   if(!nav)return;
@@ -9064,7 +9002,7 @@ function fbSetConn(ok){
     badge.style.background='rgba(0,212,184,.06)';
     if(dot){dot.style.background='var(--teal)';dot.style.boxShadow='0 0 6px var(--teal)';dot.style.animation='fbPulse 2s ease-in-out infinite';}
     if(txt){txt.textContent='LIVE';txt.style.color='var(--teal)';}
-    if(icon) icon.textContent='🔥';
+    if(icon) icon.textContent='\uD83D\uDD25';
   } else {
     badge.style.borderColor='rgba(255,107,107,.3)';
     badge.style.background='rgba(255,107,107,.06)';
@@ -9103,7 +9041,7 @@ function renderFbPopup(){
   document.getElementById('fb-popup-content').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text)">
-        ${isLive?'🔥':'⚡'} Firebase Status
+        ${isLive?'\uD83D\uDD25':'⚡'} Firebase Status
       </div>
       <button onclick="toggleFbPopup()" style="background:none;border:none;color:var(--text3);
         cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>
@@ -9132,17 +9070,17 @@ function renderFbPopup(){
     <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;
         padding:5px 0;border-bottom:1px solid rgba(42,53,80,.4)">
-        <span style="font-size:11px;color:var(--text3)">👤 User</span>
+        <span style="font-size:11px;color:var(--text3)">\uD83D\uDC64 User</span>
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">Reda Salah</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;
         padding:5px 0;border-bottom:1px solid rgba(42,53,80,.4)">
-        <span style="font-size:11px;color:var(--text3)">🕐 Session started</span>
+        <span style="font-size:11px;color:var(--text3)">\uD83D\uDD50 Session started</span>
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${loginTime}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;
         padding:5px 0;border-bottom:1px solid rgba(42,53,80,.4)">
-        <span style="font-size:11px;color:var(--text3)">💾 Last saved</span>
+        <span style="font-size:11px;color:var(--text3)">\uD83D\uDCBE Last saved</span>
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${lastSaved}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;
@@ -9152,7 +9090,7 @@ function renderFbPopup(){
           color:${isLive?'var(--teal)':'var(--coral)'}">${syncTime}</span>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0">
-        <span style="font-size:11px;color:var(--text3)">📊 Monthly records</span>
+        <span style="font-size:11px;color:var(--text3)">\uD83D\uDCCA Monthly records</span>
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--violet)">${months}</span>
       </div>
     </div>
@@ -10250,9 +10188,9 @@ function exportRevPDF(){
       <tr>
         <th class="left" rowspan="2">Month</th>
         <th rowspan="2">Rooms</th>
-        <th colspan="6" style="background:#1e40af;border-bottom:1px solid #3b82f6">🏨 LAUNDRY REVENUE — Four Seasons Doha</th>
-        <th colspan="6" style="background:#5b21b6;border-bottom:1px solid #8b5cf6">💎 PEARL VALET REVENUE — FS The Pearl</th>
-        <th colspan="3" style="background:#166534;border-bottom:1px solid #22c55e">📊 COMBINED TOTAL</th>
+        <th colspan="6" style="background:#1e40af;border-bottom:1px solid #3b82f6">\uD83C\uDFE8 LAUNDRY REVENUE — Four Seasons Doha</th>
+        <th colspan="6" style="background:#5b21b6;border-bottom:1px solid #8b5cf6">\uD83D\uDC8E PEARL VALET REVENUE — FS The Pearl</th>
+        <th colspan="3" style="background:#166534;border-bottom:1px solid #22c55e">\uD83D\uDCCA COMBINED TOTAL</th>
       </tr>
       <tr>
         <th style="background:#1e40af">Actual</th><th style="background:#1e40af">Budget</th>
@@ -10591,10 +10529,10 @@ function buildSmartTab(){
         </select>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        ${kpiCard('📋','Months Entered',monthsWithData+' / 12','out of 12 months','#a78bfa','167,139,250')}
-        ${kpiCard('📅','Last Entry',lastM>=0?MF[lastM]:'None','most recent actual','#00d4b8','0,212,184')}
-        ${kpiCard('💰','YTD Actual','QAR '+q2(grandA),monthsWithData+' months','#00d4b8','0,212,184')}
-        ${kpiCard('📊','YTD CPOR',ytdCporA?ytdCporA.toFixed(4):'—','vs budget '+ytdCporB.toFixed(4),
+        ${kpiCard('\uD83D\uDCCB','Months Entered',monthsWithData+' / 12','out of 12 months','#a78bfa','167,139,250')}
+        ${kpiCard('\uD83D\uDCC5','Last Entry',lastM>=0?MF[lastM]:'None','most recent actual','#00d4b8','0,212,184')}
+        ${kpiCard('\uD83D\uDCB0','YTD Actual','QAR '+q2(grandA),monthsWithData+' months','#00d4b8','0,212,184')}
+        ${kpiCard('\uD83D\uDCCA','YTD CPOR',ytdCporA?ytdCporA.toFixed(4):'—','vs budget '+ytdCporB.toFixed(4),
           ytdCporA>ytdCporB?'#ff6b6b':'#00d4b8',ytdCporA>ytdCporB?'255,107,107':'0,212,184')}
         ${kpiCard('⚖️','Budget Status',overBudget?'OVER':'ON TRACK',
           (vrAmt>0?'+':'')+q2(vrAmt)+' ('+vrPct.toFixed(1)+'%)',
@@ -10608,12 +10546,12 @@ function buildSmartTab(){
 
   <!-- ══ SECTION 1: PERFORMANCE ALERTS ══ -->
   <div style="background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
-    ${secHdr('🚨','Performance Alerts','#ff6b6b','255,107,107','Critical items requiring immediate attention')}
-    ${overBudget?alertRow('🔴','#ff6b6b','255,107,107',
+    ${secHdr('\uD83D\uDEA8','Performance Alerts','#ff6b6b','255,107,107','Critical items requiring immediate attention')}
+    ${overBudget?alertRow('\uD83D\uDD34','#ff6b6b','255,107,107',
       `Over Budget — QAR ${q2(Math.abs(vrAmt))} (${Math.abs(vrPct).toFixed(1)}%)`,
       `YTD actual QAR ${q2(grandA)} vs budget QAR ${q2(grandB)}. Review Laundry Supplies — highest contributor to overrun.`,
       jumpBtn('Monthly Entry','entry')):''}
-    ${ytdCporA>ytdCporB*1.1?alertRow('📈','#ff6b6b','255,107,107',
+    ${ytdCporA>ytdCporB*1.1?alertRow('\uD83D\uDCC8','#ff6b6b','255,107,107',
       `CPOR Trending High — ${ytdCporA.toFixed(4)} vs budget ${ytdCporB.toFixed(4)}`,
       `Cost per occupied room is ${((ytdCporA-ytdCporB)/ytdCporB*100).toFixed(1)}% above budget. Check Laundry Supplies spend — it is the main driver.`,
       jumpBtn('Trends & Efficiency','trends')):''}
@@ -10621,7 +10559,7 @@ function buildSmartTab(){
       `Missing Data — ${missingMonths.length} month${missingMonths.length>1?'s':''} not entered`,
       `${missingMonths.map(m=>MF[m]).join(', ')} ${missingMonths.length>1?'have':'has'} no actuals entered. Use the <strong style="color:#f5c542">Data Entry Reminders</strong> section below to jump directly.`,
       ''):''}
-    ${isBudgetSeason?alertRow('📅','#a78bfa','167,139,250',
+    ${isBudgetSeason?alertRow('\uD83D\uDCC5','#a78bfa','167,139,250',
       `Budget Season — Time to Plan ${nextY}`,
       `It is ${MF[curM]}. Standard budget planning starts now. Enter projected rooms for remaining ${smartY} months in Projection Planner, then export ${nextY} Budget PDF from Multi-Year Overview.`,
       jumpBtn('Projection Planner','project')):''}
@@ -10639,22 +10577,22 @@ function buildSmartTab(){
   <!-- ══ SECTION 2: FULL-YEAR FORECAST ══ -->
   ${monthsWithData>0?`
   <div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
-    ${secHdr('🔮','Full-Year Forecast','#00d4b8','0,212,184',`Where will ${smartY} end up at current pace?`)}
+    ${secHdr('\uD83D\uDD2E','Full-Year Forecast','#00d4b8','0,212,184',`Where will ${smartY} end up at current pace?`)}
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px">
-      ${kpiCard('🏠','Projected Rooms',q0(fcastRs),'full year estimate','#a78bfa','167,139,250')}
-      ${kpiCard('💰','Projected Total Expenses','QAR '+q2(fcastA),'actuals + forecast','#00d4b8','0,212,184')}
-      ${kpiCard('📊','Projected CPOR',fcastCpor?fcastCpor.toFixed(4):'—','full year estimate',
+      ${kpiCard('\uD83C\uDFE0','Projected Rooms',q0(fcastRs),'full year estimate','#a78bfa','167,139,250')}
+      ${kpiCard('\uD83D\uDCB0','Projected Total Expenses','QAR '+q2(fcastA),'actuals + forecast','#00d4b8','0,212,184')}
+      ${kpiCard('\uD83D\uDCCA','Projected CPOR',fcastCpor?fcastCpor.toFixed(4):'—','full year estimate',
         fcastCpor>ytdCporB?'#ff6b6b':'#00d4b4',fcastCpor>ytdCporB?'255,107,107':'0,212,184')}
-      ${kpiCard('📅','Months Remaining',12-monthsWithData+' months','to end of year','#f5c542','245,197,66')}
+      ${kpiCard('\uD83D\uDCC5','Months Remaining',12-monthsWithData+' months','to end of year','#f5c542','245,197,66')}
     </div>
 
     <!-- Line breakdown progress -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
       ${[
-        ['🟡 Laundry Supplies',totLaA,totLaB,'255,179,71','#ffb347'],
-        ['🟢 Operating Supplies',totOpA,totOpB,'163,230,53','#a3e635'],
-        ['🔴 Printing & Stationery',totPrA,totPrB,'255,107,107','#ff6b6b'],
+        ['\uD83D\uDFE1 Laundry Supplies',totLaA,totLaB,'255,179,71','#ffb347'],
+        ['\uD83D\uDFE2 Operating Supplies',totOpA,totOpB,'163,230,53','#a3e635'],
+        ['\uD83D\uDD34 Printing & Stationery',totPrA,totPrB,'255,107,107','#ff6b6b'],
       ].map(([lbl,act,bud,rgb,col])=>{
         const p=bud?Math.min(act/bud*100,120):0;
         const over=act>bud;
@@ -10680,7 +10618,7 @@ function buildSmartTab(){
   <!-- ══ SECTION 3: MONTHLY DETAIL TABLE ══ -->
   ${monthsWithData>0?`
   <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px;overflow:hidden">
-    ${secHdr('📋','Monthly Breakdown','#a78bfa','167,139,250',`All entered months for ${smartY} — actuals vs budget`)}
+    ${secHdr('\uD83D\uDCCB','Monthly Breakdown','#a78bfa','167,139,250',`All entered months for ${smartY} — actuals vs budget`)}
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;min-width:800px">
         <thead>
@@ -10721,7 +10659,7 @@ function buildSmartTab(){
   <!-- ══ SECTION 4: OCCUPANCY ANALYSIS ══ -->
   ${monthsWithData>0?`
   <div style="background:#1a2236;border:1px solid rgba(56,189,248,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
-    ${secHdr('🏨','Occupancy vs CPOR Analysis','#38bdf8','56,189,248','Months where cost per room is high relative to occupancy')}
+    ${secHdr('\uD83C\uDFE8','Occupancy vs CPOR Analysis','#38bdf8','56,189,248','Months where cost per room is high relative to occupancy')}
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;min-width:600px">
         <thead><tr style="background:#0f1a2e">
@@ -10755,7 +10693,7 @@ function buildSmartTab(){
 
   <!-- ══ SECTION 5: BUDGET SEASON ASSISTANT ══ -->
   <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
-    ${secHdr('📋','Budget Season Assistant','#a78bfa','167,139,250',`Prepare ${nextY} budget — step by step`)}
+    ${secHdr('\uD83D\uDCCB','Budget Season Assistant','#a78bfa','167,139,250',`Prepare ${nextY} budget — step by step`)}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
       <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px">Current ${smartY} Base</div>
@@ -10791,8 +10729,8 @@ function buildSmartTab(){
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${[
-        ['🔮 Projection Planner','project','a78bfa','167,139,250'],
-        ['📊 Multi-Year Overview','overview','00d4b8','0,212,184'],
+        ['\uD83D\uDD2E Projection Planner','project','a78bfa','167,139,250'],
+        ['\uD83D\uDCCA Multi-Year Overview','overview','00d4b8','0,212,184'],
         ['⚙ Budget Adjustments','increases','ffb347','255,179,71'],
       ].map(([lbl,tab,col,rgb])=>`<button onclick="navToTab('${tab}')""
         style="padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;
@@ -12395,7 +12333,7 @@ function rsModalClose(result){
 // Preset modals
 function modalSignOut(){
   return rsModal({
-    icon:'🚪', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    icon:'\uD83D\uDEAA', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
     title:'Sign Out', sub:'RS BudgetPro · Four Seasons Hotel Doha',
     body:`<div style="background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.15);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:#00d4b8">
       ✓ All changes are saved to Firebase cloud automatically.
@@ -12408,7 +12346,7 @@ function modalSignOut(){
 
 function modalClearYear(y){
   return rsModal({
-    icon:'🗑', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    icon:'\uD83D\uDDD1', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
     title:`Clear ${y} Projections`,
     sub:'This cannot be undone',
     body:`<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#ff6b6b">
@@ -12423,7 +12361,7 @@ function modalClearYear(y){
 function modalClearMonth(y, m){
   const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
   return rsModal({
-    icon:'🗑', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
+    icon:'\uD83D\uDDD1', iconBg:'rgba(255,107,107,.1)', iconBorder:'rgba(255,107,107,.3)',
     title:`Clear ${MF[m]} ${y}`,
     sub:'Remove projection for this month only',
     body:`<div style="font-size:12px;color:#94a3b8">The projected rooms for <strong style="color:#f5c542">${MF[m]} ${y}</strong> will be removed. Actual data in Monthly Entry is not affected.</div>`,
@@ -12435,13 +12373,13 @@ function modalClearMonth(y, m){
 function modalLockMonth(y, m){
   const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
   return rsModal({
-    icon:'🔒', iconBg:'rgba(245,197,66,.1)', iconBorder:'rgba(245,197,66,.3)',
+    icon:'\uD83D\uDD12', iconBg:'rgba(245,197,66,.1)', iconBorder:'rgba(245,197,66,.3)',
     title:`Lock ${MF[m]} ${y}`,
     sub:'Submit to Finance',
     body:`<div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#f5c542">
       Locked months cannot be edited until unlocked. Data still shows in all reports.
     </div>`,
-    confirmText:'🔒 Lock Month', cancelText:'Cancel',
+    confirmText:'\uD83D\uDD12 Lock Month', cancelText:'Cancel',
     confirmCol:'#f5c542', confirmRgb:'245,197,66'
   });
 }
@@ -12449,22 +12387,22 @@ function modalLockMonth(y, m){
 function modalUnlockMonth(y, m){
   const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
   return rsModal({
-    icon:'🔓', iconBg:'rgba(100,116,139,.1)', iconBorder:'rgba(100,116,139,.3)',
+    icon:'\uD83D\uDD13', iconBg:'rgba(100,116,139,.1)', iconBorder:'rgba(100,116,139,.3)',
     title:`Unlock ${MF[m]} ${y}`,
     sub:'Allow editing again',
     body:`<div style="font-size:12px;color:#94a3b8"><strong style="color:#e2e8f0">${MF[m]} ${y}</strong> will be unlocked. You can edit actuals again.</div>`,
-    confirmText:'🔓 Unlock', cancelText:'Cancel',
+    confirmText:'\uD83D\uDD13 Unlock', cancelText:'Cancel',
     confirmCol:'#64748b', confirmRgb:'100,116,139'
   });
 }
 
 function modalUnlockYear(y){
   return rsModal({
-    icon:'🔓', iconBg:'rgba(100,116,139,.1)', iconBorder:'rgba(100,116,139,.3)',
+    icon:'\uD83D\uDD13', iconBg:'rgba(100,116,139,.1)', iconBorder:'rgba(100,116,139,.3)',
     title:`Unlock All ${y}`,
     sub:'Remove all locks for this year',
     body:`<div style="font-size:12px;color:#94a3b8">All locked months in <strong style="color:#e2e8f0">${y}</strong> will be unlocked for editing.</div>`,
-    confirmText:'🔓 Unlock Year', cancelText:'Cancel',
+    confirmText:'\uD83D\uDD13 Unlock Year', cancelText:'Cancel',
     confirmCol:'#64748b', confirmRgb:'100,116,139'
   });
 }
@@ -12518,7 +12456,7 @@ function modalConfirmActual(y, m, actual, forecast){
 
 function modalRestoreBackup(date){
   return rsModal({
-    icon:'📂', iconBg:'rgba(255,179,71,.1)', iconBorder:'rgba(255,179,71,.3)',
+    icon:'\uD83D\uDCC2', iconBg:'rgba(255,179,71,.1)', iconBorder:'rgba(255,179,71,.3)',
     title:'Restore Backup',
     sub:`From ${date}`,
     body:`<div style="background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:#ff6b6b;margin-bottom:10px">
@@ -12532,7 +12470,7 @@ function modalRestoreBackup(date){
 
 function modalDeleteAll(){
   return rsModal({
-    icon:'💥', iconBg:'rgba(255,107,107,.15)', iconBorder:'rgba(255,107,107,.4)',
+    icon:'\uD83D\uDCA5', iconBg:'rgba(255,107,107,.15)', iconBorder:'rgba(255,107,107,.4)',
     title:'Delete ALL Data',
     sub:'This is permanent and cannot be undone',
     body:`<div style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.3);border-radius:8px;padding:12px;font-size:12px;color:#ff6b6b;margin-bottom:10px">
