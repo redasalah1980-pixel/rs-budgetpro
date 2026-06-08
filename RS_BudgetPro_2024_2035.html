@@ -5246,131 +5246,215 @@ function buildReport(){
 }
 
 function printReport(){
-  // Get the rendered report HTML
-  const doc = document.getElementById('rpt-doc');
-  if(!doc || !doc.innerHTML.trim()){
-    toast('Generate the report first'); return;
-  }
-  // Collect all styles from the page
-  const styles = Array.from(document.querySelectorAll('style,link[rel="stylesheet"]'))
-    .map(s => s.outerHTML).join('\n');
+  const y = rptYear, py = y-1;
+  const yd = getYearData(y);
+  const pyd = py>=2024 ? getYearData(py) : null;
+  const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const MS3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const LOGO = document.querySelector('[alt="RS Logo"]')?.src || '';
 
-  const printWin = window.open('','_blank','width=1400,height=900');
-  printWin.document.write(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>RS BudgetPro — Budget Report ${rptYear}</title>
-${styles}
-<style>
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  @page{size:A3 landscape;margin:8mm}
-  body{background:#fff!important;margin:0;padding:0;font-family:'Outfit',sans-serif}
-  .rpt-doc{box-shadow:none!important;border-radius:0!important;margin:0!important}
-  .rpt-header{background:linear-gradient(135deg,#0b3d2e,#1a5c42)!important}
-  .rpt-kpi-row{background:#f0fdf4!important}
-  .rv-sec-row td{background:#0f2d1e!important;color:#4ade80!important}
-  .rv-total-row td{background:#0f1e14!important}
-  .rv-metric-row td{background:#1a2235!important}
-  .rv-hdr-label{position:static!important;background:#1e293b!important;color:#e2e8f0!important}
-  .rv-mh{background:#1e293b!important;color:#94a3b8!important}
-  .rv-ytd-hdr{background:#0f3460!important;color:#38bdf8!important}
-  .rv-py-hdr{background:#2d1b69!important;color:#a78bfa!important}
-  .rv-sh{background:#263244!important}
-  .rv-label{position:static!important;background:#1a2235!important;white-space:normal!important}
-  .rv-line:hover td{background:unset!important}
-  .rv-table{font-size:7.5px!important;width:100%!important;min-width:unset!important}
-  .rv-hdr-label,.rv-label,.rv-met-lbl{min-width:unset!important;width:140px!important}
-  .rv-a,.rv-b,.rv-v,.rv-py,.rv-met{font-size:7.5px!important;padding:4px 3px!important}
-  .rv-mh,.rv-sh{font-size:6.5px!important;padding:5px 2px!important}
-  .rpt-kpi-cell .rk-v{font-size:12px!important}
-  .rpt-footer-left,.rpt-footer-right{font-size:10px!important}
-  .rv-ytd{border-left:2px solid rgba(56,189,248,.5)!important}
-
-.pill-lime{border-color:rgba(163,230,53,.4);color:var(--lime);background:var(--lime-bg)}
-.pill-lime:hover{background:rgba(163,230,53,.15)}
-/* Month selector chips */
-.month-chip{
-  padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;
-  font-family:var(--ff-d);border:2px solid var(--border2);
-  color:var(--text2);cursor:pointer;transition:all .2s;user-select:none;
-  background:var(--bg4);letter-spacing:.3px;
-  display:inline-flex;align-items:center;justify-content:center;
-  -webkit-appearance:none;appearance:none;outline:none;
-}
-.month-chip:hover{border-color:var(--lime);color:var(--lime);background:rgba(163,230,53,.06)}
-.month-chip.selected{
-  background:var(--lime-bg);border-color:var(--lime);color:var(--lime);
-  box-shadow:0 0 10px rgba(163,230,53,.2);
-}
-/* Special item card */
-.si-item{background:var(--bg4);border:1px solid rgba(163,230,53,.2);border-radius:var(--r);
-  padding:10px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.si-badge{background:var(--lime-bg);border:1px solid rgba(163,230,53,.4);color:var(--lime);
-  padding:2px 10px;border-radius:12px;font-family:var(--ff-m);font-size:12px;font-weight:500;flex-shrink:0}
-.si-months-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-.si-month-tag{background:rgba(163,230,53,.1);color:var(--lime);padding:1px 7px;
-  border-radius:8px;font-size:10px;font-weight:600;font-family:var(--ff-d)}
-
-
-/* ── REVENUE PROJECTION PANEL ── */
-.rev-proj-panel{background:var(--bg3);border:1px solid rgba(0,212,184,.2);
-  border-radius:var(--rl);margin-bottom:20px;overflow:hidden}
-.rev-proj-hdr{background:linear-gradient(135deg,rgba(0,212,184,.1),rgba(167,139,250,.06));
-  padding:14px 20px;border-bottom:1px solid rgba(0,212,184,.15);
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.rev-proj-hdr-title{font-family:var(--ff-d);font-size:14px;font-weight:700;color:var(--teal);
-  display:flex;align-items:center;gap:8px}
-.rev-proj-body{padding:18px 20px}
-.rev-proj-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px}
-.rev-proj-field{display:flex;flex-direction:column;gap:4px}
-.rev-proj-field label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3)}
-.rev-proj-field input,.rev-proj-field select{
-  background:var(--bg4);border:1px solid var(--border);border-radius:6px;
-  color:var(--text);font-family:var(--ff-m);font-size:13px;padding:8px 10px;
-  transition:border-color .2s;width:100%}
-.rev-proj-field input:focus,.rev-proj-field select:focus{outline:none;border-color:var(--teal)}
-.rev-proj-field input.c-teal{color:var(--teal)}
-.rev-proj-field input.c-violet{color:var(--violet)}
-.rev-proj-field input.c-amber{color:var(--amber)}
-
-/* RPOR derived display */
-.rev-proj-rpor{background:var(--bg4);border-radius:var(--r);padding:12px 16px;
-  margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.rpor-item .rpor-l{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
-.rpor-item .rpor-v{font-family:var(--ff-m);font-size:14px;font-weight:500}
-.rpor-item .rpor-s{font-size:10px;color:var(--text3);margin-top:1px}
-
-/* Projection result table */
-.rev-proj-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
-.rev-proj-table th{background:var(--bg4);padding:8px 12px;font-family:var(--ff-d);font-size:10px;
-  font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--text3);
-  border:1px solid var(--border);text-align:right;white-space:nowrap}
-.rev-proj-table th:first-child{text-align:left}
-.rev-proj-table td{padding:7px 12px;border:1px solid rgba(42,53,80,.5);text-align:right;
-  font-family:var(--ff-m);font-size:12px;vertical-align:middle}
-.rev-proj-table td:first-child{text-align:left;font-family:var(--ff-b);font-size:12px;
-  color:var(--text2);background:var(--bg3)}
-.rev-proj-table .proj-total-row td{background:var(--bg4)!important;font-weight:700;
-  border-top:2px solid var(--border2)!important}
-.rev-proj-table .proj-total-row td:first-child{color:var(--teal)!important}
-
-/* Growth badge */
-.growth-badge{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;
-  font-weight:700;font-family:var(--ff-m)}
-.growth-pos{background:var(--teal-bg);color:var(--teal);border:1px solid var(--teal-d)}
-.growth-neg{background:var(--coral-bg);color:var(--coral);border:1px solid var(--coral-d)}
-
-<\/style>
-<\/head>
-<body>
-<div class="rpt-doc">${doc.innerHTML}</div>
-<\/body>
-<\/html>`);
-  printWin.document.close();
-  printWin.onload = function(){
-    setTimeout(()=>{ printWin.print(); }, 600);
+  // ── helpers ──
+  const q  = n => (n!==undefined&&n!==null&&n!==0) ? n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  const qi = n => n ? n.toLocaleString('en-US') : '—';
+  const vr = (a,b,isExp) => {
+    // Finance standard: exp → B-A (positive=saving=green), rev → A-B (positive=good=green)
+    if(!a&&!b) return '<span style="color:#9ca3af">—</span>';
+    const diff = isExp ? b-a : a-b;
+    const col  = diff>0 ? '#059669' : diff<0 ? '#dc2626' : '#9ca3af';
+    const sign = diff>0 ? '+' : '';
+    return `<span style="color:${col};font-weight:700">${sign}${Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
   };
+  const pct = (a,b) => b ? Math.round(a/b*100)+'%' : '—';
+  const bar = (a,b,isExp) => {
+    if(!b) return '';
+    const p = Math.min(Math.round(a/b*100),150);
+    const good = isExp ? a<=b : a>=b;
+    const col = good ? '#059669' : '#dc2626';
+    return `<div style="display:flex;align-items:center;gap:4px;margin-top:2px">
+      <div style="width:40px;height:4px;border-radius:2px;background:#e5e7eb;overflow:hidden">
+        <div style="height:100%;width:${Math.min(p,100)}%;background:${col};border-radius:2px"></div>
+      </div>
+      <span style="font-size:8px;color:${col};font-weight:700">${pct(a,b)}</span>
+    </div>`;
+  };
+
+  // ── month header cells ──
+  const mhdrs = MS3.map(m=>`
+    <th colspan="3" style="padding:5px 3px;text-align:center;font-size:8px;font-weight:700;
+      color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;white-space:nowrap">${m}</th>`).join('');
+
+  const subhdrs = Array(12).fill(0).map(()=>`
+    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#059669;background:#f8fafb;border:1px solid #e2e8f0">ACT</th>
+    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#d97706;background:#f8fafb;border:1px solid #e2e8f0">BUD</th>
+    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#6366f1;background:#f8fafb;border:1px solid #e2e8f0">VAR</th>`).join('')+`
+    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#059669;background:#eff6ff;border:1px solid #e2e8f0">YTD ACT</th>
+    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#d97706;background:#eff6ff;border:1px solid #e2e8f0">YTD BUD</th>
+    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#6366f1;background:#eff6ff;border:1px solid #e2e8f0">YTD VAR</th>
+    ${pyd?`<th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#7c3aed;background:#faf5ff;border:1px solid #e2e8f0">PY</th>`:''}`;
+
+  // ── data row builder ──
+  const dataRow = (label, keyA, keyB, isExp, bg, bold, secColor) => {
+    let ytdA=0, ytdB=0, ytdPy=0;
+    const cells = yd.months.map(mo=>{
+      const a=mo[keyA]||0, b=mo[keyB]||0;
+      ytdA+=a; ytdB+=b;
+      const diff = isExp ? b-a : a-b;
+      const col = diff>0?'#059669':diff<0?'#dc2626':'#9ca3af';
+      return `<td style="padding:3px 2px;text-align:right;font-size:7.5px;color:#374151;background:${bg};border:1px solid #e2e8f0">${a?q(a):'—'}</td>
+        <td style="padding:3px 2px;text-align:right;font-size:7.5px;color:#6b7280;background:${bg};border:1px solid #e2e8f0">${b?q(b):'—'}</td>
+        <td style="padding:3px 2px;text-align:right;font-size:7.5px;background:${bg};border:1px solid #e2e8f0">${(a||b)?vr(a,b,isExp):'—'}</td>`;
+    }).join('');
+    if(pyd){ yd.months.forEach(mo=>{ ytdPy+=(pyd.months[mo.m][keyA]||0); }); }
+    const ytdDiff = isExp ? ytdB-ytdA : ytdA-ytdB;
+    const ytdCol = ytdDiff>0?'#059669':ytdDiff<0?'#dc2626':'#9ca3af';
+    return `<tr>
+      <td style="padding:4px 8px;font-size:8px;font-weight:${bold?'700':'500'};
+        color:${secColor||'#374151'};background:${bold?'#f8fafc':'#fff'};
+        border:1px solid #e2e8f0;white-space:nowrap;min-width:110px">${label}</td>
+      ${cells}
+      <td style="padding:3px 4px;text-align:right;font-size:7.5px;font-weight:${bold?'700':'500'};color:#1e40af;background:#eff6ff;border:1px solid #e2e8f0">${ytdA?q(ytdA):'—'}</td>
+      <td style="padding:3px 4px;text-align:right;font-size:7.5px;color:#92400e;background:#eff6ff;border:1px solid #e2e8f0">${ytdB?q(ytdB):'—'}</td>
+      <td style="padding:3px 4px;text-align:right;font-size:7.5px;background:#eff6ff;border:1px solid #e2e8f0;font-weight:${bold?'700':'500'}">
+        ${ytdA||ytdB?`<span style="color:${ytdCol}">${ytdDiff>=0?'+':''}${Math.abs(ytdDiff).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'—'}
+      </td>
+      ${pyd?`<td style="padding:3px 4px;text-align:right;font-size:7.5px;color:#7c3aed;background:#faf5ff;border:1px solid #e2e8f0">${ytdPy?q(ytdPy):'—'}</td>`:''}
+    </tr>`;
+  };
+
+  // ── section header ──
+  const secHdr = (label, col, bg) => {
+    const cols = 12*3 + 3 + (pyd?1:0) + 1;
+    return `<tr>
+      <td colspan="${cols}" style="padding:6px 8px;font-size:9px;font-weight:800;letter-spacing:1px;
+        text-transform:uppercase;color:${col};background:${bg};border:1px solid #e2e8f0">${label}</td>
+    </tr>`;
+  };
+
+  // ── metric rows (rooms, occ, kg, cpor) ──
+  const metricRows = [
+    {label:'Rooms Sold', vals: yd.months.map(mo=>qi(mo.rooms)), tot: qi(yd.totRs), col:'#7c3aed'},
+    {label:'Occupancy %', vals: yd.months.map(mo=>mo.occ?mo.occ.toFixed(1)+'%':'—'), tot: yd.occ?yd.occ.toFixed(1)+'%':'—', col:'#0891b2'},
+    {label:'Total KG', vals: yd.months.map(mo=>qi(mo.kg)), tot: qi(yd.totKg), col:'#0284c7'},
+    {label:'CPOR Actual', vals: yd.months.map(mo=>mo.rooms&&mo.totExpA?(mo.totExpA/mo.rooms).toFixed(4):'—'), tot: yd.cporA?yd.cporA.toFixed(4):'—', col:'#7c3aed'},
+  ].map(({label,vals,tot,col})=>`<tr>
+    <td style="padding:4px 8px;font-size:8px;font-weight:600;color:${col};background:#fafafa;border:1px solid #e2e8f0;white-space:nowrap">${label}</td>
+    ${vals.map(v=>`
+      <td style="padding:3px 2px;text-align:right;font-size:7.5px;color:${col};background:#fafafa;border:1px solid #e2e8f0">${v}</td>
+      <td style="background:#fafafa;border:1px solid #e2e8f0"></td>
+      <td style="background:#fafafa;border:1px solid #e2e8f0"></td>`).join('')}
+    <td style="padding:3px 4px;text-align:right;font-size:8px;font-weight:700;color:${col};background:#eff6ff;border:1px solid #e2e8f0">${tot}</td>
+    <td style="background:#eff6ff;border:1px solid #e2e8f0"></td>
+    <td style="background:#eff6ff;border:1px solid #e2e8f0"></td>
+    ${pyd?`<td style="background:#faf5ff;border:1px solid #e2e8f0"></td>`:''}
+  </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>RS BudgetPro — Budget Performance Report ${y}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A3 landscape;margin:6mm}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11px}
+    table{border-collapse:collapse}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+
+  <!-- HEADER -->
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1a3a5c 50%,#1e1040 100%);
+    padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${LOGO?`<img src="${LOGO}" style="width:40px;height:40px;border-radius:8px">`:''}
+      <div>
+        <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
+        <div style="font-size:19px;font-weight:900;color:#f5c542;letter-spacing:-.3px">Budget Performance Report</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">Actual vs Budget vs Prior Year ${py} · Full Year Breakdown</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:32px;font-weight:900;color:#f5c542;letter-spacing:-1px;line-height:1">${y}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:4px">Prepared by Reda Salah</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.25);margin-top:2px">${now}</div>
+    </div>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    ${[
+      ['Rooms Sold', qi(yd.totRs), '#7c3aed', '#faf5ff'],
+      ['Total KG', qi(yd.totKg), '#0284c7', '#eff6ff'],
+      ['Total Expenses', q(yd.totExpA), '#dc2626', '#fff1f2'],
+      ['Expense Variance', (yd.totExpB?(yd.totExpB-yd.totExpA>=0?'+':'')+Math.abs(yd.totExpB-yd.totExpA).toLocaleString('en-US',{minimumFractionDigits:2}):'—'), yd.totExpB&&yd.totExpB-yd.totExpA>=0?'#059669':'#dc2626', '#f0fdf4'],
+      ['CPOR Actual', yd.cporA?yd.cporA.toFixed(4):'—', '#7c3aed', '#faf5ff'],
+      ['Total Revenue', q(yd.totRevA), '#059669', '#f0fdf4'],
+      ['Laundry Revenue', q(yd.totRevLaA), '#0284c7', '#eff6ff'],
+      ['Pearl Valet', q(yd.totRevVaA), '#7c3aed', '#faf5ff'],
+    ].map(([lbl,val,col,bg])=>`
+      <div style="background:${bg};border:1px solid ${col}30;border-radius:8px;padding:8px 12px;flex:1;min-width:100px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6b7280;margin-bottom:3px">${lbl}</div>
+        <div style="font-size:13px;font-weight:800;color:${col};font-family:'Courier New',monospace">${val}</div>
+      </div>`).join('')}
+  </div>
+
+  <!-- LEGEND -->
+  <div style="display:flex;gap:14px;align-items:center;margin-bottom:8px;font-size:9px;padding:5px 8px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0">
+    <span style="font-weight:700;color:#475569">Key:</span>
+    <span><span style="color:#059669;font-weight:700">ACT</span> = Actual</span>
+    <span><span style="color:#d97706;font-weight:700">BUD</span> = Budget</span>
+    <span><span style="color:#6366f1;font-weight:700">VAR</span> = Variance (Finance std: Exp=B−A, Rev=A−B)</span>
+    <span style="color:#1e40af;font-weight:700">Blue cols</span> = Year Total
+    ${pyd?`<span style="color:#7c3aed;font-weight:700">Purple col</span> = Prior Year ${py}`:''}
+    <span><span style="color:#059669;font-weight:700">Green</span> = Favorable · <span style="color:#dc2626;font-weight:700">Red</span> = Unfavorable</span>
+  </div>
+
+  <!-- MAIN TABLE -->
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:7.5px">
+    <thead>
+      <tr>
+        <th rowspan="2" style="padding:6px 8px;text-align:left;font-size:9px;font-weight:700;
+          color:#1e293b;background:#e2e8f0;border:1px solid #cbd5e1;min-width:110px">Description</th>
+        ${mhdrs}
+        <th colspan="3" style="padding:5px 3px;text-align:center;font-size:8px;font-weight:800;
+          color:#1e40af;background:#dbeafe;border:1px solid #bfdbfe">FULL YEAR</th>
+        ${pyd?`<th rowspan="2" style="padding:5px 3px;text-align:center;font-size:8px;font-weight:700;
+          color:#7c3aed;background:#ede9fe;border:1px solid #ddd6fe;white-space:nowrap">${py}<br>Actual</th>`:''}
+      </tr>
+      <tr>${subhdrs}</tr>
+    </thead>
+    <tbody>
+      <!-- METRICS -->
+      ${secHdr('OCCUPANCY & EFFICIENCY','#0f172a','#e2e8f0')}
+      ${metricRows}
+
+      <!-- REVENUE -->
+      ${secHdr('REVENUE (QAR)','#065f46','#d1fae5')}
+      ${dataRow('Laundry Revenue (FS Doha)','revLaA','revLaB',false,'#f0fdf4',false,'#065f46')}
+      ${dataRow('Pearl Valet Revenue — FS Pearl','revVaA','revVaB',false,'#faf5ff',false,'#4c1d95')}
+      ${dataRow('TOTAL REVENUE','totRevA','totRevB',false,'#dcfce7',true,'#065f46')}
+
+      <!-- EXPENSES -->
+      ${secHdr('OPERATING EXPENSES (QAR)','#7f1d1d','#fee2e2')}
+      ${dataRow('Laundry Supplies','laA','laB',true,'#fff7ed',false,'#92400e')}
+      ${dataRow('Operating Supplies','opA','opB',true,'#f0fdf4',false,'#14532d')}
+      ${dataRow('Printing & Stationery','prA','prB',true,'#fff1f2',false,'#9f1239')}
+      ${dataRow('TOTAL EXPENSES','totExpA','totExpB',true,'#fee2e2',true,'#7f1d1d')}
+    </tbody>
+  </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+    padding:8px 16px;display:flex;justify-content:space-between;align-items:center;font-size:8px;color:#94a3b8">
+    <div>Four Seasons Hotel Doha · Laundry Department · Budget Performance Report · <strong style="color:#dc2626">CONFIDENTIAL</strong></div>
+    <div>RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</div>
+  </div>
+
+  </body></html>`;
+
+  const w = window.open('','_blank','width=1400,height=900');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 600);
+  toast('Budget Report PDF ready ✓');
 }
 
 function exportReportExcel(){
