@@ -1145,6 +1145,7 @@ select option{background:var(--bg4)}
   <div class="ntab" onclick="goTab(this,'trends')">Trends</div>
   <div class="ntab" onclick="goTab(this,'smart')">Smart Insights</div>
   <div class="ntab" onclick="goTab(this,'scenario')">Scenarios</div>
+  <div class="ntab" onclick="goTab(this,'casual')">👷 Casual Labour</div>
   <div class="nav-sep"></div>
   <span class="nav-group-label">SYSTEM</span>
   <div class="ntab" onclick="goTab(this,'backup')">Backup</div>
@@ -2869,6 +2870,7 @@ function goTab(el,id){
   if(id==='smart')    {buildSmartTab()}
   if(id==='pulse')    {buildPulseTab()}
   if(id==='scenario') {buildScenarioTab()}
+  if(id==='casual')   {buildCasualTab()}
   if(id==='dashboard'){buildYP();buildDash()}
 }
 
@@ -8533,6 +8535,600 @@ function buildGuideTab(){
 }
 
 
+/* ════════════════════════════════════════
+   CASUAL LABOUR TAB
+   ════════════════════════════════════════ */
+
+// Default companies — stored in SETT.casualCompanies
+// Structure: [{id, name, rates:[{rate, fromY, fromM, toY, toM}]}]
+function getCasualCompanies(){
+  if(!SETT.casualCompanies || !SETT.casualCompanies.length){
+    SETT.casualCompanies = [
+      {id:'alaska',  name:'Alaska',   rates:[{rate:95,  fromY:2024,fromM:0,toY:2099,toM:11}]},
+      {id:'mrvalet', name:'Mr. Valet',rates:[{rate:100, fromY:2024,fromM:0,toY:2099,toM:11}]},
+    ];
+  }
+  return SETT.casualCompanies;
+}
+
+// Get effective rate for a company in a given year/month
+function casualRate(compId, y, m){
+  const comp = getCasualCompanies().find(c=>c.id===compId);
+  if(!comp) return 0;
+  // Find the rate entry whose range covers y/m
+  const ym = y*12+m;
+  const match = comp.rates
+    .filter(r => (r.fromY*12+r.fromM) <= ym && (r.toY*12+r.toM) >= ym)
+    .sort((a,b)=>(b.fromY*12+b.fromM)-(a.fromY*12+a.fromM))[0];
+  return match ? match.rate : 0;
+}
+
+// Casual actuals stored in DATA[y][m].casual = {alaska:{days,budget_days}, mrvalet:{days,budget_days}}
+// Casual budget projections stored in SETT.casualBudget[y][m] = {alaska:{days}, mrvalet:{days}}
+function getCasualBudget(y,m,compId){
+  return SETT.casualBudget?.[y]?.[m]?.[compId]?.days || 0;
+}
+function setCasualBudget(y,m,compId,days){
+  if(!SETT.casualBudget) SETT.casualBudget={};
+  if(!SETT.casualBudget[y]) SETT.casualBudget[y]={};
+  if(!SETT.casualBudget[y][m]) SETT.casualBudget[y][m]={};
+  if(!SETT.casualBudget[y][m][compId]) SETT.casualBudget[y][m][compId]={};
+  SETT.casualBudget[y][m][compId].days = days;
+}
+function getCasualActual(y,m,compId){
+  return DATA[y]?.[m]?.casual?.[compId]?.days || 0;
+}
+function setCasualActual(y,m,compId,days){
+  if(!DATA[y]) DATA[y]={};
+  if(!DATA[y][m]) DATA[y][m]={};
+  if(!DATA[y][m].casual) DATA[y][m].casual={};
+  if(!DATA[y][m].casual[compId]) DATA[y][m].casual[compId]={};
+  DATA[y][m].casual[compId].days = days||undefined;
+  if(!days) delete DATA[y][m].casual[compId].days;
+}
+
+let casualY = new Date().getFullYear();
+
+function buildCasualTab(){
+  const el = document.getElementById('casual-body');
+  if(!el) return;
+  const comps = getCasualCompanies();
+  const MF = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MFF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const curY = new Date().getFullYear();
+  const curM = new Date().getMonth();
+
+  // ── KPI data ──────────────────────────────────────────────
+  let kpis = {};
+  comps.forEach(c=>{
+    let totActDays=0, totActCost=0, totBudDays=0, totBudCost=0;
+    for(let m=0;m<12;m++){
+      const actDays = getCasualActual(casualY,m,c.id);
+      const budDays = getCasualBudget(casualY,m,c.id);
+      const rate    = casualRate(c.id,casualY,m);
+      totActDays+=actDays; totActCost+=actDays*rate;
+      totBudDays+=budDays; totBudCost+=budDays*rate;
+    }
+    kpis[c.id]={totActDays,totActCost,totBudDays,totBudCost};
+  });
+  const totActCostAll = comps.reduce((s,c)=>s+(kpis[c.id]?.totActCost||0),0);
+  const totKg  = Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.kg||0),0);
+  const totRs  = Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.roomsSold||0),0);
+  const costPerKg = totKg ? totActCostAll/totKg : 0;
+  const costPerRn = totRs ? totActCostAll/totRs : 0;
+
+  // ── KPI card HTML ──────────────────────────────────────────
+  const kpiCard=(label,val,sub,col)=>`
+    <div style="background:#1a2236;border:1px solid ${col}30;border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${col},transparent)"></div>
+      <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">${label}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:17px;font-weight:700;color:${col}">${val}</div>
+      <div style="font-size:10px;color:#4a5568;margin-top:3px">${sub}</div>
+    </div>`;
+
+  // ── Month table ────────────────────────────────────────────
+  const buildMonthTable = ()=>{
+    const rows = MF.map((ms,m)=>{
+      const isFuture = casualY>curY||(casualY===curY&&m>curM);
+      const kg   = DATA[casualY]?.[m]?.kg||0;
+      const rs   = DATA[casualY]?.[m]?.roomsSold||0;
+      const cells = comps.map(c=>{
+        const actD = getCasualActual(casualY,m,c.id);
+        const budD = getCasualBudget(casualY,m,c.id);
+        const rate = casualRate(c.id,casualY,m);
+        const actC = actD*rate, budC=budD*rate;
+        const var_ = budC ? budC-actC : null;
+        const varCol = var_===null?'#4a5568':var_>=0?'#00d4b8':'#ff6b6b';
+        return `
+          <td style="padding:6px 4px;text-align:center">
+            <input type="text" inputmode="decimal"
+              value="${actD||''}" placeholder="—"
+              data-y="${casualY}" data-m="${m}" data-c="${c.id}" data-t="act"
+              onchange="casualSaveDay(this)"
+              style="width:54px;background:${isFuture?'rgba(255,255,255,.03)':'var(--bg3)'};border:1px solid ${actD?'rgba(0,212,184,.3)':'var(--border)'};
+                border-radius:5px;padding:4px 5px;font-family:var(--ff-m);font-size:11px;
+                font-weight:600;color:var(--teal);text-align:center;outline:none;
+                ${isFuture?'opacity:.5':''}">
+          </td>
+          <td style="padding:6px 4px;text-align:center">
+            <input type="text" inputmode="decimal"
+              value="${budD||''}" placeholder="—"
+              data-y="${casualY}" data-m="${m}" data-c="${c.id}" data-t="bud"
+              onchange="casualSaveDay(this)"
+              style="width:54px;background:rgba(255,179,71,.04);border:1px solid ${budD?'rgba(255,179,71,.3)':'var(--border)'};
+                border-radius:5px;padding:4px 5px;font-family:var(--ff-m);font-size:11px;
+                font-weight:600;color:var(--amber);text-align:center;outline:none">
+          </td>
+          <td style="padding:6px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${actC?fN(actC):'—'}</td>
+          <td style="padding:6px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--amber)">${budC?fN(budC):'—'}</td>
+          <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:600;color:${varCol}">${var_!==null?(var_>=0?'+':'')+fN(var_):'—'}</td>`;
+      }).join('');
+      // Totals for this month
+      const totActM = comps.reduce((s,c)=>s+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+      const totBudM = comps.reduce((s,c)=>s+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+      const totVarM = totBudM ? totBudM-totActM : null;
+      const tvCol   = totVarM===null?'#4a5568':totVarM>=0?'#a3e635':'#ff6b6b';
+      return `<tr style="background:${isFuture?'rgba(255,255,255,.01)':m%2?'rgba(255,255,255,.015)':'transparent'}${isFuture?';opacity:.45':''}">
+        <td style="padding:6px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:${isFuture?'#4a5568':'var(--text2)'}">
+          ${casualY===curY&&m===curM?`<span style="color:var(--teal)">●</span> `:''}${MFF[m]}
+        </td>
+        <td style="padding:6px 8px;text-align:right;font-size:10px;color:#4a5568">${kg?kg.toLocaleString():'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:10px;color:#4a5568">${rs?rs.toLocaleString():'—'}</td>
+        ${cells}
+        <td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--teal);background:rgba(0,212,184,.04)">${totActM?fN(totActM):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;color:var(--amber);background:rgba(255,179,71,.04)">${totBudM?fN(totBudM):'—'}</td>
+        <td style="padding:6px 8px;text-align:right;font-size:11px;font-weight:700;color:${tvCol}">${totVarM!==null?(totVarM>=0?'+':'')+fN(totVarM):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    // Col headers per company
+    const compCols = comps.map(c=>`
+      <th colspan="5" style="padding:7px 6px;text-align:center;font-size:10px;font-weight:700;
+        color:var(--teal);background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.15)">
+        ${c.name} <span style="font-size:8px;color:#4a5568;font-weight:400">(QAR ${casualRate(c.id,casualY,0)}/day)</span>
+      </th>`).join('');
+    const subCols = comps.map(c=>`
+      <th style="padding:5px 3px;text-align:center;font-size:8px;color:var(--teal);border-left:2px solid rgba(0,212,184,.1)">Act Days</th>
+      <th style="padding:5px 3px;text-align:center;font-size:8px;color:var(--amber)">Bud Days</th>
+      <th style="padding:5px 3px;text-align:right;font-size:8px;color:var(--teal)">Act Cost</th>
+      <th style="padding:5px 3px;text-align:right;font-size:8px;color:var(--amber)">Bud Cost</th>
+      <th style="padding:5px 3px;text-align:right;font-size:8px;color:#64748b">Variance</th>`).join('');
+
+    // Totals row
+    const totRow = comps.map(c=>{
+      const tAD=MF.reduce((_,ms,m)=>_+getCasualActual(casualY,m,c.id),0);
+      const tBD=MF.reduce((_,ms,m)=>_+getCasualBudget(casualY,m,c.id),0);
+      const tAC=MF.reduce((_,ms,m)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+      const tBC=MF.reduce((_,ms,m)=>_+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+      const tv=tBC?tBC-tAC:null; const tvc=tv===null?'#4a5568':tv>=0?'#00d4b8':'#ff6b6b';
+      return `<td style="padding:8px 4px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--teal);border-left:2px solid rgba(0,212,184,.15)">${tAD||'—'}</td>
+        <td style="padding:8px 4px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--amber)">${tBD||'—'}</td>
+        <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--teal)">${tAC?fN(tAC):'—'}</td>
+        <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--amber)">${tBC?fN(tBC):'—'}</td>
+        <td style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:${tvc}">${tv!==null?(tv>=0?'+':'')+fN(tv):'—'}</td>`;
+    }).join('');
+    const gTotAC = comps.reduce((_,c)=>_+MF.reduce((__,ms,m)=>__+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0),0);
+    const gTotBC = comps.reduce((_,c)=>_+MF.reduce((__,ms,m)=>__+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0),0);
+    const gVar   = gTotBC?gTotBC-gTotAC:null;
+    const gvc    = gVar===null?'#4a5568':gVar>=0?'#a3e635':'#ff6b6b';
+
+    return `<div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:900px">
+        <thead>
+          <tr style="background:var(--bg3)">
+            <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
+            <th rowspan="2" style="padding:7px 6px;text-align:right;font-size:9px;color:#38bdf8">KG</th>
+            <th rowspan="2" style="padding:7px 6px;text-align:right;font-size:9px;color:#a78bfa">Rooms</th>
+            ${compCols}
+            <th colspan="3" style="padding:7px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--lime);background:rgba(163,230,53,.06)">TOTAL</th>
+          </tr>
+          <tr style="background:var(--bg4)">
+            ${subCols}
+            <th style="padding:5px 4px;text-align:right;font-size:8px;color:var(--teal)">Act Cost</th>
+            <th style="padding:5px 4px;text-align:right;font-size:8px;color:var(--amber)">Bud Cost</th>
+            <th style="padding:5px 4px;text-align:right;font-size:8px;color:#64748b">Variance</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+            <td colspan="3" style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>
+            ${totRow}
+            <td style="padding:8px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.06)">${gTotAC?fN(gTotAC):'—'}</td>
+            <td style="padding:8px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--amber);background:rgba(255,179,71,.06)">${gTotBC?fN(gTotBC):'—'}</td>
+            <td style="padding:8px 8px;text-align:right;font-size:11px;font-weight:800;color:${gvc}">${gVar!==null?(gVar>=0?'+':'')+fN(gVar):'—'}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+  };
+
+  // ── Auto-project budget ───────────────────────────────────
+  const buildAutoProjectPanel = ()=>{
+    // Find prior year KG/days ratio per company
+    const py = casualY-1;
+    const pyKg = Object.values(DATA[py]||{}).reduce((s,m)=>s+(m.kg||0),0);
+    const pyDays = comps.reduce((acc,c)=>{
+      acc[c.id]=MF.reduce((_,ms,m)=>_+getCasualActual(py,m,c.id),0); return acc;},{});
+    const kgPerDay = {};
+    comps.forEach(c=>{ kgPerDay[c.id]=pyDays[c.id]&&pyKg?pyKg/pyDays[c.id]:0; });
+    const projKg = Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.kg||0),0) ||
+                   Object.values(PROJ[casualY]||{}).reduce((s,m)=>s+(m.roomsSold||0)*((SETT.kgPerRn)||1.8),0);
+
+    return `<div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--teal)">🤖 Auto-Project Budget from KG</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:2px">Uses prior year KG ÷ actual casual days = KG/day ratio → applies to projected KG for ${casualY}</div>
+        </div>
+        <button onclick="casualAutoProject(${casualY})" style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer"
+          onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">
+          ⚡ Apply Auto-Projection to ${casualY} Budget
+        </button>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
+          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${py} Total KG</div>
+          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#38bdf8">${pyKg.toLocaleString()}</div>
+        </div>
+        ${comps.map(c=>`
+          <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
+            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${c.name} ${py} Days</div>
+            <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--teal)">${pyDays[c.id]||'—'}</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
+            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${c.name} KG/Day</div>
+            <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--amber)">${kgPerDay[c.id]?kgPerDay[c.id].toFixed(0):'—'}</div>
+          </div>`).join('')}
+        <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
+          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${casualY} Proj KG</div>
+          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#a78bfa">${projKg?projKg.toLocaleString():'Enter KG data'}</div>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // ── Company management modal trigger ──────────────────────
+  const compCards = comps.map(c=>{
+    const latestRate = c.rates.sort((a,b)=>(b.fromY*12+b.fromM)-(a.fromY*12+a.fromM))[0];
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;flex:1;min-width:200px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--text)">${c.name}</div>
+        <button onclick="openCasualCompModal('${c.id}')" style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">✏️ Edit</button>
+      </div>
+      <div style="font-size:11px;color:#4a5568;margin-bottom:4px">Current rate: <strong style="color:var(--amber);font-family:var(--ff-m)">QAR ${latestRate?.rate||0}/day</strong></div>
+      <div style="font-size:10px;color:#4a5568">${c.rates.length} rate period${c.rates.length>1?'s':''} on record</div>
+    </div>`;
+  }).join('');
+
+  // ── Render ─────────────────────────────────────────────────
+  el.innerHTML = `<div class="main" style="padding-bottom:80px">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+      <div>
+        <div class="pt">👷 Casual Labour <span>Days · Cost · Budget — separate from main expenses</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="ypills" id="yp-casual"></div>
+        <button onclick="openCasualCompModal('new')" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.4);color:var(--lime);background:rgba(163,230,53,.08);cursor:pointer"
+          onmouseover="this.style.background='rgba(163,230,53,.18)'" onmouseout="this.style.background='rgba(163,230,53,.08)'">
+          ➕ Add Company
+        </button>
+        <button onclick="printCasualPDF()" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.35);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer"
+          onmouseover="this.style.background='rgba(255,107,107,.15)'" onmouseout="this.style.background='rgba(255,107,107,.06)'">
+          🖨 Print Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Company cards -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">${compCards}
+      <div style="background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:9px;padding:12px 14px;flex:1;min-width:200px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#38bdf8;margin-bottom:6px">Total Casual Cost ${casualY}</div>
+        <div style="font-family:var(--ff-m);font-size:18px;font-weight:700;color:#38bdf8">${totActCostAll?'QAR '+fN(totActCostAll):'—'}</div>
+        <div style="font-size:10px;color:#4a5568;margin-top:4px">
+          ${costPerKg?'QAR '+costPerKg.toFixed(3)+' per KG &nbsp;·&nbsp; ':''}
+          ${costPerRn?'QAR '+costPerRn.toFixed(2)+' per room night':''}
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI strip -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px">
+      ${comps.map(c=>{
+        const k=kpis[c.id];
+        const v=k.totBudCost?k.totBudCost-k.totActCost:null;
+        const vc=v===null?'#4a5568':v>=0?'var(--teal)':'var(--coral)';
+        return kpiCard(`${c.name} — Actual Cost`, k.totActCost?'QAR '+fN(k.totActCost):'—', `${k.totActDays} days · Budget: ${k.totBudCost?'QAR '+fN(k.totBudCost):'not set'}`, 'var(--teal)')+
+               kpiCard(`${c.name} — Variance`, v!==null?(v>=0?'+':'')+fN(v):'—', `${k.totBudDays} budget days planned`, vc);
+      }).join('')}
+      ${kpiCard('KG/Casual Day', totKg&&comps.reduce((_,c)=>_+kpis[c.id].totActDays,0)?(totKg/comps.reduce((_,c)=>_+kpis[c.id].totActDays,0)).toFixed(1)+' KG':'—', `Total KG: ${totKg.toLocaleString()}`, '#38bdf8')}
+      ${kpiCard('Cost/Room Night', costPerRn?'QAR '+costPerRn.toFixed(2):'—', `Total rooms: ${totRs.toLocaleString()}`, '#a78bfa')}
+    </div>
+
+    <!-- Auto projection -->
+    ${buildAutoProjectPanel()}
+
+    <!-- Main table -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:16px">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Detail — ${casualY}</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:2px">Enter actual days worked per company · Budget days auto-project or enter manually</div>
+        </div>
+        <button onclick="casualClearBudget(${casualY})" style="padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer">🗑 Clear Budget</button>
+      </div>
+      ${buildMonthTable()}
+    </div>
+
+  </div>`;
+
+  // Build year pills
+  const pillsEl = document.getElementById('yp-casual');
+  if(pillsEl){
+    pillsEl.innerHTML='';
+    YEARS.forEach(y=>{
+      const b=document.createElement('button');
+      b.className='yr'+(casualY===y?' active':'');
+      b.textContent=y;
+      b.onclick=()=>{casualY=y;buildCasualTab();};
+      pillsEl.appendChild(b);
+    });
+  }
+}
+
+function casualSaveDay(el){
+  const y=+el.dataset.y, m=+el.dataset.m, c=el.dataset.c, t=el.dataset.t;
+  const v=parseInt(el.value.replace(/,/g,''))||0;
+  if(t==='act') setCasualActual(y,m,c,v);
+  else           setCasualBudget(y,m,c,v);
+  autoSave();
+  buildCasualTab();
+}
+
+function casualAutoProject(y){
+  const py = y-1;
+  const comps = getCasualCompanies();
+  const MF = Array(12).fill(0).map((_,i)=>i);
+  const pyKgTotal = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.kg||0),0);
+  if(!pyKgTotal){ toast('No KG data for '+py+' — enter actuals first'); return; }
+
+  comps.forEach(c=>{
+    const pyDays = MF.reduce((_,m)=>_+getCasualActual(py,m,c.id),0);
+    if(!pyDays) return;
+    const kgPerDay = pyKgTotal/pyDays;
+    MF.forEach(m=>{
+      const projKg = DATA[y]?.[m]?.kg || (DATA[y]?.[m]?.roomsSold||(PROJ[y]?.[m]?.roomsSold||0))*1.8;
+      if(projKg) setCasualBudget(y,m,c.id,Math.round(projKg/kgPerDay));
+    });
+  });
+  saveAll();
+  buildCasualTab();
+  toast('Budget projected from KG/day ratio ✓');
+}
+
+function casualClearBudget(y){
+  if(!confirm('Clear all budget days for '+y+'?')) return;
+  const comps = getCasualCompanies();
+  for(let m=0;m<12;m++) comps.forEach(c=>setCasualBudget(y,m,c.id,0));
+  saveAll(); buildCasualTab();
+}
+
+// ── Company editor modal ───────────────────────────────────
+function openCasualCompModal(id){
+  const comps = getCasualCompanies();
+  const comp  = id==='new' ? null : comps.find(c=>c.id===id);
+  const MF    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const ratesHtml = (comp?.rates||[{rate:0,fromY:2024,fromM:0,toY:2099,toM:11}])
+    .sort((a,b)=>(a.fromY*12+a.fromM)-(b.fromY*12+b.fromM))
+    .map((r,i)=>`
+      <div class="casual-rate-row" style="display:grid;grid-template-columns:80px 90px 90px 90px 90px 36px;gap:6px;align-items:center;margin-bottom:6px">
+        <input type="number" value="${r.rate}" placeholder="Rate QAR"
+          style="background:var(--bg3);border:1px solid rgba(255,179,71,.3);border-radius:6px;padding:6px 8px;color:var(--amber);font-family:var(--ff-m);font-size:12px;outline:none;width:100%">
+        <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
+          ${YEARS.map(y=>`<option value="${y}" ${y===r.fromY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
+          ${MF.map((ms,mi)=>`<option value="${mi}" ${mi===r.fromM?'selected':''}>${ms}</option>`).join('')}
+        </select>
+        <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
+          ${YEARS.map(y=>`<option value="${y}" ${y===r.toY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
+          ${MF.map((ms,mi)=>`<option value="${mi}" ${mi===r.toM?'selected':''}>${ms}</option>`).join('')}
+        </select>
+        <button onclick="this.closest('.casual-rate-row').remove()" style="width:32px;height:32px;border-radius:6px;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer;font-size:14px">×</button>
+      </div>`).join('');
+
+  const mo = document.createElement('div');
+  mo.id='casual-comp-modal';
+  mo.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px';
+  mo.innerHTML=`
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)">
+        <div style="font-family:var(--ff-d);font-size:14px;font-weight:800;color:var(--text)">${comp?'Edit Company — '+comp.name:'Add New Company'}</div>
+        <button onclick="document.getElementById('casual-comp-modal').remove()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:18px">×</button>
+      </div>
+      <div style="padding:18px 20px">
+        <!-- Name -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">Company Name</label>
+          <input id="casual-comp-name" type="text" value="${comp?.name||''}" placeholder="e.g. Alaska"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none">
+        </div>
+        <!-- Rate periods -->
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3)">Rate Periods</label>
+            <button onclick="addCasualRateRow()" style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(163,230,53,.3);color:var(--lime);background:rgba(163,230,53,.06);cursor:pointer">+ Add Period</button>
+          </div>
+          <div style="display:grid;grid-template-columns:80px 90px 90px 90px 90px 36px;gap:6px;margin-bottom:4px">
+            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">Rate QAR</div>
+            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">From Year</div>
+            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">From Month</div>
+            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">To Year</div>
+            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">To Month</div>
+            <div></div>
+          </div>
+          <div id="casual-rate-rows">${ratesHtml}</div>
+        </div>
+        ${comp&&comp.id!=='alaska'&&comp.id!=='mrvalet'?`
+        <div style="margin-bottom:14px">
+          <button onclick="deleteCasualCompany('${comp.id}')" style="padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer">🗑 Delete Company</button>
+        </div>`:''}
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <button onclick="document.getElementById('casual-comp-modal').remove()" style="padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);border:1px solid var(--border);color:var(--text2);background:transparent;cursor:pointer">Cancel</button>
+          <button onclick="saveCasualComp('${id}')" style="padding:8px 22px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer">💾 Save</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(mo);
+}
+
+function addCasualRateRow(){
+  const MF = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const row = document.createElement('div');
+  row.className='casual-rate-row';
+  row.style.cssText='display:grid;grid-template-columns:80px 90px 90px 90px 90px 36px;gap:6px;align-items:center;margin-bottom:6px';
+  row.innerHTML=`
+    <input type="number" value="" placeholder="Rate QAR" style="background:var(--bg3);border:1px solid rgba(255,179,71,.3);border-radius:6px;padding:6px 8px;color:var(--amber);font-family:var(--ff-m);font-size:12px;outline:none;width:100%">
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${YEARS.map(y=>`<option value="${y}" ${y===new Date().getFullYear()?'selected':''}>${y}</option>`).join('')}</select>
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${MF.map((ms,mi)=>`<option value="${mi}">${ms}</option>`).join('')}</select>
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${YEARS.map(y=>`<option value="${y}" ${y===2099?'selected':''}>${y}</option>`).join('')}</select>
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${MF.map((ms,mi)=>`<option value="${mi}" ${mi===11?'selected':''}>${ms}</option>`).join('')}</select>
+    <button onclick="this.closest('.casual-rate-row').remove()" style="width:32px;height:32px;border-radius:6px;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer;font-size:14px">×</button>`;
+  document.getElementById('casual-rate-rows').appendChild(row);
+}
+
+function saveCasualComp(id){
+  const name = document.getElementById('casual-comp-name').value.trim();
+  if(!name){ toast('Enter a company name'); return; }
+  const rows  = document.querySelectorAll('.casual-rate-row');
+  const rates = [];
+  rows.forEach(row=>{
+    const inputs  = row.querySelectorAll('input,select');
+    const rate    = parseFloat(inputs[0].value)||0;
+    const fromY   = parseInt(inputs[1].value);
+    const fromM   = parseInt(inputs[2].value);
+    const toY     = parseInt(inputs[3].value);
+    const toM     = parseInt(inputs[4].value);
+    if(rate) rates.push({rate,fromY,fromM,toY,toM});
+  });
+  if(!rates.length){ toast('Add at least one rate period'); return; }
+
+  if(!SETT.casualCompanies) SETT.casualCompanies=[];
+  if(id==='new'){
+    const newId = name.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now().toString(36);
+    SETT.casualCompanies.push({id:newId, name, rates});
+  } else {
+    const idx = SETT.casualCompanies.findIndex(c=>c.id===id);
+    if(idx>=0) SETT.casualCompanies[idx]={...SETT.casualCompanies[idx], name, rates};
+  }
+  saveAll();
+  document.getElementById('casual-comp-modal').remove();
+  buildCasualTab();
+  toast('Company saved ✓');
+}
+
+function deleteCasualCompany(id){
+  if(!confirm('Delete this company? All its casual data will remain in the records.')) return;
+  SETT.casualCompanies = getCasualCompanies().filter(c=>c.id!==id);
+  saveAll();
+  document.getElementById('casual-comp-modal').remove();
+  buildCasualTab();
+}
+
+function printCasualPDF(){
+  const comps = getCasualCompanies();
+  const MF    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now   = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const LOGO  = document.querySelector('[alt="RS Logo"]')?.src||'';
+
+  let totActAll=0, totBudAll=0;
+  const rows = MF.map((ms,m)=>{
+    const kg = DATA[casualY]?.[m]?.kg||0;
+    const rs = DATA[casualY]?.[m]?.roomsSold||0;
+    const compCells = comps.map(c=>{
+      const actD=getCasualActual(casualY,m,c.id);
+      const budD=getCasualBudget(casualY,m,c.id);
+      const rate=casualRate(c.id,casualY,m);
+      const actC=actD*rate, budC=budD*rate;
+      totActAll+=actC; totBudAll+=budC;
+      const v=budC?budC-actC:null;
+      const vc=v===null?'#9ca3af':v>=0?'#059669':'#dc2626';
+      return `<td style="padding:6px 5px;text-align:center;font-size:9px;color:#374151">${actD||'—'}</td>
+        <td style="padding:6px 5px;text-align:right;font-size:9px;color:#059669;font-weight:600">${actC?actC.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+        <td style="padding:6px 5px;text-align:center;font-size:9px;color:#6b7280">${budD||'—'}</td>
+        <td style="padding:6px 5px;text-align:right;font-size:9px;color:#d97706;font-weight:600">${budC?budC.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+        <td style="padding:6px 5px;text-align:right;font-size:9px;font-weight:700;color:${vc}">${v!==null?(v>=0?'+':'')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`;
+    }).join('');
+    const totAct=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+    const totBud=comps.reduce((_,c)=>_+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+    const tv=totBud?totBud-totAct:null; const tvc=tv===null?'#9ca3af':tv>=0?'#059669':'#dc2626';
+    return `<tr style="background:${m%2?'#f8fafc':'#fff'}">
+      <td style="padding:6px 8px;font-size:10px;font-weight:600;color:#1e293b">${MF[m]}</td>
+      <td style="padding:6px 6px;text-align:right;font-size:9px;color:#0284c7">${kg.toLocaleString()||'—'}</td>
+      <td style="padding:6px 6px;text-align:right;font-size:9px;color:#7c3aed">${rs.toLocaleString()||'—'}</td>
+      ${compCells}
+      <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:800;color:#059669;background:#f0fdf4">${totAct?totAct.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:800;color:#d97706;background:#fffbeb">${totBud?totBud.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:800;color:${tvc}">${tv!==null?(tv>=0?'+':'')+Math.abs(tv).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const compHdrs = comps.map(c=>`<th colspan="5" style="padding:6px 4px;text-align:center;font-size:9px;font-weight:700;color:#0d9488;background:#f0fdfa;border:1px solid #e2e8f0">${c.name} (QAR ${casualRate(c.id,casualY,0)}/day)</th>`).join('');
+  const subHdrs  = comps.map(c=>`
+    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0">Act Days</th>
+    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0">Act Cost</th>
+    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#d97706;border:1px solid #e2e8f0">Bud Days</th>
+    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#d97706;border:1px solid #e2e8f0">Bud Cost</th>
+    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#6366f1;border:1px solid #e2e8f0">Var</th>`).join('');
+
+  const totKgY = MF.reduce((_,ms,m)=>_+(DATA[casualY]?.[m]?.kg||0),0);
+  const totRsY = MF.reduce((_,ms,m)=>_+(DATA[casualY]?.[m]?.roomsSold||0),0);
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Casual Labour Report ${casualY}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+  </head><body style="padding:10px">
+  <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c,#1e1040);padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${LOGO?`<img src="${LOGO}" style="width:40px;height:40px;border-radius:8px">`:''}
+      <div>
+        <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
+        <div style="font-size:20px;font-weight:900;color:#f5c542">👷 Casual Labour Report — ${casualY}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">Actual vs Budget · Days &amp; Cost · Prepared by Reda Salah · ${now}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      ${[['Total Actual Cost','QAR '+totActAll.toLocaleString('en-US',{minimumFractionDigits:2}),'#4ade80'],
+         ['Total Budget Cost','QAR '+totBudAll.toLocaleString('en-US',{minimumFractionDigits:2}),'#fbbf24'],
+         ['Variance',(totBudAll-totActAll>=0?'+':'')+(totBudAll-totActAll).toLocaleString('en-US',{minimumFractionDigits:2}),totBudAll-totActAll>=0?'#4ade80':'#f87171'],
+         ['Total KG',totKgY.toLocaleString(),'#38bdf8'],
+         ['Total Rooms',totRsY.toLocaleString(),'#a78bfa']
+      ].map(([l,v,c])=>`<div style="background:rgba(255,255,255,.06);border-radius:8px;padding:8px 12px;text-align:right">
+        <div style="font-size:8px;color:rgba(255,255,255,.4);margin-bottom:2px">${l}</div>
+        <div style="font-family:'Courier New',monospace;font-size:13px;font-weight:800;color:${c}">${v}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+  <table style="width:100%;font-size:9px">
+    <thead>
+      <tr style="background:#0f172a"><th rowspan="2" style="padding:6px 8px;text-align:left;color:#94a3b8;min-width:60px">Month</th><th rowspan="2" style="padding:6px 5px;color:#38bdf8">KG</th><th rowspan="2" style="padding:6px 5px;color:#a78bfa">Rooms</th>${compHdrs}<th colspan="3" style="padding:6px 4px;text-align:center;font-size:9px;font-weight:700;color:#a3e635;background:rgba(163,230,53,.1);border:1px solid #e2e8f0">TOTAL</th></tr>
+      <tr style="background:#1e293b">${subHdrs}<th style="padding:5px 3px;font-size:7px;font-weight:700;color:#4ade80;border:1px solid #e2e8f0">Total Act</th><th style="padding:5px 3px;font-size:7px;font-weight:700;color:#fbbf24;border:1px solid #e2e8f0">Total Bud</th><th style="padding:5px 3px;font-size:7px;font-weight:700;color:#818cf8;border:1px solid #e2e8f0">Variance</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </body></html>`;
+
+  const w=window.open('','_blank','width=1400,height=900');
+  w.document.write(html); w.document.close();
+  setTimeout(()=>{w.focus();w.print();},600);
+  toast('Casual Labour PDF ready ✓');
+}
+
 function buildBackupTab(){
   // Count data stats
   let months=0,notes=0,yearsWithData=[];
@@ -12788,6 +13384,10 @@ window.addEventListener('beforeunload',saveAll);
     </div>
     <div id="bwiz-body" style="padding:20px"></div>
   </div>
+</div>
+
+<div id="pane-casual" class="pane">
+  <div id="casual-body"></div>
 </div>
 
 <div id="pane-backup" class="pane">
