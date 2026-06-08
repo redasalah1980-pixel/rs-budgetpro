@@ -1063,53 +1063,6 @@ select option{background:var(--bg4)}
     c.appendChild(el);setTimeout(()=>el.remove(),8000);
   },250);
 })();
-function togglePass(){
-  const i=document.getElementById('login-pass'),b=document.getElementById('pass-toggle');
-  i.type=i.type==='password'?'text':'password';
-  b.textContent=i.type==='password'?'SHOW':'HIDE';
-}
-function checkCaps(e){
-  const on=e.getModifierState&&e.getModifierState('CapsLock');
-  const w=document.getElementById('caps-warning'),ic=document.getElementById('caps-icon');
-  if(w)w.style.display=on?'block':'none';
-  if(ic)ic.style.display=on?'flex':'none';
-}
-function doLogin(){
-  const p=document.getElementById('login-pass').value;
-  const err=document.getElementById('login-error');
-  const btn=document.getElementById('login-btn');
-  if(p==='RS@2026'){
-    btn.textContent='Authenticating...';
-    btn.style.background='linear-gradient(135deg,#1a4a6b,#38bdf8)';
-    btn.style.color='#fff';
-    err.style.display='none';
-    function openSystem(){
-      _fbLoginTime = new Date();
-      const ls=document.getElementById('login-screen');
-      ls.style.transition='opacity .8s';ls.style.opacity='0';
-      setTimeout(()=>{ls.style.display='none';},800);
-      btn.textContent='Welcome, Reda Salah';
-      btn.style.background='linear-gradient(135deg,#00907d,#00d4b8)';
-      btn.style.color='#fff';
-    }
-    if(typeof fbSignIn==='function'){
-      fbSignIn('reda.salah1980@gmail.com',p).catch(()=>{}).finally(()=>openSystem());
-    } else {
-      setTimeout(openSystem,600);
-    }
-  } else {
-    err.style.display='block';
-    btn.style.background='linear-gradient(135deg,#7a0000,#c44444)';
-    btn.style.color='#fff';
-    setTimeout(()=>{
-      btn.style.background='linear-gradient(135deg,#7a4400,#c9a84c,#f5c542,#c9a84c,#7a4400)';
-      btn.style.backgroundSize='250% auto';
-      btn.style.color='#0d0118';
-    },900);
-    document.getElementById('login-pass').value='';
-    document.getElementById('login-pass').focus();
-  }
-}
 </script>
 
 
@@ -2554,18 +2507,17 @@ function doLogin(){
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
 
-'use strict';
-function togglePass(){const i=document.getElementById('login-pass'),b=document.getElementById('pass-toggle');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁':'🙈';}
+function togglePass(){const i=document.getElementById('login-pass'),b=document.getElementById('pass-toggle');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'HIDE':'SHOW';}
 function checkCaps(e){const on=e.getModifierState&&e.getModifierState('CapsLock');const w=document.getElementById('caps-warning'),ic=document.getElementById('caps-icon');if(w)w.style.display=on?'block':'none';if(ic)ic.style.display=on?'flex':'none';}
 function doLogin(){
   const p=document.getElementById('login-pass').value,err=document.getElementById('login-error'),btn=document.getElementById('login-btn');
   if(p==='RS@2026'){
-    btn.innerHTML='𓆣 &nbsp; Authenticating… &nbsp; 𓆣';
+    btn.innerHTML='&#x130A3; &nbsp; Authenticating\u2026 &nbsp; &#x130A3;';
     btn.style.background='linear-gradient(135deg,#1a4a6b,#38bdf8)';btn.style.color='#fff';
     err.style.display='none';
 
     const proceed = () => {
-      btn.innerHTML='𓆣 &nbsp; Welcome, Reda Salah &nbsp; 𓆣';
+      btn.innerHTML='&#x130A3; &nbsp; Welcome, Reda Salah &nbsp; &#x130A3;';
       btn.style.background='linear-gradient(135deg,#00907d,#00d4b8)';
       const ls=document.getElementById('login-screen');
       ls.style.transition='opacity .8s';ls.style.opacity='0';
@@ -6290,7 +6242,7 @@ async function signOut(){
     document.getElementById('login-pass').value='';
     document.getElementById('login-error').style.display='none';
     document.getElementById('caps-warning').style.display='none';
-    document.getElementById('login-btn').innerHTML='𓂀 &nbsp; Enter the Kingdom &nbsp; 𓂀';
+    document.getElementById('login-btn').innerHTML='&#x13000; &nbsp; Enter the Kingdom &nbsp; &#x13000;';
     document.getElementById('login-btn').style.background='linear-gradient(135deg,#7a4400,#c9a84c,#f5c542,#c9a84c,#7a4400)';
     document.getElementById('login-btn').style.backgroundSize='250% auto';
     document.getElementById('login-btn').style.color='#0d0118';
