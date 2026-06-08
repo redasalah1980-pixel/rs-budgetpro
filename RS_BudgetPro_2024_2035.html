@@ -5250,214 +5250,388 @@ function printReport(){
   const yd = getYearData(y);
   const pyd = py>=2024 ? getYearData(py) : null;
   const now = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const MF  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const MS3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const LOGO = document.querySelector('[alt="RS Logo"]')?.src || '';
 
-  // ── helpers ──
-  const q  = n => (n!==undefined&&n!==null&&n!==0) ? n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  // ── helpers ──────────────────────────────────────────────────────────────
+  const q  = n => (n!==undefined&&n!==null&&n!==0)
+    ? n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
   const qi = n => n ? n.toLocaleString('en-US') : '—';
-  const vr = (a,b,isExp) => {
-    // Finance standard: exp → B-A (positive=saving=green), rev → A-B (positive=good=green)
+
+  const vrCell = (a,b,isExp) => {
     if(!a&&!b) return '<span style="color:#9ca3af">—</span>';
     const diff = isExp ? b-a : a-b;
-    const col  = diff>0 ? '#059669' : diff<0 ? '#dc2626' : '#9ca3af';
-    const sign = diff>0 ? '+' : '';
+    const col  = diff>0?'#059669':diff<0?'#dc2626':'#9ca3af';
+    const sign = diff>0?'+':'';
     return `<span style="color:${col};font-weight:700">${sign}${Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`;
   };
-  const pct = (a,b) => b ? Math.round(a/b*100)+'%' : '—';
-  const bar = (a,b,isExp) => {
-    if(!b) return '';
-    const p = Math.min(Math.round(a/b*100),150);
+
+  const pctBar = (a,b,isExp) => {
+    if(!b||!a) return '';
+    const p   = Math.min(Math.round(a/b*100),150);
     const good = isExp ? a<=b : a>=b;
-    const col = good ? '#059669' : '#dc2626';
-    return `<div style="display:flex;align-items:center;gap:4px;margin-top:2px">
-      <div style="width:40px;height:4px;border-radius:2px;background:#e5e7eb;overflow:hidden">
-        <div style="height:100%;width:${Math.min(p,100)}%;background:${col};border-radius:2px"></div>
+    const col  = good ? '#059669' : '#dc2626';
+    return `<div style="margin-top:3px;display:flex;align-items:center;gap:3px">
+      <div style="flex:1;height:5px;border-radius:3px;background:#e5e7eb;overflow:hidden">
+        <div style="height:100%;width:${Math.min(p,100)}%;background:${col};border-radius:3px"></div>
       </div>
-      <span style="font-size:8px;color:${col};font-weight:700">${pct(a,b)}</span>
+      <span style="font-size:8px;color:${col};font-weight:700;white-space:nowrap">${Math.round(a/b*100)}%</span>
     </div>`;
   };
 
-  // ── month header cells ──
-  const mhdrs = MS3.map(m=>`
-    <th colspan="3" style="padding:5px 3px;text-align:center;font-size:8px;font-weight:700;
-      color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;white-space:nowrap">${m}</th>`).join('');
-
-  const subhdrs = Array(12).fill(0).map(()=>`
-    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#059669;background:#f8fafb;border:1px solid #e2e8f0">ACT</th>
-    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#d97706;background:#f8fafb;border:1px solid #e2e8f0">BUD</th>
-    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#6366f1;background:#f8fafb;border:1px solid #e2e8f0">VAR</th>`).join('')+`
-    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#059669;background:#eff6ff;border:1px solid #e2e8f0">YTD ACT</th>
-    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#d97706;background:#eff6ff;border:1px solid #e2e8f0">YTD BUD</th>
-    <th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#6366f1;background:#eff6ff;border:1px solid #e2e8f0">YTD VAR</th>
-    ${pyd?`<th style="padding:4px 2px;text-align:right;font-size:7px;font-weight:700;color:#7c3aed;background:#faf5ff;border:1px solid #e2e8f0">PY</th>`:''}`;
-
-  // ── data row builder ──
-  const dataRow = (label, keyA, keyB, isExp, bg, bold, secColor) => {
-    let ytdA=0, ytdB=0, ytdPy=0;
-    const cells = yd.months.map(mo=>{
-      const a=mo[keyA]||0, b=mo[keyB]||0;
-      ytdA+=a; ytdB+=b;
-      const diff = isExp ? b-a : a-b;
-      const col = diff>0?'#059669':diff<0?'#dc2626':'#9ca3af';
-      return `<td style="padding:3px 2px;text-align:right;font-size:7.5px;color:#374151;background:${bg};border:1px solid #e2e8f0">${a?q(a):'—'}</td>
-        <td style="padding:3px 2px;text-align:right;font-size:7.5px;color:#6b7280;background:${bg};border:1px solid #e2e8f0">${b?q(b):'—'}</td>
-        <td style="padding:3px 2px;text-align:right;font-size:7.5px;background:${bg};border:1px solid #e2e8f0">${(a||b)?vr(a,b,isExp):'—'}</td>`;
-    }).join('');
-    if(pyd){ yd.months.forEach(mo=>{ ytdPy+=(pyd.months[mo.m][keyA]||0); }); }
-    const ytdDiff = isExp ? ytdB-ytdA : ytdA-ytdB;
-    const ytdCol = ytdDiff>0?'#059669':ytdDiff<0?'#dc2626':'#9ca3af';
-    return `<tr>
-      <td style="padding:4px 8px;font-size:8px;font-weight:${bold?'700':'500'};
-        color:${secColor||'#374151'};background:${bold?'#f8fafc':'#fff'};
-        border:1px solid #e2e8f0;white-space:nowrap;min-width:110px">${label}</td>
-      ${cells}
-      <td style="padding:3px 4px;text-align:right;font-size:7.5px;font-weight:${bold?'700':'500'};color:#1e40af;background:#eff6ff;border:1px solid #e2e8f0">${ytdA?q(ytdA):'—'}</td>
-      <td style="padding:3px 4px;text-align:right;font-size:7.5px;color:#92400e;background:#eff6ff;border:1px solid #e2e8f0">${ytdB?q(ytdB):'—'}</td>
-      <td style="padding:3px 4px;text-align:right;font-size:7.5px;background:#eff6ff;border:1px solid #e2e8f0;font-weight:${bold?'700':'500'}">
-        ${ytdA||ytdB?`<span style="color:${ytdCol}">${ytdDiff>=0?'+':''}${Math.abs(ytdDiff).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'—'}
-      </td>
-      ${pyd?`<td style="padding:3px 4px;text-align:right;font-size:7.5px;color:#7c3aed;background:#faf5ff;border:1px solid #e2e8f0">${ytdPy?q(ytdPy):'—'}</td>`:''}
-    </tr>`;
-  };
-
-  // ── section header ──
-  const secHdr = (label, col, bg) => {
-    const cols = 12*3 + 3 + (pyd?1:0) + 1;
-    return `<tr>
-      <td colspan="${cols}" style="padding:6px 8px;font-size:9px;font-weight:800;letter-spacing:1px;
-        text-transform:uppercase;color:${col};background:${bg};border:1px solid #e2e8f0">${label}</td>
-    </tr>`;
-  };
-
-  // ── metric rows (rooms, occ, kg, cpor) ──
-  const metricRows = [
-    {label:'Rooms Sold', vals: yd.months.map(mo=>qi(mo.rooms)), tot: qi(yd.totRs), col:'#7c3aed'},
-    {label:'Occupancy %', vals: yd.months.map(mo=>mo.occ?mo.occ.toFixed(1)+'%':'—'), tot: yd.occ?yd.occ.toFixed(1)+'%':'—', col:'#0891b2'},
-    {label:'Total KG', vals: yd.months.map(mo=>qi(mo.kg)), tot: qi(yd.totKg), col:'#0284c7'},
-    {label:'CPOR Actual', vals: yd.months.map(mo=>mo.rooms&&mo.totExpA?(mo.totExpA/mo.rooms).toFixed(4):'—'), tot: yd.cporA?yd.cporA.toFixed(4):'—', col:'#7c3aed'},
-  ].map(({label,vals,tot,col})=>`<tr>
-    <td style="padding:4px 8px;font-size:8px;font-weight:600;color:${col};background:#fafafa;border:1px solid #e2e8f0;white-space:nowrap">${label}</td>
-    ${vals.map(v=>`
-      <td style="padding:3px 2px;text-align:right;font-size:7.5px;color:${col};background:#fafafa;border:1px solid #e2e8f0">${v}</td>
-      <td style="background:#fafafa;border:1px solid #e2e8f0"></td>
-      <td style="background:#fafafa;border:1px solid #e2e8f0"></td>`).join('')}
-    <td style="padding:3px 4px;text-align:right;font-size:8px;font-weight:700;color:${col};background:#eff6ff;border:1px solid #e2e8f0">${tot}</td>
-    <td style="background:#eff6ff;border:1px solid #e2e8f0"></td>
-    <td style="background:#eff6ff;border:1px solid #e2e8f0"></td>
-    ${pyd?`<td style="background:#faf5ff;border:1px solid #e2e8f0"></td>`:''}
-  </tr>`).join('');
-
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>RS BudgetPro — Budget Performance Report ${y}</title>
-  <style>
+  // ── shared CSS ────────────────────────────────────────────────────────────
+  const CSS = `
     *{box-sizing:border-box;margin:0;padding:0}
-    @page{size:A3 landscape;margin:6mm}
-    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11px}
-    table{border-collapse:collapse}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:12px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #e2e8f0}
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  </style></head><body>
+    .pg{page-break-after:always}
+    .no-break{page-break-after:avoid}
+    .sec-hdr td{font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:7px 10px}
+    .tot-row td{font-weight:800;font-size:11px}
+  `;
 
-  <!-- HEADER -->
-  <div style="background:linear-gradient(135deg,#0f172a 0%,#1a3a5c 50%,#1e1040 100%);
-    padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:12px">
-      ${LOGO?`<img src="${LOGO}" style="width:40px;height:40px;border-radius:8px">`:''}
-      <div>
-        <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
-        <div style="font-size:19px;font-weight:900;color:#f5c542;letter-spacing:-.3px">Budget Performance Report</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">Actual vs Budget vs Prior Year ${py} · Full Year Breakdown</div>
+  // ── shared header ─────────────────────────────────────────────────────────
+  const pageHeader = (half) => `
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1a3a5c 55%,#1e1040 100%);
+      padding:16px 22px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;
+      border-radius:10px">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${LOGO?`<img src="${LOGO}" style="width:44px;height:44px;border-radius:9px;object-fit:cover">`:''}
+        <div>
+          <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Four Seasons Hotel Doha — Laundry Department</div>
+          <div style="font-size:22px;font-weight:900;color:#f5c542;letter-spacing:-.3px;line-height:1.1">Budget Performance Report</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:3px">Actual vs Budget vs Prior Year ${py} · ${half} · ${now}</div>
+        </div>
       </div>
+      <div style="text-align:right">
+        <div style="font-size:40px;font-weight:900;color:#f5c542;letter-spacing:-2px;line-height:1">${y}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:4px">Prepared by Reda Salah · RS BudgetPro V3.0</div>
+      </div>
+    </div>`;
+
+  // ── KPI strip (only on page 1) ────────────────────────────────────────────
+  const kpiStrip = () => `
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:12px">
+      ${[
+        ['Rooms Sold', qi(yd.totRs),          '#7c3aed','#faf5ff'],
+        ['Total KG',   qi(yd.totKg),          '#0284c7','#eff6ff'],
+        ['Total Exp',  q(yd.totExpA),          '#dc2626','#fff1f2'],
+        ['Exp Var',    yd.totExpB ? (yd.totExpB-yd.totExpA>=0?'+':'')+Math.abs(yd.totExpB-yd.totExpA).toLocaleString('en-US',{minimumFractionDigits:2}):'—',
+                                               yd.totExpB&&yd.totExpB-yd.totExpA>=0?'#059669':'#dc2626','#f0fdf4'],
+        ['CPOR',       yd.cporA?yd.cporA.toFixed(4):'—','#7c3aed','#faf5ff'],
+        ['Total Rev',  q(yd.totRevA),          '#059669','#f0fdf4'],
+        ['FS Doha Rev',q(yd.totRevLaA),        '#0284c7','#eff6ff'],
+        ['Pearl Valet',q(yd.totRevVaA),        '#7c3aed','#faf5ff'],
+      ].map(([l,v,c,bg])=>`
+        <div style="background:${bg};border:1px solid ${c}30;border-radius:8px;padding:9px 11px">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">${l}</div>
+          <div style="font-size:13px;font-weight:800;color:${c};font-family:'Courier New',monospace;line-height:1.2">${v}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // ── legend ────────────────────────────────────────────────────────────────
+  const legend = () => `
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:9px;
+      padding:6px 10px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;flex-wrap:wrap">
+      <strong style="color:#475569">Legend:</strong>
+      <span><span style="color:#059669;font-weight:700">ACT</span> = Actual</span>
+      <span><span style="color:#d97706;font-weight:700">BUD</span> = Budget (Finance)</span>
+      <span><span style="color:#6366f1;font-weight:700">VAR</span> = Variance · Expenses: Budget−Actual · Revenue: Actual−Budget</span>
+      <span><span style="color:#059669;font-weight:700">■ Green</span> = Favorable</span>
+      <span><span style="color:#dc2626;font-weight:700">■ Red</span> = Unfavorable</span>
+      <span><span style="color:#1e40af;font-weight:700">Blue</span> = Half-Year Total</span>
+      ${pyd?`<span><span style="color:#7c3aed;font-weight:700">Purple</span> = Prior Year ${py}</span>`:''}
+    </div>`;
+
+  // ── table builder for a range of months ──────────────────────────────────
+  const buildHalfTable = (fromM, toM) => {
+    const halfMonths = yd.months.slice(fromM, toM+1);
+    const halfLabel  = `${MF[fromM]} – ${MF[toM]} ${y}`;
+
+    // Table header
+    const mHdrs = halfMonths.map(mo=>`
+      <th colspan="3" style="padding:7px 4px;text-align:center;font-size:11px;font-weight:700;
+        color:#1e293b;background:#f1f5f9;white-space:nowrap">${MS3[mo.m]}</th>`).join('');
+
+    const subHdrs = halfMonths.map(()=>`
+      <th style="padding:5px 3px;text-align:right;font-size:9px;font-weight:700;color:#059669;background:#f8fafb">ACT</th>
+      <th style="padding:5px 3px;text-align:right;font-size:9px;font-weight:700;color:#d97706;background:#f8fafb">BUD</th>
+      <th style="padding:5px 3px;text-align:right;font-size:9px;font-weight:700;color:#6366f1;background:#f8fafb">VAR</th>`).join('')+`
+      <th style="padding:5px 4px;text-align:right;font-size:9px;font-weight:800;color:#1e40af;background:#dbeafe">H-ACT</th>
+      <th style="padding:5px 4px;text-align:right;font-size:9px;font-weight:800;color:#d97706;background:#dbeafe">H-BUD</th>
+      <th style="padding:5px 4px;text-align:right;font-size:9px;font-weight:700;color:#6366f1;background:#dbeafe">H-VAR</th>
+      ${pyd?`<th style="padding:5px 4px;text-align:right;font-size:9px;font-weight:700;color:#7c3aed;background:#ede9fe">PY</th>`:''}`;
+
+    // Metric rows (rooms, occ, kg, cpor)
+    const metRows = [
+      {label:'Rooms Sold',  vals: halfMonths.map(mo=>qi(mo.rooms)), totA: halfMonths.reduce((s,mo)=>s+mo.rooms,0), col:'#7c3aed', fmt:(v)=>qi(v)},
+      {label:'Occupancy %', vals: halfMonths.map(mo=>mo.occ?mo.occ.toFixed(1)+'%':'—'), totA: null, col:'#0891b2', fmt:null},
+      {label:'Total KG',    vals: halfMonths.map(mo=>qi(mo.kg)), totA: halfMonths.reduce((s,mo)=>s+mo.kg,0), col:'#0284c7', fmt:(v)=>qi(v)},
+      {label:'CPOR Actual', vals: halfMonths.map(mo=>mo.rooms&&mo.totExpA?(mo.totExpA/mo.rooms).toFixed(4):'—'), totA: null, col:'#7c3aed', fmt:null},
+    ].map(({label,vals,totA,col,fmt})=>`<tr style="background:#fafafa">
+      <td style="padding:6px 10px;font-size:10px;font-weight:600;color:${col};background:#f8fafc;white-space:nowrap;min-width:150px">${label}</td>
+      ${vals.map(v=>`
+        <td style="padding:5px 4px;text-align:right;font-size:10px;color:${col};background:#fafafa">${v}</td>
+        <td style="background:#fafafa"></td>
+        <td style="background:#fafafa"></td>`).join('')}
+      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:700;color:${col};background:#eff6ff">${totA!==null?fmt(totA):'—'}</td>
+      <td style="background:#eff6ff"></td>
+      <td style="background:#eff6ff"></td>
+      ${pyd?`<td style="background:#faf5ff"></td>`:''}
+    </tr>`).join('');
+
+    // Data row for revenue/expense lines
+    const dataRow = (label, keyA, keyB, isExp, rowBg, bold, labelCol) => {
+      let htdA=0, htdB=0, htdPy=0;
+      const cells = halfMonths.map(mo=>{
+        const a=mo[keyA]||0, b=mo[keyB]||0;
+        htdA+=a; htdB+=b;
+        return `
+          <td style="padding:6px 4px;text-align:right;font-size:${bold?'11':'10'}px;
+            font-weight:${bold?'700':'400'};color:#374151;background:${rowBg}">${a?q(a):'—'}</td>
+          <td style="padding:6px 4px;text-align:right;font-size:${bold?'11':'10'}px;
+            color:#6b7280;background:${rowBg}">${b?q(b):'—'}</td>
+          <td style="padding:6px 4px;text-align:right;font-size:${bold?'11':'10'}px;
+            background:${rowBg}">${(a||b)?vrCell(a,b,isExp):'—'}</td>`;
+      }).join('');
+      if(pyd) halfMonths.forEach(mo=>{ htdPy+=(pyd.months[mo.m][keyA]||0); });
+      const htdDiff = isExp ? htdB-htdA : htdA-htdB;
+      const htdCol  = htdDiff>0?'#059669':htdDiff<0?'#dc2626':'#9ca3af';
+      return `<tr>
+        <td style="padding:7px 10px;font-size:${bold?'11':'10'}px;font-weight:${bold?'800':'500'};
+          color:${labelCol||'#374151'};background:${bold?'#f0f9ff':'#fff'};
+          white-space:nowrap;min-width:150px">${label}</td>
+        ${cells}
+        <td style="padding:6px 5px;text-align:right;font-size:${bold?'11':'10'}px;
+          font-weight:${bold?'800':'500'};color:#1e40af;background:#dbeafe">${htdA?q(htdA):'—'}</td>
+        <td style="padding:6px 5px;text-align:right;font-size:${bold?'11':'10'}px;
+          color:#92400e;background:#dbeafe">${htdB?q(htdB):'—'}</td>
+        <td style="padding:6px 5px;text-align:right;font-size:${bold?'11':'10'}px;
+          font-weight:${bold?'800':'500'};background:#dbeafe">
+          ${htdA||htdB?`<span style="color:${htdCol};font-weight:700">${htdDiff>=0?'+':''}${Math.abs(htdDiff).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'—'}
+        </td>
+        ${pyd?`<td style="padding:6px 5px;text-align:right;font-size:10px;color:#7c3aed;background:#ede9fe">${htdPy?q(htdPy):'—'}</td>`:''}
+      </tr>`;
+    };
+
+    const secHdr = (label, color, bg) => `<tr class="sec-hdr">
+      <td colspan="${halfMonths.length*3+3+(pyd?1:0)+1}"
+        style="padding:8px 10px;font-size:10px;font-weight:800;letter-spacing:1px;
+          text-transform:uppercase;color:${color};background:${bg}">
+        ${label}
+      </td></tr>`;
+
+    return `
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#475569;
+        margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #e2e8f0">${halfLabel}</div>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <thead>
+          <tr>
+            <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:11px;font-weight:700;
+              color:#1e293b;background:#e2e8f0;min-width:150px">Description</th>
+            ${mHdrs}
+            <th colspan="3" style="padding:7px 4px;text-align:center;font-size:11px;font-weight:800;
+              color:#1e40af;background:#bfdbfe">Half-Year Total</th>
+            ${pyd?`<th rowspan="2" style="padding:7px 4px;text-align:center;font-size:10px;
+              font-weight:700;color:#7c3aed;background:#ddd6fe;white-space:nowrap">${py}<br>Actual</th>`:''}
+          </tr>
+          <tr>${subHdrs}</tr>
+        </thead>
+        <tbody>
+          ${secHdr('Occupancy & Efficiency','#1e3a5f','#e2e8f0')}
+          ${metRows}
+          ${secHdr('Revenue (QAR)','#064e3b','#d1fae5')}
+          ${dataRow('Laundry Revenue — FS Doha','revLaA','revLaB',false,'#f0fdf4',false,'#065f46')}
+          ${dataRow('Pearl Valet Revenue — FS Pearl','revVaA','revVaB',false,'#faf5ff',false,'#4c1d95')}
+          ${dataRow('TOTAL REVENUE','totRevA','totRevB',false,'#dcfce7',true,'#065f46')}
+          ${secHdr('Operating Expenses (QAR)','#7f1d1d','#fee2e2')}
+          ${dataRow('Laundry Supplies','laA','laB',true,'#fff7ed',false,'#92400e')}
+          ${dataRow('Operating Supplies','opA','opB',true,'#f0fdf4',false,'#14532d')}
+          ${dataRow('Printing & Stationery','prA','prB',true,'#fff1f2',false,'#9f1239')}
+          ${dataRow('TOTAL EXPENSES','totExpA','totExpB',true,'#fee2e2',true,'#7f1d1d')}
+        </tbody>
+      </table>
+      </div>`;
+  };
+
+  // ── full year total table (Page 3 — optional if user wants) ──────────────
+  const fullYearTotals = () => {
+    const lines = [
+      {label:'Laundry Revenue — FS Doha', keyA:'totRevLaA', keyB:'totRevLaB', isExp:false, col:'#065f46', bg:'#f0fdf4'},
+      {label:'Pearl Valet Revenue — FS Pearl', keyA:'totRevVaA', keyB:'totRevVaB', isExp:false, col:'#4c1d95', bg:'#faf5ff'},
+      {label:'TOTAL REVENUE', keyA:'totRevA', keyB:'totRevB', isExp:false, col:'#065f46', bg:'#dcfce7', bold:true},
+      {label:'Laundry Supplies', keyA:'totLaA', keyB:'totLaB', isExp:true, col:'#92400e', bg:'#fff7ed'},
+      {label:'Operating Supplies', keyA:'totOpA', keyB:'totOpB', isExp:true, col:'#14532d', bg:'#f0fdf4'},
+      {label:'Printing & Stationery', keyA:'totPrA', keyB:'totPrB', isExp:true, col:'#9f1239', bg:'#fff1f2'},
+      {label:'TOTAL EXPENSES', keyA:'totExpA', keyB:'totExpB', isExp:true, col:'#7f1d1d', bg:'#fee2e2', bold:true},
+    ];
+
+    const rows = lines.map(({label,keyA,keyB,isExp,col,bg,bold})=>{
+      const a=yd[keyA]||0, b=yd[keyB]||0;
+      const pyA = pyd ? (pyd[keyA]||0) : null;
+      const diff = isExp ? b-a : a-b;
+      const varCol = diff>0?'#059669':diff<0?'#dc2626':'#9ca3af';
+      const pct2 = b ? Math.round(a/b*100) : null;
+      return `<tr style="background:${bg}">
+        <td style="padding:10px 14px;font-size:${bold?'13':'12'}px;font-weight:${bold?'800':'500'};
+          color:${col};white-space:nowrap">${label}</td>
+        <td style="padding:10px 12px;text-align:right;font-family:'Courier New',monospace;
+          font-size:${bold?'13':'12'}px;font-weight:${bold?'800':'500'};color:${col}">${a?q(a):'—'}</td>
+        <td style="padding:10px 12px;text-align:right;font-family:'Courier New',monospace;
+          font-size:${bold?'13':'12'}px;color:#6b7280">${b?q(b):'—'}</td>
+        <td style="padding:10px 12px;text-align:right;font-size:${bold?'13':'12'}px;
+          font-weight:${bold?'800':'500'}">
+          ${a||b?`<span style="color:${varCol};font-weight:700">${diff>=0?'+':''}${Math.abs(diff).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'—'}
+        </td>
+        <td style="padding:10px 12px;text-align:center">
+          ${pct2!==null?`<div style="display:flex;align-items:center;gap:6px">
+            <div style="flex:1;height:8px;border-radius:4px;background:#e5e7eb;overflow:hidden">
+              <div style="height:100%;width:${Math.min(pct2,100)}%;background:${varCol};border-radius:4px"></div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:${varCol};min-width:35px">${pct2}%</span>
+          </div>`:'—'}
+        </td>
+        ${pyA!==null?`<td style="padding:10px 12px;text-align:right;font-family:'Courier New',monospace;
+          font-size:12px;color:#7c3aed">${pyA?q(pyA):'—'}</td>`:''}
+      </tr>`;
+    });
+
+    return `<div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#1e293b;
+        margin-bottom:12px">Full Year Summary — ${y}</div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#1e293b">
+            <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;
+              color:#94a3b8;width:240px">Line Item</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#4ade80">Actual (QAR)</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#fbbf24">Budget (QAR)</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#818cf8">Variance</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#94a3b8">% Achieved</th>
+            ${pyd?`<th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#c084fc">Prior Year ${py}</th>`:''}
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:800;
+            letter-spacing:1px;text-transform:uppercase;color:#064e3b;background:#d1fae5;
+            border:1px solid #a7f3d0">REVENUE</td></tr>
+          ${rows.slice(0,3).join('')}
+          <tr><td colspan="6" style="padding:6px 10px;font-size:9px;font-weight:800;
+            letter-spacing:1px;text-transform:uppercase;color:#7f1d1d;background:#fee2e2;
+            border:1px solid #fecaca">OPERATING EXPENSES</td></tr>
+          ${rows.slice(3).join('')}
+        </tbody>
+      </table>
+
+      <!-- Rooms & KG summary -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px">
+        ${[
+          ['Rooms Sold', qi(yd.totRs), '#7c3aed','#faf5ff'],
+          ['Occupancy %', yd.occ?yd.occ.toFixed(1)+'%':'—', '#0891b2','#eff6ff'],
+          ['Total KG', qi(yd.totKg), '#0284c7','#eff6ff'],
+          ['CPOR Actual', yd.cporA?yd.cporA.toFixed(4):'—', '#7c3aed','#faf5ff'],
+          ['Cost / KG', yd.totKg&&yd.totExpA?(yd.totExpA/yd.totKg).toFixed(3):'—', '#0284c7','#eff6ff'],
+        ].map(([l,v,c,bg])=>`
+          <div style="background:${bg};border:1px solid ${c}30;border-radius:10px;padding:12px 14px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#6b7280;margin-bottom:5px">${l}</div>
+            <div style="font-size:18px;font-weight:800;color:${c};font-family:'Courier New',monospace">${v}</div>
+          </div>`).join('')}
+      </div>`;
+  };
+
+  // ── footer ────────────────────────────────────────────────────────────────
+  const footer = () => `
+    <div style="margin-top:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+      padding:9px 16px;display:flex;justify-content:space-between;align-items:center;font-size:8.5px;color:#94a3b8">
+      <div>Four Seasons Hotel Doha · Laundry Department · Budget Performance Report ·
+        <strong style="color:#dc2626">CONFIDENTIAL</strong></div>
+      <div>RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</div>
+    </div>`;
+
+  // ── assemble full document ────────────────────────────────────────────────
+  const html = `<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>RS BudgetPro — Budget Performance Report ${y}</title>
+    <style>${CSS}</style>
+  </head><body>
+
+    <!-- PAGE 1: Jan – Jun -->
+    <div class="pg" style="padding:12px 14px">
+      ${pageHeader('January – June')}
+      ${kpiStrip()}
+      ${legend()}
+      ${buildHalfTable(0,5)}
+      ${footer()}
     </div>
-    <div style="text-align:right">
-      <div style="font-size:32px;font-weight:900;color:#f5c542;letter-spacing:-1px;line-height:1">${y}</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:4px">Prepared by Reda Salah</div>
-      <div style="font-size:8px;color:rgba(255,255,255,.25);margin-top:2px">${now}</div>
+
+    <!-- PAGE 2: Jul – Dec -->
+    <div class="pg" style="padding:12px 14px">
+      ${pageHeader('July – December')}
+      ${legend()}
+      ${buildHalfTable(6,11)}
+      ${footer()}
     </div>
-  </div>
 
-  <!-- KPI STRIP -->
-  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-    ${[
-      ['Rooms Sold', qi(yd.totRs), '#7c3aed', '#faf5ff'],
-      ['Total KG', qi(yd.totKg), '#0284c7', '#eff6ff'],
-      ['Total Expenses', q(yd.totExpA), '#dc2626', '#fff1f2'],
-      ['Expense Variance', (yd.totExpB?(yd.totExpB-yd.totExpA>=0?'+':'')+Math.abs(yd.totExpB-yd.totExpA).toLocaleString('en-US',{minimumFractionDigits:2}):'—'), yd.totExpB&&yd.totExpB-yd.totExpA>=0?'#059669':'#dc2626', '#f0fdf4'],
-      ['CPOR Actual', yd.cporA?yd.cporA.toFixed(4):'—', '#7c3aed', '#faf5ff'],
-      ['Total Revenue', q(yd.totRevA), '#059669', '#f0fdf4'],
-      ['Laundry Revenue', q(yd.totRevLaA), '#0284c7', '#eff6ff'],
-      ['Pearl Valet', q(yd.totRevVaA), '#7c3aed', '#faf5ff'],
-    ].map(([lbl,val,col,bg])=>`
-      <div style="background:${bg};border:1px solid ${col}30;border-radius:8px;padding:8px 12px;flex:1;min-width:100px">
-        <div style="font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#6b7280;margin-bottom:3px">${lbl}</div>
-        <div style="font-size:13px;font-weight:800;color:${col};font-family:'Courier New',monospace">${val}</div>
-      </div>`).join('')}
-  </div>
-
-  <!-- LEGEND -->
-  <div style="display:flex;gap:14px;align-items:center;margin-bottom:8px;font-size:9px;padding:5px 8px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0">
-    <span style="font-weight:700;color:#475569">Key:</span>
-    <span><span style="color:#059669;font-weight:700">ACT</span> = Actual</span>
-    <span><span style="color:#d97706;font-weight:700">BUD</span> = Budget</span>
-    <span><span style="color:#6366f1;font-weight:700">VAR</span> = Variance (Finance std: Exp=B−A, Rev=A−B)</span>
-    <span style="color:#1e40af;font-weight:700">Blue cols</span> = Year Total
-    ${pyd?`<span style="color:#7c3aed;font-weight:700">Purple col</span> = Prior Year ${py}`:''}
-    <span><span style="color:#059669;font-weight:700">Green</span> = Favorable · <span style="color:#dc2626;font-weight:700">Red</span> = Unfavorable</span>
-  </div>
-
-  <!-- MAIN TABLE -->
-  <div style="overflow-x:auto">
-  <table style="width:100%;border-collapse:collapse;font-size:7.5px">
-    <thead>
-      <tr>
-        <th rowspan="2" style="padding:6px 8px;text-align:left;font-size:9px;font-weight:700;
-          color:#1e293b;background:#e2e8f0;border:1px solid #cbd5e1;min-width:110px">Description</th>
-        ${mhdrs}
-        <th colspan="3" style="padding:5px 3px;text-align:center;font-size:8px;font-weight:800;
-          color:#1e40af;background:#dbeafe;border:1px solid #bfdbfe">FULL YEAR</th>
-        ${pyd?`<th rowspan="2" style="padding:5px 3px;text-align:center;font-size:8px;font-weight:700;
-          color:#7c3aed;background:#ede9fe;border:1px solid #ddd6fe;white-space:nowrap">${py}<br>Actual</th>`:''}
-      </tr>
-      <tr>${subhdrs}</tr>
-    </thead>
-    <tbody>
-      <!-- METRICS -->
-      ${secHdr('OCCUPANCY & EFFICIENCY','#0f172a','#e2e8f0')}
-      ${metricRows}
-
-      <!-- REVENUE -->
-      ${secHdr('REVENUE (QAR)','#065f46','#d1fae5')}
-      ${dataRow('Laundry Revenue (FS Doha)','revLaA','revLaB',false,'#f0fdf4',false,'#065f46')}
-      ${dataRow('Pearl Valet Revenue — FS Pearl','revVaA','revVaB',false,'#faf5ff',false,'#4c1d95')}
-      ${dataRow('TOTAL REVENUE','totRevA','totRevB',false,'#dcfce7',true,'#065f46')}
-
-      <!-- EXPENSES -->
-      ${secHdr('OPERATING EXPENSES (QAR)','#7f1d1d','#fee2e2')}
-      ${dataRow('Laundry Supplies','laA','laB',true,'#fff7ed',false,'#92400e')}
-      ${dataRow('Operating Supplies','opA','opB',true,'#f0fdf4',false,'#14532d')}
-      ${dataRow('Printing & Stationery','prA','prB',true,'#fff1f2',false,'#9f1239')}
-      ${dataRow('TOTAL EXPENSES','totExpA','totExpB',true,'#fee2e2',true,'#7f1d1d')}
-    </tbody>
-  </table>
-  </div>
-
-  <!-- FOOTER -->
-  <div style="margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
-    padding:8px 16px;display:flex;justify-content:space-between;align-items:center;font-size:8px;color:#94a3b8">
-    <div>Four Seasons Hotel Doha · Laundry Department · Budget Performance Report · <strong style="color:#dc2626">CONFIDENTIAL</strong></div>
-    <div>RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</div>
-  </div>
+    <!-- PAGE 3: Full Year Summary -->
+    <div style="padding:12px 14px">
+      ${pageHeader('Full Year Summary')}
+      ${fullYearTotals()}
+      ${footer()}
+    </div>
 
   </body></html>`;
 
   const w = window.open('','_blank','width=1400,height=900');
   w.document.write(html);
   w.document.close();
-  setTimeout(()=>{ w.focus(); w.print(); }, 600);
-  toast('Budget Report PDF ready ✓');
+  setTimeout(()=>{ w.focus(); w.print(); }, 700);
+  toast('Budget Report PDF ready — 3 pages ✓');
 }
 
 function exportReportExcel(){
+  const y=rptYear,py=y-1;
+  const yd=getYearData(y);
+  const pyd=py>=2024?getYearData(py):null;
+  const now=new Date().toLocaleDateString('en-US');
+  const rows=[];
+  const hdr1=['Description',...MS.flatMap(m=>[m,'','']),'Year Total','','',py+' Actual'];
+  const hdr2=['',...Array(12).fill(['Actual','Budget','Variance']).flat(),'Actual','Budget','Variance','Prior Year'];
+  rows.push(hdr1,hdr2);
+  rows.push(['Rooms Sold',...yd.months.flatMap(mo=>[mo.rooms,'','']),yd.totRs,'','','']);
+  rows.push(['Occupancy %',...yd.months.flatMap(mo=>[mo.occ?mo.occ.toFixed(1)+'%':'—','','']),yd.occ?yd.occ.toFixed(1)+'%':'','','','']);
+  rows.push(['Total KG',...yd.months.flatMap(mo=>[mo.kg||0,'','']),yd.totKg,'','','']);
+  rows.push(['CPOR Actual',...yd.months.flatMap(mo=>[mo.rooms&&mo.totExpA?(mo.totExpA/mo.rooms).toFixed(4):0,'','']),yd.cporA?yd.cporA.toFixed(4):0,'','','']);
+  const addLine=(label,keyA,keyB,isExp)=>{
+    let ytdA=0,ytdB=0,ytdPy=0;
+    const cells=yd.months.flatMap(mo=>{
+      const a=mo[keyA]||0,b=mo[keyB]||0;
+      ytdA+=a;ytdB+=b;
+      if(pyd)ytdPy+=pyd.months[mo.m][keyA]||0;
+      return[a,b,isExp?b-a:a-b];
+    });
+    rows.push([label,...cells,ytdA,ytdB,isExp?ytdB-ytdA:ytdA-ytdB,pyd?ytdPy:'—']);
+  };
+  rows.push(['--- REVENUE ---']);
+  addLine('Laundry Revenue','revLaA','revLaB',false);
+  addLine('Pearl Valet Revenue','revVaA','revVaB',false);
+  addLine('TOTAL REVENUE','totRevA','totRevB',false);
+  rows.push(['--- OPERATING EXPENSES ---']);
+  addLine('Laundry Supplies','laA','laB',true);
+  addLine('Operating Supplies','opA','opB',true);
+  addLine('Printing & Stationery','prA','prB',true);
+  addLine('TOTAL EXPENSES','totExpA','totExpB',true);
+  const csv=rows.map(r=>r.map(c=>{const s=String(c??'');return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`':s;}).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`RS_BudgetReport_${y}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('Excel file exported ✓');
+}
+
+
   const y=rptYear,py=y-1;
   const yd=getYearData(y);
   const pyd=py>=2024?getYearData(py):null;
