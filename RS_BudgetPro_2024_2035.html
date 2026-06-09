@@ -6589,7 +6589,7 @@ function cqeLoad(){
               <div style="font-size:10px;color:#4a5568">
                 Cost: <span style="font-family:var(--ff-m);color:var(--teal);font-weight:700">${actC ? 'QAR ' + fN(actC) : '—'}</span>
               </div>
-              ${vsPy !== null ? `<div style="font-size:10px;font-weight:700;color:${vsPyCol}">${vsPy > 0 ? '+' : ''}${vsPy}d vs ${py}</div>` : ''}
+              ${vsPy !== null && actD > 0 ? `<div style="font-size:10px;font-weight:700;color:${vsPyCol}">${vsPy > 0 ? '+' : ''}${vsPy}d vs ${py}</div>` : ''}
             </div>
           </div>
         </div>`;
@@ -6649,9 +6649,9 @@ function cqeUpdateSummary(){
         <div style="font-family:var(--ff-m);font-size:14px;color:var(--teal);font-weight:700">${totActD} days</div></div>
       <div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Cost (QAR)</div>
         <div style="font-family:var(--ff-m);font-size:14px;color:var(--teal);font-weight:700">${fN(totActC)}</div></div>
-      ${totPyD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">${py} Same Month</div>
+      ${totPyD && totActD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">${py} Same Month</div>
         <div style="font-family:var(--ff-m);font-size:14px;color:#64748b;font-weight:700">${totPyD}d · ${fN(totPyC)}</div></div>` : ''}
-      ${vsDays !== null ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">vs ${py}</div>
+      ${vsDays !== null && totActD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">vs ${py}</div>
         <div style="font-family:var(--ff-m);font-size:14px;font-weight:700;color:${vsCol}">${vsDays > 0 ? '+' : ''}${vsDays}d &nbsp; ${vsCost > 0 ? '+' : ''}${fN(vsCost)}</div></div>` : ''}
     </div>`;
 }
