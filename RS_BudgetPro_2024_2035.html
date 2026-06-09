@@ -2134,6 +2134,12 @@ select option{background:var(--bg4)}
         </select>
       <button onclick="exportRevPDF()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer" onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">🖨 Revenue PDF</button>
       <button onclick="exportRevExcel()" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(56,189,248,.4);color:var(--sky);background:rgba(56,189,248,.1);cursor:pointer" onmouseover="this.style.background='rgba(56,189,248,.2)'" onmouseout="this.style.background='rgba(56,189,248,.1)'">📊 Revenue Excel</button>
+      <button onclick="lockRevFullYear(revYear||new Date().getFullYear())"
+        style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(245,197,66,.4);color:var(--amber);background:rgba(245,197,66,.08);cursor:pointer"
+        onmouseover="this.style.background='rgba(245,197,66,.18)'" onmouseout="this.style.background='rgba(245,197,66,.08)'">\uD83D\uDD12 Lock Year</button>
+      <button onclick="unlockRevFullYear(revYear||new Date().getFullYear())"
+        style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid rgba(255,107,107,.35);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer"
+        onmouseover="this.style.background='rgba(255,107,107,.15)'" onmouseout="this.style.background='rgba(255,107,107,.06)'">\uD83D\uDD13 Unlock Year</button>
     </div>
   </div>
   <!-- REVENUE PROJECTION PANEL -->
@@ -2554,11 +2560,11 @@ function pearlActive(y,m){ return y>PEARL_START_Y||(y===PEARL_START_Y&&m>=PEARL_
 const MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-const K_D='rsBP_d_v4',K_I='rsBP_i_v4',K_S='rsBP_s_v4',K_P='rsBP_p_v4',K_SI='rsBP_si_v1',K_LK='rsBP_lk_v1';
+const K_D='rsBP_d_v4',K_I='rsBP_i_v4',K_S='rsBP_s_v4',K_P='rsBP_p_v4',K_SI='rsBP_si_v1',K_LK='rsBP_lk_v1',K_RLK='rsBP_rlk_v1';
 
 // DATA[year][0..11]={roomsSold,kg,laA,opA,prA}
 // PROJ[year][0..11]={roomsSold} — projection entries
-let DATA={},INCS=[],SETT={baseLa:324939.18,baseOp:47811,basePr:18590,baseRs:46613,roomsAvail:237,cporMethod:'single'},PROJ={},SPEC=[],LOCKS={};
+let DATA={},INCS=[],SETT={baseLa:324939.18,baseOp:47811,basePr:18590,baseRs:46613,roomsAvail:237,cporMethod:'single'},PROJ={},SPEC=[],LOCKS={},REV_LOCKS={};
 let activeY=new Date().getFullYear(),dashY=new Date().getFullYear();
 
 /* ── PERSIST ── */
@@ -2579,12 +2585,13 @@ function saveAll(){
   localStorage.setItem(K_REV, JSON.stringify(REV));
   localStorage.setItem(K_REVB,JSON.stringify(REV_BUD));
   localStorage.setItem(K_LK,  JSON.stringify(LOCKS));
+  localStorage.setItem(K_RLK, JSON.stringify(REV_LOCKS));
   localStorage.setItem(K_SI, JSON.stringify(SPEC));
   localStorage.setItem('rsBP_lastSaved',new Date().toLocaleString());
 
   // 2. Save to Firebase (cloud backup)
   fbSave({
-    DATA, INCS, SETT, PROJ, SPEC, REV, REV_BUD, LOCKS,
+    DATA, INCS, SETT, PROJ, SPEC, REV, REV_BUD, LOCKS, REV_LOCKS,
     _savedAt: new Date().toISOString()
   });
 }
@@ -4640,7 +4647,7 @@ function f0(n){if(!n&&n!==0)return'—';return n.toLocaleString('en-US',{minimum
 // REV_BUD[year][month] = {laB, valB} (budgets)
 let REV={}, REV_BUD={};
 const K_REV='rsBP_rev_v1', K_REVB='rsBP_revb_v1';
-let revYear=2025, revModalYear=2025;
+let revYear=new Date().getFullYear(), revModalYear=new Date().getFullYear();
 
 function loadRev(){
   try{const d=localStorage.getItem(K_REV); if(d)REV=JSON.parse(d)}catch(e){}
@@ -4650,7 +4657,8 @@ function saveRev(){
   localStorage.setItem(K_REV,JSON.stringify(REV));
   localStorage.setItem(K_REVB,JSON.stringify(REV_BUD));
   localStorage.setItem(K_LK,  JSON.stringify(LOCKS));
-  localStorage.setItem(K_SI,JSON.stringify(SPEC));
+  localStorage.setItem(K_LK,  JSON.stringify(LOCKS));
+  localStorage.setItem(K_RLK, JSON.stringify(REV_LOCKS));
   localStorage.setItem('rsBP_lastSaved',new Date().toLocaleString());
 }
 
@@ -4729,6 +4737,8 @@ function makeRevCard(y,m){
   const laB=b.laB||0, valB=b.valB||0, othB=b.othB||0;
   const totA=laA+valA+othA, totB=laB+valB+othB;
   const hasData=!!(laA||valA||othA);
+  const locked=isRevLocked(y,m);
+  const dis=locked?'disabled style="opacity:.45;cursor:not-allowed;"':'';
 
   const laPct =laB ?Math.min(200,laA/laB*100):0;
   const valPct=valB?Math.min(200,valA/valB*100):0;
@@ -4780,9 +4790,19 @@ function makeRevCard(y,m){
       <div style="display:flex;align-items:center;gap:8px">
         <span class="rev-month-name">${MF[m]}</span>
         <div class="mc-dot" style="${hasData?'background:var(--teal)':''}"></div>
+        ${locked?`<span style="font-size:9px;font-weight:700;color:var(--amber);background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:5px;padding:1px 6px">\uD83D\uDD12 Locked</span>`:''}
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:6px">
         ${totB?`<span style="font-family:var(--ff-m);font-size:11px;color:${arcCol};background:${arcCol}22;padding:2px 8px;border-radius:10px">${totPct.toFixed(0)}% of target</span>`:'<span style="font-size:10px;color:var(--text3)">No budget set</span>'}
+        <button onclick="toggleRevLock(${y},${m})" title="${locked?'Unlock month':'Lock month'}"
+          style="padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;
+            border:1px solid ${locked?'rgba(255,107,107,.35)':'rgba(245,197,66,.35)'};
+            color:${locked?'var(--coral)':'var(--amber)'};
+            background:${locked?'rgba(255,107,107,.06)':'rgba(245,197,66,.06)'};cursor:pointer;
+            transition:all .15s"
+          onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+          ${locked?'\uD83D\uDD13 Unlock':'\uD83D\uDD12 Lock'}
+        </button>
       </div>
     </div>
     <div class="rev-card-body">
@@ -4822,14 +4842,14 @@ function makeRevCard(y,m){
           <input type="number" placeholder="0.00" value="${r.laA!==undefined?r.laA:''}"
             data-f="laA" class="${r.laA!==undefined?'filled':''}"
             style="${r.laA!==undefined?'color:var(--teal);border-color:rgba(0,212,184,.3)':''}"
-            oninput="hRev(this,${y},${m})" onblur="hRevBlur(this,${y},${m})">
+            oninput="hRev(this,${y},${m})" onblur="hRevBlur(this,${y},${m})" ${dis}>
         </div>
         ${pearlActive(y,m)?`<div class="fld">
           <label><span class="ld" style="background:var(--violet)"></span>Valet Actual (Pearl)</label>
           <input type="number" placeholder="0.00" value="${r.valA!==undefined?r.valA:''}"
             data-f="valA" class="${r.valA!==undefined?'filled':''}"
             style="${r.valA!==undefined?'color:var(--violet);border-color:rgba(167,139,250,.3)':''}"
-            oninput="hRev(this,${y},${m})" onblur="hRevBlur(this,${y},${m})">
+            oninput="hRev(this,${y},${m})" onblur="hRevBlur(this,${y},${m})" ${dis}>
         </div>`:'<div style="opacity:.3;font-size:10px;color:var(--text3);padding:6px 0">Pearl N/A</div>'}
       </div>
       <div class="csl" style="color:var(--amber);margin-top:6px">Budget (QAR)</div>
@@ -4839,14 +4859,14 @@ function makeRevCard(y,m){
           <input type="number" placeholder="0.00" value="${b.laB||''}"
             data-f="laB" class="${b.laB?'filled':''}"
             style="${b.laB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
-            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
+            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})" ${dis}>
         </div>
         ${pearlActive(y,m)?`<div class="fld">
           <label><span class="ld" style="background:var(--amber)"></span>Valet Budget (Pearl)</label>
           <input type="number" placeholder="0.00" value="${b.valB||''}"
             data-f="valB" class="${b.valB?'filled':''}"
             style="${b.valB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
-            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
+            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})" ${dis}>
         </div>`:'<div style="opacity:.3;font-size:10px;color:var(--text3);padding:6px 0">Pearl N/A</div>'}
       </div>
     </div>
@@ -4866,14 +4886,14 @@ function makeRevCard(y,m){
           <input type="number" placeholder="e.g. 95.50 or -305" data-f="othA"
             class="${r.othA!==undefined&&r.othA!==0?'rev-inp filled':'rev-inp'}" value="${r.othA!==undefined&&r.othA!==0?r.othA:''}"
             style="${r.othA!==undefined&&r.othA!==0?'color:var(--teal);border-color:rgba(0,212,184,.3)':''}"
-            oninput="hRevAct(this,${y},${m})" onblur="hRevActBlur(this,${y},${m})">
+            oninput="hRevAct(this,${y},${m})" onblur="hRevActBlur(this,${y},${m})" ${dis}>
         </div>
         <div>
           <label style="font-size:9px;font-weight:700;color:var(--amber);display:block;margin-bottom:4px">BUDGET</label>
           <input type="number" placeholder="0.00" data-f="othB"
             class="${b.othB?'rev-inp filled':'rev-inp'}" value="${b.othB||''}"
             style="${b.othB?'color:var(--amber);border-color:rgba(255,179,71,.3)':''}"
-            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})">
+            oninput="hRevBud(this,${y},${m})" onblur="hRevBudBlur(this,${y},${m})" ${dis}>
         </div>
       </div>
     </div>`;
@@ -5865,11 +5885,11 @@ function updateRevProj(){
         <tr>
           <th style="background:#1a2236;padding:8px 10px;text-align:left;font-family:'Syne',sans-serif;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#64748b">Month</th>
           <th style="background:#1a2236;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa">Rooms Sold</th>
-          <th style="background:#003d30;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#00d4b8">🏨 Laundry Projected</th>
+          <th style="background:#003d30;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#00d4b8">\uD83C\uDFE8 Laundry Projected</th>
           ${hasBud?'<th style="background:#002a21;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;color:#4a9a8a;letter-spacing:.5px;text-transform:uppercase">Saved Budget</th>':''}
-          <th style="background:#2d1a5e;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa">💎 Pearl Projected</th>
+          <th style="background:#2d1a5e;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#a78bfa">\uD83D\uDC8E Pearl Projected</th>
           ${hasBud?'<th style="background:#1e0f42;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;color:#7c5cc0;letter-spacing:.5px;text-transform:uppercase">Saved Budget</th>':''}
-          <th style="background:#3d3000;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#f5c542">📊 Total Projected</th>
+          <th style="background:#3d3000;padding:8px 10px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#f5c542">\uD83D\uDCCA Total Projected</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -8541,345 +8561,314 @@ function buildGuideTab(){
 
 // Default companies — stored in SETT.casualCompanies
 // Structure: [{id, name, rates:[{rate, fromY, fromM, toY, toM}]}]
+
+/* ════════════════════════════════════════
+   CASUAL LABOUR — DATA HELPERS
+   ════════════════════════════════════════ */
 function getCasualCompanies(){
-  if(!SETT.casualCompanies || !SETT.casualCompanies.length){
-    SETT.casualCompanies = [
-      {id:'alaska',  name:'Alaska',   rates:[{rate:95,  fromY:2024,fromM:0,toY:2099,toM:11}]},
-      {id:'mrvalet', name:'Mr. Valet',rates:[{rate:100, fromY:2024,fromM:0,toY:2099,toM:11}]},
+  if(!SETT.casualCompanies||!SETT.casualCompanies.length){
+    SETT.casualCompanies=[
+      {id:'alaska',  name:'Alaska',   rates:[{rate:95, fromY:2024,fromM:0,toY:2099,toM:11}]},
+      {id:'mrvalet', name:'Mr. Valet',rates:[{rate:100,fromY:2024,fromM:0,toY:2099,toM:11}]},
     ];
   }
   return SETT.casualCompanies;
 }
 
-// Get effective rate for a company in a given year/month
-function casualRate(compId, y, m){
-  const comp = getCasualCompanies().find(c=>c.id===compId);
+function casualRate(compId,y,m){
+  const comp=getCasualCompanies().find(c=>c.id===compId);
   if(!comp) return 0;
-  // Find the rate entry whose range covers y/m
-  const ym = y*12+m;
-  const match = comp.rates
-    .filter(r => (r.fromY*12+r.fromM) <= ym && (r.toY*12+r.toM) >= ym)
+  const ym=y*12+m;
+  const match=comp.rates
+    .filter(r=>(r.fromY*12+r.fromM)<=ym&&(r.toY*12+r.toM)>=ym)
     .sort((a,b)=>(b.fromY*12+b.fromM)-(a.fromY*12+a.fromM))[0];
-  return match ? match.rate : 0;
+  return match?match.rate:0;
 }
 
-// Casual actuals stored in DATA[y][m].casual = {alaska:{days,budget_days}, mrvalet:{days,budget_days}}
-// Casual budget projections stored in SETT.casualBudget[y][m] = {alaska:{days}, mrvalet:{days}}
-function getCasualBudget(y,m,compId){
-  return SETT.casualBudget?.[y]?.[m]?.[compId]?.days || 0;
-}
-function setCasualBudget(y,m,compId,days){
-  if(!SETT.casualBudget) SETT.casualBudget={};
-  if(!SETT.casualBudget[y]) SETT.casualBudget[y]={};
-  if(!SETT.casualBudget[y][m]) SETT.casualBudget[y][m]={};
-  if(!SETT.casualBudget[y][m][compId]) SETT.casualBudget[y][m][compId]={};
-  SETT.casualBudget[y][m][compId].days = days;
-}
 function getCasualActual(y,m,compId){
-  return DATA[y]?.[m]?.casual?.[compId]?.days || 0;
+  return DATA[y]?.[m]?.casual?.[compId]?.days||0;
 }
 function setCasualActual(y,m,compId,days){
-  if(!DATA[y]) DATA[y]={};
-  if(!DATA[y][m]) DATA[y][m]={};
-  if(!DATA[y][m].casual) DATA[y][m].casual={};
-  if(!DATA[y][m].casual[compId]) DATA[y][m].casual[compId]={};
-  DATA[y][m].casual[compId].days = days||undefined;
-  if(!days) delete DATA[y][m].casual[compId].days;
+  if(!DATA[y])DATA[y]={};
+  if(!DATA[y][m])DATA[y][m]={};
+  if(!DATA[y][m].casual)DATA[y][m].casual={};
+  if(!DATA[y][m].casual[compId])DATA[y][m].casual[compId]={};
+  if(days) DATA[y][m].casual[compId].days=days;
+  else delete DATA[y][m].casual[compId].days;
 }
 
-let casualY = new Date().getFullYear();
+// Projected days: rooms→KG→days chain using prior year ratios
+function casualProjectedDays(compId,y,m){
+  const py=y-1;
+  const pyKg=Array.from({length:12},(_,mm)=>DATA[py]?.[mm]?.kg||0).reduce((a,b)=>a+b,0);
+  const pyRs=Array.from({length:12},(_,mm)=>DATA[py]?.[mm]?.roomsSold||0).reduce((a,b)=>a+b,0);
+  const pyDays=Array.from({length:12},(_,mm)=>getCasualActual(py,mm,compId)).reduce((a,b)=>a+b,0);
+  if(!pyKg||!pyRs||!pyDays) return 0;
+  const kgPerRn=pyKg/pyRs;
+  const kgPerDay=pyKg/pyDays;
+  const projRooms=DATA[y]?.[m]?.roomsSold||PROJ[y]?.[m]?.roomsSold||0;
+  const estKg=projRooms*kgPerRn;
+  return estKg?Math.round(estKg/kgPerDay):0;
+}
 
+let casualY=new Date().getFullYear();
+
+/* ════════════════════════════════════════
+   CASUAL LABOUR — BUILD TAB
+   ════════════════════════════════════════ */
 function buildCasualTab(){
-  const el = document.getElementById('casual-body');
+  const el=document.getElementById('casual-body');
   if(!el) return;
-  const comps = getCasualCompanies();
-  const MF = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const MFF = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const curY = new Date().getFullYear();
-  const curM = new Date().getMonth();
+  const comps=getCasualCompanies();
+  const MF=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MFF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const curY=new Date().getFullYear(), curM=new Date().getMonth();
+  const py=casualY-1;
 
-  // ── KPI data ──────────────────────────────────────────────
-  let kpis = {};
+  // ── KPIs ──
+  let totActCost=0,totProjCost=0,totPyCost=0;
+  const compKpis={};
   comps.forEach(c=>{
-    let totActDays=0, totActCost=0, totBudDays=0, totBudCost=0;
+    let actD=0,actC=0,projD=0,projC=0,pyD=0,pyC=0;
     for(let m=0;m<12;m++){
-      const actDays = getCasualActual(casualY,m,c.id);
-      const budDays = getCasualBudget(casualY,m,c.id);
-      const rate    = casualRate(c.id,casualY,m);
-      totActDays+=actDays; totActCost+=actDays*rate;
-      totBudDays+=budDays; totBudCost+=budDays*rate;
+      const r=casualRate(c.id,casualY,m), rpy=casualRate(c.id,py,m);
+      const a=getCasualActual(casualY,m,c.id);
+      const p=casualProjectedDays(c.id,casualY,m);
+      const prev=getCasualActual(py,m,c.id);
+      actD+=a; actC+=a*r; projD+=p; projC+=p*r; pyD+=prev; pyC+=prev*rpy;
     }
-    kpis[c.id]={totActDays,totActCost,totBudDays,totBudCost};
+    compKpis[c.id]={actD,actC,projD,projC,pyD,pyC};
+    totActCost+=actC; totProjCost+=projC; totPyCost+=pyC;
   });
-  const totActCostAll = comps.reduce((s,c)=>s+(kpis[c.id]?.totActCost||0),0);
-  const totKg  = Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.kg||0),0);
-  const totRs  = Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.roomsSold||0),0);
-  const costPerKg = totKg ? totActCostAll/totKg : 0;
-  const costPerRn = totRs ? totActCostAll/totRs : 0;
+  const totKg=Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.kg||0),0);
+  const totRs=Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.roomsSold||0),0);
 
-  // ── KPI card HTML ──────────────────────────────────────────
+  // ── Prior year ratios display ──
+  const pyKgTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.kg||0).reduce((a,b)=>a+b,0);
+  const pyRsTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.roomsSold||0).reduce((a,b)=>a+b,0);
+  const kgPerRnRatio=pyRsTot&&pyKgTot?pyKgTot/pyRsTot:0;
+
+  // ── KPI card ──
   const kpiCard=(label,val,sub,col)=>`
     <div style="background:#1a2236;border:1px solid ${col}30;border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${col},transparent)"></div>
       <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">${label}</div>
-      <div style="font-family:'DM Mono',monospace;font-size:17px;font-weight:700;color:${col}">${val}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${col};line-height:1.2">${val}</div>
       <div style="font-size:10px;color:#4a5568;margin-top:3px">${sub}</div>
     </div>`;
 
-  // ── Month table ────────────────────────────────────────────
-  const buildMonthTable = ()=>{
-    const rows = MF.map((ms,m)=>{
-      const isFuture = casualY>curY||(casualY===curY&&m>curM);
-      const kg   = DATA[casualY]?.[m]?.kg||0;
-      const rs   = DATA[casualY]?.[m]?.roomsSold||0;
-      const cells = comps.map(c=>{
-        const actD = getCasualActual(casualY,m,c.id);
-        const budD = getCasualBudget(casualY,m,c.id);
-        const rate = casualRate(c.id,casualY,m);
-        const actC = actD*rate, budC=budD*rate;
-        const var_ = budC ? budC-actC : null;
-        const varCol = var_===null?'#4a5568':var_>=0?'#00d4b8':'#ff6b6b';
-        return `
-          <td style="padding:6px 4px;text-align:center">
-            <input type="text" inputmode="decimal"
-              value="${actD||''}" placeholder="—"
-              data-y="${casualY}" data-m="${m}" data-c="${c.id}" data-t="act"
-              onchange="casualSaveDay(this)"
-              style="width:54px;background:${isFuture?'rgba(255,255,255,.03)':'var(--bg3)'};border:1px solid ${actD?'rgba(0,212,184,.3)':'var(--border)'};
-                border-radius:5px;padding:4px 5px;font-family:var(--ff-m);font-size:11px;
-                font-weight:600;color:var(--teal);text-align:center;outline:none;
-                ${isFuture?'opacity:.5':''}">
-          </td>
-          <td style="padding:6px 4px;text-align:center">
-            <input type="text" inputmode="decimal"
-              value="${budD||''}" placeholder="—"
-              data-y="${casualY}" data-m="${m}" data-c="${c.id}" data-t="bud"
-              onchange="casualSaveDay(this)"
-              style="width:54px;background:rgba(255,179,71,.04);border:1px solid ${budD?'rgba(255,179,71,.3)':'var(--border)'};
-                border-radius:5px;padding:4px 5px;font-family:var(--ff-m);font-size:11px;
-                font-weight:600;color:var(--amber);text-align:center;outline:none">
-          </td>
-          <td style="padding:6px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${actC?fN(actC):'—'}</td>
-          <td style="padding:6px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--amber)">${budC?fN(budC):'—'}</td>
-          <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:600;color:${varCol}">${var_!==null?(var_>=0?'+':'')+fN(var_):'—'}</td>`;
-      }).join('');
-      // Totals for this month
-      const totActM = comps.reduce((s,c)=>s+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-      const totBudM = comps.reduce((s,c)=>s+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-      const totVarM = totBudM ? totBudM-totActM : null;
-      const tvCol   = totVarM===null?'#4a5568':totVarM>=0?'#a3e635':'#ff6b6b';
-      return `<tr style="background:${isFuture?'rgba(255,255,255,.01)':m%2?'rgba(255,255,255,.015)':'transparent'}${isFuture?';opacity:.45':''}">
-        <td style="padding:6px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:${isFuture?'#4a5568':'var(--text2)'}">
-          ${casualY===curY&&m===curM?`<span style="color:var(--teal)">●</span> `:''}${MFF[m]}
+  // ── Month table ──
+  const monthRows=MF.map((ms,m)=>{
+    const isFuture=casualY>curY||(casualY===curY&&m>curM);
+    const kg=DATA[casualY]?.[m]?.kg||0;
+    const rs=DATA[casualY]?.[m]?.roomsSold||PROJ[casualY]?.[m]?.roomsSold||0;
+
+    const compCells=comps.map(c=>{
+      const rate=casualRate(c.id,casualY,m);
+      const ratePy=casualRate(c.id,py,m);
+      const actD=getCasualActual(casualY,m,c.id);
+      const projD=casualProjectedDays(c.id,casualY,m);
+      const pyD=getCasualActual(py,m,c.id);
+      const actC=actD*rate, projC=projD*rate, pyC=pyD*ratePy;
+
+      // vs projected variance
+      const vProj=projD&&actD?(actD-projD):null;
+      const vProjCol=vProj===null?'#4a5568':vProj<=0?'var(--teal)':'var(--coral)';
+      // vs prior year variance
+      const vPy=pyD&&actD?(actD-pyD):null;
+      const vPyCol=vPy===null?'#4a5568':vPy<=0?'var(--teal)':'var(--coral)';
+
+      return `
+        <td style="padding:5px 3px;text-align:center">
+          <input type="text" inputmode="decimal"
+            value="${actD||''}" placeholder="—"
+            data-y="${casualY}" data-m="${m}" data-c="${c.id}"
+            onchange="casualSaveDay(this)"
+            style="width:50px;background:${isFuture?'rgba(255,255,255,.03)':'var(--bg3)'};
+              border:1px solid ${actD?'rgba(0,212,184,.35)':'var(--border)'};
+              border-radius:5px;padding:4px 4px;font-family:var(--ff-m);font-size:11px;
+              font-weight:700;color:var(--teal);text-align:center;outline:none;
+              ${isFuture?'opacity:.45':''}">
         </td>
-        <td style="padding:6px 8px;text-align:right;font-size:10px;color:#4a5568">${kg?kg.toLocaleString():'—'}</td>
-        <td style="padding:6px 8px;text-align:right;font-size:10px;color:#4a5568">${rs?rs.toLocaleString():'—'}</td>
-        ${cells}
-        <td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--teal);background:rgba(0,212,184,.04)">${totActM?fN(totActM):'—'}</td>
-        <td style="padding:6px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;color:var(--amber);background:rgba(255,179,71,.04)">${totBudM?fN(totBudM):'—'}</td>
-        <td style="padding:6px 8px;text-align:right;font-size:11px;font-weight:700;color:${tvCol}">${totVarM!==null?(totVarM>=0?'+':'')+fN(totVarM):'—'}</td>
-      </tr>`;
+        <td style="padding:5px 4px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal);font-weight:600">${actC?fN(actC):'—'}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:10px;color:#a78bfa">${projD||'—'}</td>
+        <td style="padding:5px 4px;text-align:right;font-size:10px;color:#a78bfa">${projC?fN(projC):'—'}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:10px;color:#64748b">${pyD||'—'}</td>
+        <td style="padding:5px 4px;text-align:right;font-size:10px;color:#64748b">${pyC?fN(pyC):'—'}</td>
+        <td style="padding:5px 3px;text-align:center;font-size:10px;font-weight:700;color:${vProjCol}">${vProj!==null?(vProj>0?'+':'')+vProj:'—'}</td>`;
     }).join('');
 
-    // Col headers per company
-    const compCols = comps.map(c=>`
-      <th colspan="5" style="padding:7px 6px;text-align:center;font-size:10px;font-weight:700;
-        color:var(--teal);background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.15)">
-        ${c.name} <span style="font-size:8px;color:#4a5568;font-weight:400">(QAR ${casualRate(c.id,casualY,0)}/day)</span>
-      </th>`).join('');
-    const subCols = comps.map(c=>`
-      <th style="padding:5px 3px;text-align:center;font-size:8px;color:var(--teal);border-left:2px solid rgba(0,212,184,.1)">Act Days</th>
-      <th style="padding:5px 3px;text-align:center;font-size:8px;color:var(--amber)">Bud Days</th>
-      <th style="padding:5px 3px;text-align:right;font-size:8px;color:var(--teal)">Act Cost</th>
-      <th style="padding:5px 3px;text-align:right;font-size:8px;color:var(--amber)">Bud Cost</th>
-      <th style="padding:5px 3px;text-align:right;font-size:8px;color:#64748b">Variance</th>`).join('');
+    const totActM=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+    const totProjM=comps.reduce((_,c)=>_+casualProjectedDays(c.id,casualY,m)*casualRate(c.id,casualY,m),0);
+    const totPyM=comps.reduce((_,c)=>_+getCasualActual(py,m,c.id)*casualRate(c.id,py,m),0);
+    const totVarM=totProjM&&totActM?totActM-totProjM:null;
+    const tvc=totVarM===null?'#4a5568':totVarM<=0?'var(--lime)':'var(--coral)';
 
-    // Totals row
-    const totRow = comps.map(c=>{
-      const tAD=MF.reduce((_,ms,m)=>_+getCasualActual(casualY,m,c.id),0);
-      const tBD=MF.reduce((_,ms,m)=>_+getCasualBudget(casualY,m,c.id),0);
-      const tAC=MF.reduce((_,ms,m)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-      const tBC=MF.reduce((_,ms,m)=>_+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-      const tv=tBC?tBC-tAC:null; const tvc=tv===null?'#4a5568':tv>=0?'#00d4b8':'#ff6b6b';
-      return `<td style="padding:8px 4px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--teal);border-left:2px solid rgba(0,212,184,.15)">${tAD||'—'}</td>
-        <td style="padding:8px 4px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--amber)">${tBD||'—'}</td>
-        <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--teal)">${tAC?fN(tAC):'—'}</td>
-        <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:var(--amber)">${tBC?fN(tBC):'—'}</td>
-        <td style="padding:8px 6px;text-align:right;font-size:10px;font-weight:700;color:${tvc}">${tv!==null?(tv>=0?'+':'')+fN(tv):'—'}</td>`;
-    }).join('');
-    const gTotAC = comps.reduce((_,c)=>_+MF.reduce((__,ms,m)=>__+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0),0);
-    const gTotBC = comps.reduce((_,c)=>_+MF.reduce((__,ms,m)=>__+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0),0);
-    const gVar   = gTotBC?gTotBC-gTotAC:null;
-    const gvc    = gVar===null?'#4a5568':gVar>=0?'#a3e635':'#ff6b6b';
+    return `<tr style="background:${isFuture?'rgba(255,255,255,.01)':m%2?'rgba(255,255,255,.018)':'transparent'}${isFuture?';opacity:.4':''}">
+      <td style="padding:5px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:${casualY===curY&&m===curM?'var(--teal)':isFuture?'#4a5568':'var(--text2)'}">
+        ${casualY===curY&&m===curM?'<span style="color:var(--teal)">● </span>':''}${MFF[m]}
+      </td>
+      <td style="padding:5px 6px;text-align:right;font-size:10px;color:#38bdf8">${kg?kg.toLocaleString():'—'}</td>
+      <td style="padding:5px 6px;text-align:right;font-size:10px;color:#a78bfa">${rs?rs.toLocaleString():'—'}</td>
+      ${compCells}
+      <td style="padding:5px 6px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.04)">${totActM?fN(totActM):'—'}</td>
+      <td style="padding:5px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;color:#a78bfa;background:rgba(167,139,250,.04)">${totProjM?fN(totProjM):'—'}</td>
+      <td style="padding:5px 6px;text-align:right;font-size:10px;color:#4a5568">${totPyM?fN(totPyM):'—'}</td>
+      <td style="padding:5px 6px;text-align:right;font-size:11px;font-weight:700;color:${tvc}">${totVarM!==null?(totVarM>0?'+':'')+fN(totVarM):'—'}</td>
+    </tr>`;
+  }).join('');
 
-    return `<div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;min-width:900px">
-        <thead>
-          <tr style="background:var(--bg3)">
-            <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
-            <th rowspan="2" style="padding:7px 6px;text-align:right;font-size:9px;color:#38bdf8">KG</th>
-            <th rowspan="2" style="padding:7px 6px;text-align:right;font-size:9px;color:#a78bfa">Rooms</th>
-            ${compCols}
-            <th colspan="3" style="padding:7px 6px;text-align:center;font-size:10px;font-weight:700;color:var(--lime);background:rgba(163,230,53,.06)">TOTAL</th>
-          </tr>
-          <tr style="background:var(--bg4)">
-            ${subCols}
-            <th style="padding:5px 4px;text-align:right;font-size:8px;color:var(--teal)">Act Cost</th>
-            <th style="padding:5px 4px;text-align:right;font-size:8px;color:var(--amber)">Bud Cost</th>
-            <th style="padding:5px 4px;text-align:right;font-size:8px;color:#64748b">Variance</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-        <tfoot>
-          <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
-            <td colspan="3" style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>
-            ${totRow}
-            <td style="padding:8px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.06)">${gTotAC?fN(gTotAC):'—'}</td>
-            <td style="padding:8px 8px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--amber);background:rgba(255,179,71,.06)">${gTotBC?fN(gTotBC):'—'}</td>
-            <td style="padding:8px 8px;text-align:right;font-size:11px;font-weight:800;color:${gvc}">${gVar!==null?(gVar>=0?'+':'')+fN(gVar):'—'}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>`;
-  };
+  // Column headers per company
+  const compHdrs=comps.map(c=>`
+    <th colspan="7" style="padding:6px 4px;text-align:center;font-size:10px;font-weight:700;
+      color:var(--teal);background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.15)">
+      ${c.name}
+      <span style="font-size:8px;color:#4a5568;font-weight:400">&nbsp;QAR ${casualRate(c.id,casualY,0)}/day</span>
+    </th>`).join('');
 
-  // ── Auto-project budget ───────────────────────────────────
-  const buildAutoProjectPanel = ()=>{
-    // Find prior year KG/days ratio per company
-    const py = casualY-1;
-    const pyKg = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.kg||0),0);
-    const pyRs = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.roomsSold||0),0);
-    const kgPerRnRatio = pyRs && pyKg ? pyKg/pyRs : 0;
-    const pyDays = comps.reduce((acc,c)=>{
-      acc[c.id]=MF.reduce((_,ms,m)=>_+getCasualActual(py,m,c.id),0); return acc;},{});
-    const kgPerDay = {};
-    comps.forEach(c=>{ kgPerDay[c.id]=pyDays[c.id]&&pyKg?pyKg/pyDays[c.id]:0; });
-    // Projected KG: use actual KG if entered, else estimate from projected rooms x prior year KG/RN ratio
-    const projKgPerMonth = MF.map((_,m)=>{
-      const actKg=DATA[casualY]?.[m]?.kg||0; if(actKg) return actKg;
-      const rs=DATA[casualY]?.[m]?.roomsSold||PROJ[casualY]?.[m]?.roomsSold||0;
-      return kgPerRnRatio?Math.round(rs*kgPerRnRatio):0;
-    });
-    const projKg = projKgPerMonth.reduce((s,v)=>s+v,0);
+  const subHdrs=comps.map(c=>`
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);border-left:2px solid rgba(0,212,184,.1);text-align:center">Act Days</th>
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);text-align:right">Act Cost</th>
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:center">Proj Days</th>
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:right">Proj Cost</th>
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:center">${py} Days</th>
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:right">${py} Cost</th>
+    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">vs Proj</th>`).join('');
 
-    return `<div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.2);border-radius:10px;padding:14px 16px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-        <div>
-          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--teal)">🤖 Auto-Project Budget from Projected Rooms</div>
-          <div style="font-size:10px;color:#4a5568;margin-top:2px">
-            Chain: Projected Rooms (${casualY}) × KG/Room Night (${py} ratio) = Est. KG → ÷ KG/Casual Day (${py} ratio) = Budget Days needed
-          </div>
-        </div>
-        <button onclick="casualAutoProject(${casualY})" style="padding:7px 16px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer"
-          onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">
-          ⚡ Apply Auto-Projection to ${casualY} Budget
-        </button>
-      </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap">
-        <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
-          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${py} Total KG</div>
-          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#38bdf8">${pyKg.toLocaleString()}</div>
-        </div>
-        ${comps.map(c=>`
-          <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
-            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${c.name} ${py} Days</div>
-            <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--teal)">${pyDays[c.id]||'—'}</div>
-          </div>
-          <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
-            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${c.name} KG/Day</div>
-            <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:var(--amber)">${kgPerDay[c.id]?kgPerDay[c.id].toFixed(1)+' KG':'—'}</div>
-          </div>`).join('')}
-        <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
-          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${py} KG per Room Night</div>
-          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#38bdf8">${kgPerRnRatio?kgPerRnRatio.toFixed(3)+' KG':'No data'}</div>
-        </div>
-        <div style="background:var(--bg3);border-radius:7px;padding:8px 12px">
-          <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">${casualY} Est. Total KG</div>
-          <div style="font-family:var(--ff-m);font-size:13px;font-weight:700;color:#a78bfa">${projKg?projKg.toLocaleString():'Enter rooms in Projection Planner'}</div>
-          <div style="font-size:9px;color:#4a5568;margin-top:2px">${kgPerRnRatio?'from projected rooms \xd7 '+kgPerRnRatio.toFixed(3):'—'}</div>
-        </div>
-      </div>
-    </div>`;
-  };
+  // Totals row
+  const totalsRow=comps.map(c=>{
+    const k=compKpis[c.id];
+    return `<td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--teal);border-left:2px solid rgba(0,212,184,.15)">${k.actD||'—'}</td>
+      <td style="padding:7px 4px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--teal)">${k.actC?fN(k.actC):'—'}</td>
+      <td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:700;color:#a78bfa">${k.projD||'—'}</td>
+      <td style="padding:7px 4px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:#a78bfa">${k.projC?fN(k.projC):'—'}</td>
+      <td style="padding:7px 3px;text-align:center;font-size:10px;font-weight:700;color:#64748b">${k.pyD||'—'}</td>
+      <td style="padding:7px 4px;text-align:right;font-size:10px;font-weight:700;color:#64748b">${k.pyC?fN(k.pyC):'—'}</td>
+      <td style="padding:7px 3px;text-align:center;font-size:10px;font-weight:700;color:${k.actD&&k.projD?(k.actD<=k.projD?'var(--teal)':'var(--coral)'):'#4a5568'}">${k.actD&&k.projD?(k.actD-k.projD>0?'+':'')+(k.actD-k.projD):'—'}</td>`;
+  }).join('');
 
-  // ── Company management modal trigger ──────────────────────
-  const compCards = comps.map(c=>{
-    const latestRate = c.rates.sort((a,b)=>(b.fromY*12+b.fromM)-(a.fromY*12+a.fromM))[0];
-    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;flex:1;min-width:200px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+  const gVarC=totActCost&&totProjCost?totActCost-totProjCost:null;
+  const gvc=gVarC===null?'#4a5568':gVarC<=0?'var(--lime)':'var(--coral)';
+
+  // Company cards
+  const compCards=comps.map(c=>{
+    const latestRate=c.rates.sort((a,b)=>(b.fromY*12+b.fromM)-(a.fromY*12+a.fromM))[0];
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;flex:1;min-width:180px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--text)">${c.name}</div>
-        <button onclick="openCasualCompModal('${c.id}')" style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">✏️ Edit</button>
+        <button onclick="openCasualCompModal('${c.id}')" style="padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">✏ Edit</button>
       </div>
-      <div style="font-size:11px;color:#4a5568;margin-bottom:4px">Current rate: <strong style="color:var(--amber);font-family:var(--ff-m)">QAR ${latestRate?.rate||0}/day</strong></div>
-      <div style="font-size:10px;color:#4a5568">${c.rates.length} rate period${c.rates.length>1?'s':''} on record</div>
+      <div style="font-size:11px;color:#4a5568">Rate: <strong style="color:var(--amber);font-family:var(--ff-m)">QAR ${latestRate?.rate||0}/day</strong></div>
+      <div style="font-size:10px;color:#4a5568;margin-top:2px">${c.rates.length} rate period${c.rates.length>1?'s':''}</div>
     </div>`;
   }).join('');
 
-  // ── Render ─────────────────────────────────────────────────
-  el.innerHTML = `<div class="main" style="padding-bottom:80px">
+  // Ratios info panel
+  const ratiosPanel=`<div style="background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:9px;padding:12px 14px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+    <div style="font-size:10px;font-weight:700;color:#38bdf8;flex-shrink:0">📐 ${py} Ratios used for ${casualY} projection:</div>
+    ${kgPerRnRatio?`<div style="font-size:10px;color:#4a5568"><span style="color:#38bdf8;font-family:var(--ff-m);font-weight:700">${kgPerRnRatio.toFixed(3)}</span> KG / Room Night</div>`:'<div style="font-size:10px;color:var(--coral)">No ${py} KG data — enter in Monthly Entry</div>'}
+    ${comps.map(c=>{
+      const pyKgT=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.kg||0).reduce((a,b)=>a+b,0);
+      const pyDT=Array.from({length:12},(_,m)=>getCasualActual(py,m,c.id)).reduce((a,b)=>a+b,0);
+      const kpd=pyKgT&&pyDT?pyKgT/pyDT:0;
+      return `<div style="font-size:10px;color:#4a5568">${c.name}: <span style="color:var(--amber);font-family:var(--ff-m);font-weight:700">${kpd?kpd.toFixed(1):'—'}</span> KG/day</div>`;
+    }).join('')}
+    <div style="font-size:10px;color:#4a5568;margin-left:auto">Rooms from: <span style="color:var(--violet)">Monthly Entry actuals → Projection Planner</span></div>
+  </div>`;
 
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
-      <div>
-        <div class="pt">👷 Casual Labour <span>Days · Cost · Budget — separate from main expenses</span></div>
-      </div>
+  // ── Render ──
+  el.innerHTML=`<div class="main" style="padding-bottom:80px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <div class="pt">👷 Casual Labour <span>Actual · Projected · Prior Year — separate from main expenses</span></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div class="ypills" id="yp-casual"></div>
-        <button onclick="openCasualCompModal('new')" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.4);color:var(--lime);background:rgba(163,230,53,.08);cursor:pointer"
-          onmouseover="this.style.background='rgba(163,230,53,.18)'" onmouseout="this.style.background='rgba(163,230,53,.08)'">
-          ➕ Add Company
-        </button>
-        <button onclick="printCasualPDF()" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.35);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer"
-          onmouseover="this.style.background='rgba(255,107,107,.15)'" onmouseout="this.style.background='rgba(255,107,107,.06)'">
-          🖨 Print Report
-        </button>
+        <button onclick="openCasualCompModal('new')" style="padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.35);color:var(--lime);background:rgba(163,230,53,.07);cursor:pointer">➕ Add Company</button>
+        <button onclick="printCasualPDF()" style="padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer">🖨 Print</button>
       </div>
     </div>
 
     <!-- Company cards -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">${compCards}
-      <div style="background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:9px;padding:12px 14px;flex:1;min-width:200px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#38bdf8;margin-bottom:6px">Total Casual Cost ${casualY}</div>
-        <div style="font-family:var(--ff-m);font-size:18px;font-weight:700;color:#38bdf8">${totActCostAll?'QAR '+fN(totActCostAll):'—'}</div>
-        <div style="font-size:10px;color:#4a5568;margin-top:4px">
-          ${costPerKg?'QAR '+costPerKg.toFixed(3)+' per KG &nbsp;·&nbsp; ':''}
-          ${costPerRn?'QAR '+costPerRn.toFixed(2)+' per room night':''}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      ${compCards}
+      <div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.15);border-radius:9px;padding:12px 14px;flex:2;min-width:220px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:8px">Total Casual Cost — ${casualY}</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">Actual</div><div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--teal)">${totActCost?'QAR '+fN(totActCost):'—'}</div></div>
+          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">Projected</div><div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:#a78bfa">${totProjCost?'QAR '+fN(totProjCost):'—'}</div></div>
+          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">${py} Actual</div><div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:#64748b">${totPyCost?'QAR '+fN(totPyCost):'—'}</div></div>
+          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">vs Projected</div>
+            <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:${gVarC===null?'#4a5568':gVarC<=0?'var(--lime)':'var(--coral)'}">
+              ${gVarC!==null?(gVarC>0?'+':'')+fN(gVarC):'—'}
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- KPI strip -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px">
       ${comps.map(c=>{
-        const k=kpis[c.id];
-        const v=k.totBudCost?k.totBudCost-k.totActCost:null;
-        const vc=v===null?'#4a5568':v>=0?'var(--teal)':'var(--coral)';
-        return kpiCard(`${c.name} — Actual Cost`, k.totActCost?'QAR '+fN(k.totActCost):'—', `${k.totActDays} days · Budget: ${k.totBudCost?'QAR '+fN(k.totBudCost):'not set'}`, 'var(--teal)')+
-               kpiCard(`${c.name} — Variance`, v!==null?(v>=0?'+':'')+fN(v):'—', `${k.totBudDays} budget days planned`, vc);
+        const k=compKpis[c.id];
+        const vd=k.actD&&k.projD?k.actD-k.projD:null;
+        const vc=vd===null?'#4a5568':vd<=0?'var(--teal)':'var(--coral)';
+        return kpiCard(c.name+' — Actual',k.actC?'QAR '+fN(k.actC):'—',`${k.actD} days worked`,`var(--teal)`)+
+               kpiCard(c.name+' — Projected',k.projC?'QAR '+fN(k.projC):'—',`${k.projD} days projected`,`#a78bfa`);
       }).join('')}
-      ${kpiCard('KG/Casual Day', totKg&&comps.reduce((_,c)=>_+kpis[c.id].totActDays,0)?(totKg/comps.reduce((_,c)=>_+kpis[c.id].totActDays,0)).toFixed(1)+' KG':'—', `Total KG: ${totKg.toLocaleString()}`, '#38bdf8')}
-      ${kpiCard('Cost/Room Night', costPerRn?'QAR '+costPerRn.toFixed(2):'—', `Total rooms: ${totRs.toLocaleString()}`, '#a78bfa')}
+      ${kpiCard('Cost / KG',totKg&&totActCost?'QAR '+(totActCost/totKg).toFixed(3):'—',`Total KG: ${totKg.toLocaleString()}`,'#38bdf8')}
+      ${kpiCard('Cost / Room Night',totRs&&totActCost?'QAR '+(totActCost/totRs).toFixed(2):'—',`${totRs.toLocaleString()} rooms`,'#a78bfa')}
     </div>
 
-    <!-- Auto projection -->
-    ${buildAutoProjectPanel()}
+    <!-- Ratios panel -->
+    ${ratiosPanel}
 
     <!-- Main table -->
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:16px">
-      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Detail — ${casualY}</div>
-          <div style="font-size:10px;color:#4a5568;margin-top:2px">Enter actual days worked per company · Budget days auto-project or enter manually</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+      <div style="padding:11px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Detail — ${casualY}</div>
+        <div style="font-size:10px;color:#4a5568;margin-top:2px">
+          <span style="color:var(--teal)">■</span> Actual = days you enter &nbsp;·&nbsp;
+          <span style="color:#a78bfa">■</span> Projected = auto from rooms→KG ratio &nbsp;·&nbsp;
+          <span style="color:#64748b">■</span> ${py} = last year same month
         </div>
-        <button onclick="casualClearBudget(${casualY})" style="padding:5px 12px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer">🗑 Clear Budget</button>
       </div>
-      ${buildMonthTable()}
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:1000px">
+          <thead>
+            <tr style="background:var(--bg3)">
+              <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
+              <th rowspan="2" style="padding:7px 5px;text-align:right;font-size:9px;color:#38bdf8">KG</th>
+              <th rowspan="2" style="padding:7px 5px;text-align:right;font-size:9px;color:#a78bfa">Rooms</th>
+              ${compHdrs}
+              <th colspan="4" style="padding:7px 5px;text-align:center;font-size:10px;font-weight:700;color:var(--lime);background:rgba(163,230,53,.06)">TOTAL</th>
+            </tr>
+            <tr style="background:var(--bg4)">
+              ${subHdrs}
+              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);text-align:right">Act Cost</th>
+              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:right">Proj Cost</th>
+              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:right">${py} Cost</th>
+              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">vs Proj</th>
+            </tr>
+          </thead>
+          <tbody>${monthRows}</tbody>
+          <tfoot>
+            <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+              <td colspan="3" style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>
+              ${totalsRow}
+              <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.05)">${totActCost?fN(totActCost):'—'}</td>
+              <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.05)">${totProjCost?fN(totProjCost):'—'}</td>
+              <td style="padding:8px 6px;text-align:right;font-size:11px;font-weight:700;color:#64748b">${totPyCost?fN(totPyCost):'—'}</td>
+              <td style="padding:8px 6px;text-align:center;font-size:11px;font-weight:800;color:${gvc}">${gVarC!==null?(gVarC>0?'+':'')+fN(gVarC):'—'}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
   </div>`;
 
-  // Build year pills
-  const pillsEl = document.getElementById('yp-casual');
+  // Year pills
+  const pillsEl=document.getElementById('yp-casual');
   if(pillsEl){
     pillsEl.innerHTML='';
     YEARS.forEach(y=>{
@@ -8893,121 +8882,73 @@ function buildCasualTab(){
 }
 
 function casualSaveDay(el){
-  const y=+el.dataset.y, m=+el.dataset.m, c=el.dataset.c, t=el.dataset.t;
+  const y=+el.dataset.y, m=+el.dataset.m, c=el.dataset.c;
   const v=parseInt(el.value.replace(/,/g,''))||0;
-  if(t==='act') setCasualActual(y,m,c,v);
-  else           setCasualBudget(y,m,c,v);
+  setCasualActual(y,m,c,v);
   autoSave();
   buildCasualTab();
 }
 
-function casualAutoProject(y){
-  const py = y-1;
-  const comps = getCasualCompanies();
-  const MF = Array(12).fill(0).map((_,i)=>i);
-  const pyKgTotal = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.kg||0),0);
-  const pyRsTotal = MF.reduce((_,m)=>_+(DATA[py]?.[m]?.roomsSold||0),0);
-  if(!pyKgTotal){ toast('No KG data for '+py+' — enter '+py+' KG in Monthly Entry first'); return; }
-
-  // KG per Room Night from prior year — used to estimate future KG from projected rooms
-  const kgPerRn = pyRsTotal ? pyKgTotal/pyRsTotal : 0;
-
-  // Get projected KG per month for budget year
-  // Priority: actual KG if entered > estimated from projected rooms × kgPerRn ratio
-  const getProjKg = (m) => {
-    const actKg = DATA[y]?.[m]?.kg||0;
-    if(actKg) return actKg;
-    const projRooms = DATA[y]?.[m]?.roomsSold || PROJ[y]?.[m]?.roomsSold || 0;
-    return kgPerRn && projRooms ? Math.round(projRooms * kgPerRn) : 0;
-  };
-
-  let applied=0;
-  comps.forEach(c=>{
-    const pyDays = MF.reduce((_,m)=>_+getCasualActual(py,m,c.id),0);
-    if(!pyDays){ toast(c.name+': no '+py+' casual days entered — skipped'); return; }
-    const kgPerDay = pyKgTotal/pyDays;
-    MF.forEach(m=>{
-      const projKg = getProjKg(m);
-      if(projKg){ setCasualBudget(y,m,c.id,Math.round(projKg/kgPerDay)); applied++; }
-    });
-  });
-  saveAll();
-  buildCasualTab();
-  if(applied) toast('Budget projected for '+y+' using '+py+' KG/day ratio ✓');
-  else toast('Nothing projected — check '+py+' casual days and '+y+' projected rooms');
-}
-
-function casualClearBudget(y){
-  if(!confirm('Clear all budget days for '+y+'?')) return;
-  const comps = getCasualCompanies();
-  for(let m=0;m<12;m++) comps.forEach(c=>setCasualBudget(y,m,c.id,0));
-  saveAll(); buildCasualTab();
-}
-
-// ── Company editor modal ───────────────────────────────────
+/* ════════════════════════════════════════
+   CASUAL LABOUR — COMPANY EDITOR MODAL
+   ════════════════════════════════════════ */
 function openCasualCompModal(id){
-  const comps = getCasualCompanies();
-  const comp  = id==='new' ? null : comps.find(c=>c.id===id);
-  const MF    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const comps=getCasualCompanies();
+  const comp=id==='new'?null:comps.find(c=>c.id===id);
+  const MF=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  const ratesHtml = (comp?.rates||[{rate:0,fromY:2024,fromM:0,toY:2099,toM:11}])
+  const ratesHtml=(comp?.rates||[{rate:0,fromY:2024,fromM:0,toY:2099,toM:11}])
     .sort((a,b)=>(a.fromY*12+a.fromM)-(b.fromY*12+b.fromM))
-    .map((r,i)=>`
-      <div class="casual-rate-row" style="display:grid;grid-template-columns:80px 90px 90px 90px 90px 36px;gap:6px;align-items:center;margin-bottom:6px">
+    .map(r=>`
+      <div class="crate-row" style="display:grid;grid-template-columns:90px 90px 90px 90px 90px 32px;gap:6px;align-items:center;margin-bottom:6px">
         <input type="number" value="${r.rate}" placeholder="Rate QAR"
           style="background:var(--bg3);border:1px solid rgba(255,179,71,.3);border-radius:6px;padding:6px 8px;color:var(--amber);font-family:var(--ff-m);font-size:12px;outline:none;width:100%">
         <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
-          ${YEARS.map(y=>`<option value="${y}" ${y===r.fromY?'selected':''}>${y}</option>`).join('')}
+          ${YEARS.map(y=>`<option value="${y}"${y===r.fromY?' selected':''}>${y}</option>`).join('')}
         </select>
         <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
-          ${MF.map((ms,mi)=>`<option value="${mi}" ${mi===r.fromM?'selected':''}>${ms}</option>`).join('')}
+          ${MF.map((ms,mi)=>`<option value="${mi}"${mi===r.fromM?' selected':''}>${ms}</option>`).join('')}
         </select>
         <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
-          ${YEARS.map(y=>`<option value="${y}" ${y===r.toY?'selected':''}>${y}</option>`).join('')}
+          ${YEARS.map(y=>`<option value="${y}"${y===r.toY?' selected':''}>${y}</option>`).join('')}
         </select>
         <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">
-          ${MF.map((ms,mi)=>`<option value="${mi}" ${mi===r.toM?'selected':''}>${ms}</option>`).join('')}
+          ${MF.map((ms,mi)=>`<option value="${mi}"${mi===r.toM?' selected':''}>${ms}</option>`).join('')}
         </select>
-        <button onclick="this.closest('.casual-rate-row').remove()" style="width:32px;height:32px;border-radius:6px;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer;font-size:14px">×</button>
+        <button onclick="this.closest('.crate-row').remove()" style="width:28px;height:28px;border-radius:5px;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer">×</button>
       </div>`).join('');
 
-  const mo = document.createElement('div');
+  document.getElementById('casual-comp-modal')?.remove();
+  const mo=document.createElement('div');
   mo.id='casual-comp-modal';
-  mo.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px';
+  mo.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px';
   mo.innerHTML=`
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6)">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.6)">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)">
-        <div style="font-family:var(--ff-d);font-size:14px;font-weight:800;color:var(--text)">${comp?'Edit Company — '+comp.name:'Add New Company'}</div>
+        <div style="font-family:var(--ff-d);font-size:14px;font-weight:800;color:var(--text)">${comp?'Edit — '+comp.name:'Add New Company'}</div>
         <button onclick="document.getElementById('casual-comp-modal').remove()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:18px">×</button>
       </div>
       <div style="padding:18px 20px">
-        <!-- Name -->
         <div style="margin-bottom:14px">
           <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:5px">Company Name</label>
-          <input id="casual-comp-name" type="text" value="${comp?.name||''}" placeholder="e.g. Alaska"
+          <input id="ccomp-name" type="text" value="${comp?.name||''}" placeholder="e.g. Alaska"
             style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none">
         </div>
-        <!-- Rate periods -->
         <div style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
             <label style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3)">Rate Periods</label>
             <button onclick="addCasualRateRow()" style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid rgba(163,230,53,.3);color:var(--lime);background:rgba(163,230,53,.06);cursor:pointer">+ Add Period</button>
           </div>
-          <div style="display:grid;grid-template-columns:80px 90px 90px 90px 90px 36px;gap:6px;margin-bottom:4px">
-            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">Rate QAR</div>
-            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">From Year</div>
-            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">From Month</div>
-            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">To Year</div>
-            <div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">To Month</div>
-            <div></div>
+          <div style="display:grid;grid-template-columns:90px 90px 90px 90px 90px 32px;gap:6px;margin-bottom:5px">
+            ${['Rate (QAR)','From Year','From Month','To Year','To Month',''].map(h=>`<div style="font-size:8px;color:#4a5568;font-weight:700;text-align:center">${h}</div>`).join('')}
           </div>
-          <div id="casual-rate-rows">${ratesHtml}</div>
+          <div id="crate-rows">${ratesHtml}</div>
         </div>
-        ${comp&&comp.id!=='alaska'&&comp.id!=='mrvalet'?`
-        <div style="margin-bottom:14px">
-          <button onclick="deleteCasualCompany('${comp.id}')" style="padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer">🗑 Delete Company</button>
-        </div>`:''}
-        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:10px;border-top:1px solid var(--border)">
+        ${comp&&!['alaska','mrvalet'].includes(comp.id)?`
+          <div style="margin-bottom:12px">
+            <button onclick="deleteCasualCompany('${comp.id}')" style="padding:6px 14px;border-radius:7px;font-size:11px;font-weight:700;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer">🗑 Delete Company</button>
+          </div>`:''}
+        <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid var(--border)">
           <button onclick="document.getElementById('casual-comp-modal').remove()" style="padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);border:1px solid var(--border);color:var(--text2);background:transparent;cursor:pointer">Cancel</button>
           <button onclick="saveCasualComp('${id}')" style="padding:8px 22px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer">💾 Save</button>
         </div>
@@ -9017,148 +8958,158 @@ function openCasualCompModal(id){
 }
 
 function addCasualRateRow(){
-  const MF = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const row = document.createElement('div');
-  row.className='casual-rate-row';
-  row.style.cssText='display:grid;grid-template-columns:80px 90px 90px 90px 90px 36px;gap:6px;align-items:center;margin-bottom:6px';
+  const MF=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const row=document.createElement('div');
+  row.className='crate-row';
+  row.style.cssText='display:grid;grid-template-columns:90px 90px 90px 90px 90px 32px;gap:6px;align-items:center;margin-bottom:6px';
   row.innerHTML=`
-    <input type="number" value="" placeholder="Rate QAR" style="background:var(--bg3);border:1px solid rgba(255,179,71,.3);border-radius:6px;padding:6px 8px;color:var(--amber);font-family:var(--ff-m);font-size:12px;outline:none;width:100%">
-    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${YEARS.map(y=>`<option value="${y}" ${y===new Date().getFullYear()?'selected':''}>${y}</option>`).join('')}</select>
+    <input type="number" placeholder="Rate QAR" style="background:var(--bg3);border:1px solid rgba(255,179,71,.3);border-radius:6px;padding:6px 8px;color:var(--amber);font-family:var(--ff-m);font-size:12px;outline:none;width:100%">
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${YEARS.map(y=>`<option value="${y}"${y===new Date().getFullYear()?' selected':''}>${y}</option>`).join('')}</select>
     <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${MF.map((ms,mi)=>`<option value="${mi}">${ms}</option>`).join('')}</select>
-    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${YEARS.map(y=>`<option value="${y}" ${y===2099?'selected':''}>${y}</option>`).join('')}</select>
-    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${MF.map((ms,mi)=>`<option value="${mi}" ${mi===11?'selected':''}>${ms}</option>`).join('')}</select>
-    <button onclick="this.closest('.casual-rate-row').remove()" style="width:32px;height:32px;border-radius:6px;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer;font-size:14px">×</button>`;
-  document.getElementById('casual-rate-rows').appendChild(row);
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${YEARS.map(y=>`<option value="${y}"${y===2099?' selected':''}>${y}</option>`).join('')}</select>
+    <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 4px;color:var(--text);font-size:11px;outline:none">${MF.map((ms,mi)=>`<option value="${mi}"${mi===11?' selected':''}>${ms}</option>`).join('')}</select>
+    <button onclick="this.closest('.crate-row').remove()" style="width:28px;height:28px;border-radius:5px;border:1px solid rgba(255,107,107,.3);color:var(--coral);background:transparent;cursor:pointer">×</button>`;
+  document.getElementById('crate-rows').appendChild(row);
 }
 
 function saveCasualComp(id){
-  const name = document.getElementById('casual-comp-name').value.trim();
-  if(!name){ toast('Enter a company name'); return; }
-  const rows  = document.querySelectorAll('.casual-rate-row');
-  const rates = [];
+  const name=document.getElementById('ccomp-name').value.trim();
+  if(!name){toast('Enter a company name');return;}
+  const rows=document.querySelectorAll('.crate-row');
+  const rates=[];
   rows.forEach(row=>{
-    const inputs  = row.querySelectorAll('input,select');
-    const rate    = parseFloat(inputs[0].value)||0;
-    const fromY   = parseInt(inputs[1].value);
-    const fromM   = parseInt(inputs[2].value);
-    const toY     = parseInt(inputs[3].value);
-    const toM     = parseInt(inputs[4].value);
+    const inp=row.querySelectorAll('input,select');
+    const rate=parseFloat(inp[0].value)||0;
+    const fromY=parseInt(inp[1].value);
+    const fromM=parseInt(inp[2].value);
+    const toY=parseInt(inp[3].value);
+    const toM=parseInt(inp[4].value);
     if(rate) rates.push({rate,fromY,fromM,toY,toM});
   });
-  if(!rates.length){ toast('Add at least one rate period'); return; }
-
+  if(!rates.length){toast('Add at least one rate period');return;}
   if(!SETT.casualCompanies) SETT.casualCompanies=[];
   if(id==='new'){
-    const newId = name.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now().toString(36);
-    SETT.casualCompanies.push({id:newId, name, rates});
+    const newId=name.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now().toString(36);
+    SETT.casualCompanies.push({id:newId,name,rates});
   } else {
-    const idx = SETT.casualCompanies.findIndex(c=>c.id===id);
-    if(idx>=0) SETT.casualCompanies[idx]={...SETT.casualCompanies[idx], name, rates};
+    const idx=SETT.casualCompanies.findIndex(c=>c.id===id);
+    if(idx>=0) SETT.casualCompanies[idx]={...SETT.casualCompanies[idx],name,rates};
   }
   saveAll();
   document.getElementById('casual-comp-modal').remove();
   buildCasualTab();
-  toast('Company saved ✓');
+  toast('Company saved \u2713');
 }
 
 function deleteCasualCompany(id){
-  if(!confirm('Delete this company? All its casual data will remain in the records.')) return;
-  SETT.casualCompanies = getCasualCompanies().filter(c=>c.id!==id);
+  if(!confirm('Delete this company? Casual days data is kept.')) return;
+  SETT.casualCompanies=getCasualCompanies().filter(c=>c.id!==id);
   saveAll();
   document.getElementById('casual-comp-modal').remove();
   buildCasualTab();
 }
 
+/* ════════════════════════════════════════
+   CASUAL LABOUR — PDF PRINT
+   ════════════════════════════════════════ */
 function printCasualPDF(){
-  const comps = getCasualCompanies();
-  const MF    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const now   = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const LOGO  = document.querySelector('[alt="RS Logo"]')?.src||'';
+  const comps=getCasualCompanies();
+  const MF=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MFF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const LOGO=document.querySelector('[alt="RS Logo"]')?.src||'';
+  const py=casualY-1;
 
-  let totActAll=0, totBudAll=0;
-  const rows = MF.map((ms,m)=>{
-    const kg = DATA[casualY]?.[m]?.kg||0;
-    const rs = DATA[casualY]?.[m]?.roomsSold||0;
-    const compCells = comps.map(c=>{
-      const actD=getCasualActual(casualY,m,c.id);
-      const budD=getCasualBudget(casualY,m,c.id);
-      const rate=casualRate(c.id,casualY,m);
-      const actC=actD*rate, budC=budD*rate;
-      totActAll+=actC; totBudAll+=budC;
-      const v=budC?budC-actC:null;
-      const vc=v===null?'#9ca3af':v>=0?'#059669':'#dc2626';
-      return `<td style="padding:6px 5px;text-align:center;font-size:9px;color:#374151">${actD||'—'}</td>
-        <td style="padding:6px 5px;text-align:right;font-size:9px;color:#059669;font-weight:600">${actC?actC.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-        <td style="padding:6px 5px;text-align:center;font-size:9px;color:#6b7280">${budD||'—'}</td>
-        <td style="padding:6px 5px;text-align:right;font-size:9px;color:#d97706;font-weight:600">${budC?budC.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-        <td style="padding:6px 5px;text-align:right;font-size:9px;font-weight:700;color:${vc}">${v!==null?(v>=0?'+':'')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>`;
+  let totActC=0,totProjC=0,totPyC=0;
+  const rows=MF.map((ms,m)=>{
+    const kg=DATA[casualY]?.[m]?.kg||0;
+    const rs=DATA[casualY]?.[m]?.roomsSold||PROJ[casualY]?.[m]?.roomsSold||0;
+    const compCells=comps.map(c=>{
+      const r=casualRate(c.id,casualY,m), rpy=casualRate(c.id,py,m);
+      const aD=getCasualActual(casualY,m,c.id);
+      const pD=casualProjectedDays(c.id,casualY,m);
+      const pyD=getCasualActual(py,m,c.id);
+      totActC+=aD*r; totProjC+=pD*r; totPyC+=pyD*rpy;
+      const v=pD&&aD?aD-pD:null;
+      const vc=v===null?'#9ca3af':v<=0?'#059669':'#dc2626';
+      const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
+      return `<td style="padding:5px 4px;text-align:center;font-size:9px;color:#374151">${aD||'—'}</td>
+        <td style="padding:5px 4px;text-align:right;font-size:9px;color:#059669;font-weight:600">${q(aD*r)}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:9px;color:#7c3aed">${pD||'—'}</td>
+        <td style="padding:5px 4px;text-align:right;font-size:9px;color:#7c3aed">${q(pD*r)}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:9px;color:#6b7280">${pyD||'—'}</td>
+        <td style="padding:5px 4px;text-align:right;font-size:9px;color:#6b7280">${q(pyD*rpy)}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:9px;font-weight:700;color:${vc}">${v!==null?(v>0?'+':'')+v:'—'}</td>`;
     }).join('');
-    const totAct=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-    const totBud=comps.reduce((_,c)=>_+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-    const tv=totBud?totBud-totAct:null; const tvc=tv===null?'#9ca3af':tv>=0?'#059669':'#dc2626';
+    const tA=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+    const tP=comps.reduce((_,c)=>_+casualProjectedDays(c.id,casualY,m)*casualRate(c.id,casualY,m),0);
+    const tPy=comps.reduce((_,c)=>_+getCasualActual(py,m,c.id)*casualRate(c.id,py,m),0);
+    const tv=tP&&tA?tA-tP:null; const tvc=tv===null?'#9ca3af':tv<=0?'#059669':'#dc2626';
+    const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
     return `<tr style="background:${m%2?'#f8fafc':'#fff'}">
-      <td style="padding:6px 8px;font-size:10px;font-weight:600;color:#1e293b">${MF[m]}</td>
-      <td style="padding:6px 6px;text-align:right;font-size:9px;color:#0284c7">${kg.toLocaleString()||'—'}</td>
-      <td style="padding:6px 6px;text-align:right;font-size:9px;color:#7c3aed">${rs.toLocaleString()||'—'}</td>
+      <td style="padding:5px 8px;font-size:10px;font-weight:600;color:#1e293b">${MFF[m]}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:9px;color:#0284c7">${kg.toLocaleString()||'—'}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:9px;color:#7c3aed">${rs.toLocaleString()||'—'}</td>
       ${compCells}
-      <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:800;color:#059669;background:#f0fdf4">${totAct?totAct.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-      <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:800;color:#d97706;background:#fffbeb">${totBud?totBud.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
-      <td style="padding:6px 6px;text-align:right;font-size:10px;font-weight:800;color:${tvc}">${tv!==null?(tv>=0?'+':'')+Math.abs(tv).toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:800;color:#059669;background:#f0fdf4">${q(tA)}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:700;color:#7c3aed;background:#faf5ff">${q(tP)}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:10px;color:#6b7280">${q(tPy)}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:800;color:${tvc}">${tv!==null?(tv>0?'+':'')+tv.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
     </tr>`;
   }).join('');
 
-  const compHdrs = comps.map(c=>`<th colspan="5" style="padding:6px 4px;text-align:center;font-size:9px;font-weight:700;color:#0d9488;background:#f0fdfa;border:1px solid #e2e8f0">${c.name} (QAR ${casualRate(c.id,casualY,0)}/day)</th>`).join('');
-  const subHdrs  = comps.map(c=>`
-    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0">Act Days</th>
-    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0">Act Cost</th>
-    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#d97706;border:1px solid #e2e8f0">Bud Days</th>
-    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#d97706;border:1px solid #e2e8f0">Bud Cost</th>
-    <th style="padding:5px 3px;font-size:7px;font-weight:700;color:#6366f1;border:1px solid #e2e8f0">Var</th>`).join('');
+  const compHdrs=comps.map(c=>`<th colspan="7" style="padding:5px;text-align:center;font-size:9px;font-weight:700;color:#0d9488;background:#f0fdfa;border:1px solid #e2e8f0">${c.name} — QAR ${casualRate(c.id,casualY,0)}/day</th>`).join('');
+  const subHdrs=comps.map(()=>`
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0;text-align:center">Act Days</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0">Act Cost</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#7c3aed;border:1px solid #e2e8f0;text-align:center">Proj Days</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#7c3aed;border:1px solid #e2e8f0">Proj Cost</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6b7280;border:1px solid #e2e8f0;text-align:center">${py} Days</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6b7280;border:1px solid #e2e8f0">${py} Cost</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6366f1;border:1px solid #e2e8f0;text-align:center">vs Proj</th>`).join('');
 
-  const totKgY = MF.reduce((_,ms,m)=>_+(DATA[casualY]?.[m]?.kg||0),0);
-  const totRsY = MF.reduce((_,ms,m)=>_+(DATA[casualY]?.[m]?.roomsSold||0),0);
+  const pyKgTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.kg||0).reduce((a,b)=>a+b,0);
+  const pyRsTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.roomsSold||0).reduce((a,b)=>a+b,0);
+  const kgRnR=pyRsTot&&pyKgTot?pyKgTot/pyRsTot:0;
+  const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
+  const gv=totActC&&totProjC?totActC-totProjC:null;
 
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Casual Labour Report ${casualY}</title>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Casual Labour ${casualY}</title>
   <style>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
   </head><body style="padding:10px">
-  <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c,#1e1040);padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
+  <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c,#1e1040);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
     <div style="display:flex;align-items:center;gap:12px">
       ${LOGO?`<img src="${LOGO}" style="width:40px;height:40px;border-radius:8px">`:''}
       <div>
         <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
-        <div style="font-size:20px;font-weight:900;color:#f5c542">👷 Casual Labour Report — ${casualY}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">Actual vs Budget · Days &amp; Cost · Prepared by Reda Salah · ${now}</div>
+        <div style="font-size:20px;font-weight:900;color:#f5c542">Casual Labour Report — ${casualY}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">Actual · Projected · Prior Year ${py} · ${now}</div>
       </div>
     </div>
-    <div style="display:flex;gap:10px">
-      ${[['Total Actual Cost','QAR '+totActAll.toLocaleString('en-US',{minimumFractionDigits:2}),'#4ade80'],
-         ['Total Budget Cost','QAR '+totBudAll.toLocaleString('en-US',{minimumFractionDigits:2}),'#fbbf24'],
-         ['Variance',(totBudAll-totActAll>=0?'+':'')+(totBudAll-totActAll).toLocaleString('en-US',{minimumFractionDigits:2}),totBudAll-totActAll>=0?'#4ade80':'#f87171'],
-         ['Total KG',totKgY.toLocaleString(),'#38bdf8'],
-         ['Total Rooms',totRsY.toLocaleString(),'#a78bfa']
-      ].map(([l,v,c])=>`<div style="background:rgba(255,255,255,.06);border-radius:8px;padding:8px 12px;text-align:right">
-        <div style="font-size:8px;color:rgba(255,255,255,.4);margin-bottom:2px">${l}</div>
-        <div style="font-family:'Courier New',monospace;font-size:13px;font-weight:800;color:${c}">${v}</div>
-      </div>`).join('')}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+      ${[['Actual Cost',q(totActC),'#4ade80'],['Projected Cost',q(totProjC),'#c084fc'],['Prior Year '+py,q(totPyC),'#94a3b8'],['vs Projected',gv!==null?(gv>0?'+':'')+q(gv):'—',gv===null?'#94a3b8':gv<=0?'#4ade80':'#f87171'],['KG/RN Ratio',kgRnR?kgRnR.toFixed(3):'—','#38bdf8']]
+        .map(([l,v,c])=>`<div style="background:rgba(255,255,255,.06);border-radius:7px;padding:7px 11px;text-align:right"><div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px">${l}</div><div style="font-family:'Courier New',monospace;font-size:12px;font-weight:800;color:${c}">${v}</div></div>`).join('')}
     </div>
   </div>
   <table style="width:100%;font-size:9px">
     <thead>
-      <tr style="background:#0f172a"><th rowspan="2" style="padding:6px 8px;text-align:left;color:#94a3b8;min-width:60px">Month</th><th rowspan="2" style="padding:6px 5px;color:#38bdf8">KG</th><th rowspan="2" style="padding:6px 5px;color:#a78bfa">Rooms</th>${compHdrs}<th colspan="3" style="padding:6px 4px;text-align:center;font-size:9px;font-weight:700;color:#a3e635;background:rgba(163,230,53,.1);border:1px solid #e2e8f0">TOTAL</th></tr>
-      <tr style="background:#1e293b">${subHdrs}<th style="padding:5px 3px;font-size:7px;font-weight:700;color:#4ade80;border:1px solid #e2e8f0">Total Act</th><th style="padding:5px 3px;font-size:7px;font-weight:700;color:#fbbf24;border:1px solid #e2e8f0">Total Bud</th><th style="padding:5px 3px;font-size:7px;font-weight:700;color:#818cf8;border:1px solid #e2e8f0">Variance</th></tr>
+      <tr style="background:#0f172a"><th rowspan="2" style="padding:5px 8px;text-align:left;color:#94a3b8;min-width:70px">Month</th><th rowspan="2" style="padding:5px 4px;color:#38bdf8">KG</th><th rowspan="2" style="padding:5px 4px;color:#a78bfa">Rooms</th>${compHdrs}<th colspan="4" style="padding:5px 4px;text-align:center;font-size:9px;font-weight:700;color:#a3e635;background:rgba(163,230,53,.1);border:1px solid #e2e8f0">TOTAL</th></tr>
+      <tr style="background:#1e293b">${subHdrs}<th style="padding:4px 2px;font-size:7px;color:#4ade80;border:1px solid #e2e8f0">Tot Act</th><th style="padding:4px 2px;font-size:7px;color:#c084fc;border:1px solid #e2e8f0">Tot Proj</th><th style="padding:4px 2px;font-size:7px;color:#94a3b8;border:1px solid #e2e8f0">Tot ${py}</th><th style="padding:4px 2px;font-size:7px;color:#818cf8;border:1px solid #e2e8f0;text-align:center">vs Proj</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table>
+  <div style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:7px 14px;font-size:8px;color:#94a3b8">
+    Projected days = Rooms \xd7 ${kgRnR?kgRnR.toFixed(3):'—'} KG/RN (${py} ratio) \xf7 Company KG/Day ratio (${py}) &nbsp;\xb7&nbsp; Rooms from Monthly Entry actuals or Projection Planner &nbsp;\xb7&nbsp; RS BudgetPro V3.0
+  </div>
   </body></html>`;
 
   const w=window.open('','_blank','width=1400,height=900');
   w.document.write(html); w.document.close();
   setTimeout(()=>{w.focus();w.print();},600);
-  toast('Casual Labour PDF ready ✓');
+  toast('Casual Labour PDF ready \u2713');
 }
 
-function buildBackupTab(){
+
   // Count data stats
   let months=0,notes=0,yearsWithData=[];
   YEARS.forEach(y=>{
@@ -9777,25 +9728,13 @@ function fbLoad(){
       .catch(()  => resolve(null));
   });
 }
-
-// ── SAVE TO FIREBASE ──
-function saveAll() {
-  // Save to localStorage as cache
-  localStorage.setItem(K_D,  JSON.stringify(DATA));
-  localStorage.setItem(K_I,  JSON.stringify(INCS));
-  localStorage.setItem(K_S,  JSON.stringify(SETT));
-  localStorage.setItem(K_P,  JSON.stringify(PROJ));
-  localStorage.setItem(K_SI, JSON.stringify(SPEC));
-  localStorage.setItem(K_REV,  JSON.stringify(REV));
-  localStorage.setItem(K_REVB, JSON.stringify(REV_BUD));
-  localStorage.setItem('rsBP_lastSaved', new Date().toLocaleString());
-
-  // Save to Firebase (authenticated)
-  fbSave({DATA,INCS,SETT,PROJ,SPEC,REV,REV_BUD,LOCKS,_savedAt:new Date().toISOString()});
-}
-
 // ── LOAD FROM FIREBASE (authenticated) ──
 function loadFromFirebase(){
+  // Load LOCKS immediately from localStorage so first render is always correct
+  // This prevents the 4-5 second "unlock flash" while Firebase loads
+  try{ const d=localStorage.getItem(K_LK);   if(d) LOCKS    =JSON.parse(d); }catch(e){}
+  try{ const d=localStorage.getItem(K_RLK);  if(d) REV_LOCKS=JSON.parse(d); }catch(e){}
+
   return new Promise(resolve=>{
     const dot=document.getElementById('as-dot');
     const lbl=document.getElementById('as-label');
@@ -9811,7 +9750,8 @@ function loadFromFirebase(){
         if(fbData.SPEC)    SPEC    = fbData.SPEC;
         if(fbData.REV)     REV     = fbData.REV;
         if(fbData.REV_BUD) REV_BUD = fbData.REV_BUD;
-        if(fbData.LOCKS)   LOCKS   = fbData.LOCKS;
+        if(fbData.LOCKS)     LOCKS     = fbData.LOCKS;
+        if(fbData.REV_LOCKS) REV_LOCKS = fbData.REV_LOCKS;
         localStorage.setItem(K_D,  JSON.stringify(DATA));
         localStorage.setItem(K_I,  JSON.stringify(INCS));
         localStorage.setItem(K_S,  JSON.stringify(SETT));
@@ -9846,6 +9786,8 @@ function loadLocal() {
   try{ const d=localStorage.getItem(K_SI); if(d) SPEC=JSON.parse(d); }catch(e){}
   try{ const d=localStorage.getItem(K_REV);  if(d) REV=JSON.parse(d); }catch(e){}
   try{ const d=localStorage.getItem(K_REVB); if(d) REV_BUD=JSON.parse(d); }catch(e){}
+  try{ const d=localStorage.getItem(K_LK);   if(d) LOCKS=JSON.parse(d); }catch(e){}
+  try{ const d=localStorage.getItem(K_RLK);  if(d) REV_LOCKS=JSON.parse(d); }catch(e){}
   loadRev();
 }
 
@@ -10545,9 +10487,9 @@ function exportRevPDF(){
       <tr>
         <th class="left grp-base" rowspan="2" style="min-width:32px">Month</th>
         <th class="grp-base" rowspan="2">Rooms</th>
-        <th class="grp-la" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">🏨 LAUNDRY REVENUE — Four Seasons Doha</th>
-        <th class="grp-va" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">💎 PEARL VALET REVENUE — FS The Pearl</th>
-        <th class="grp-tot" colspan="3" style="border-bottom:1px solid rgba(255,255,255,.2)">📊 COMBINED</th>
+        <th class="grp-la" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">\uD83C\uDFE8 LAUNDRY REVENUE — Four Seasons Doha</th>
+        <th class="grp-va" colspan="6" style="border-bottom:1px solid rgba(255,255,255,.2)">\uD83D\uDC8E PEARL VALET REVENUE — FS The Pearl</th>
+        <th class="grp-tot" colspan="3" style="border-bottom:1px solid rgba(255,255,255,.2)">\uD83D\uDCCA COMBINED</th>
       </tr>
       <tr>
         <th class="grp-la">Actual</th><th class="grp-la">Budget</th><th class="grp-la">Variance</th>
@@ -10631,287 +10573,6 @@ function exportRevPDF(){
   toast(`Revenue Report ${y} PDF ready ✓`);
 }
 
-function exportRevExcel(){
-  const y=getRevExportYear();
-  if(!y)return;
-  const d=getRevExportData(y);
-  const now=new Date().toLocaleDateString('en-US');
-  const rows=[];
-  const g=v=>v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—';
-  const q=v=>v?'QAR '+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
-
-  rows.push(['FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT']);
-  rows.push([`REVENUE REPORT — YEAR ${y}`]);
-  rows.push([`Prepared by: Reda Salah, Laundry Manager | Generated: ${now}`]);
-  rows.push([]);
-
-  // Summary
-  rows.push(['REVENUE SUMMARY']);
-  rows.push(['','Actual','Budget','Variance','vs Prior Year Growth']);
-  rows.push(['Laundry Revenue — FS Doha',d.totLaA.toFixed(2),d.totLaB.toFixed(2),(d.totLaA-d.totLaB).toFixed(2),
-    d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—']);
-  rows.push(['Pearl Valet Revenue — FS Pearl',d.totVaA.toFixed(2),d.totVaB.toFixed(2),(d.totVaA-d.totVaB).toFixed(2),
-    d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—']);
-  rows.push(['TOTAL REVENUE',(d.totLaA+d.totVaA).toFixed(2),(d.totLaB+d.totVaB).toFixed(2),
-    d.totVr.toFixed(2),d.totGrowthFull!==null?g(d.totGrowthFull):'—']);
-  rows.push([]);
-  rows.push(['RPOR Analysis','','','','']);
-  rows.push(['','RPOR Actual','RPOR Prior Year','Growth']);
-  rows.push(['Laundry Revenue',d.laRpor.toFixed(4),
-    d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—',
-    d.totPyLaA&&d.laRpor?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—']);
-  rows.push(['Pearl Valet Revenue — FS Pearl',d.vaRpor.toFixed(4),
-    d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—',
-    d.totPyVaA&&d.vaRpor?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—']);
-  rows.push([]);
-
-  // Monthly breakdown
-  rows.push(['MONTHLY BREAKDOWN — SIDE BY SIDE']);
-  rows.push(['Month','Rooms Sold',
-    '— LAUNDRY REVENUE (DOHA) —','','','','','','',
-    '— VALET REVENUE (PEARL) —','','','','','','',
-    '— COMBINED —','','']);
-  rows.push(['','',
-    'Actual','Budget','Variance','Var%','vs LY Same Month','Growth%','RPOR',
-    'Actual','Budget','Variance','Var%','vs LY Same Month','Growth%','RPOR',
-    'Total Actual','Total Budget','Total Variance']);
-
-  d.rows.forEach(r=>{
-    rows.push([r.month,r.rooms,
-      r.laA.toFixed(2),r.laB.toFixed(2),(r.laVr).toFixed(2),
-      r.laB?g(r.laVr/r.laB*100):'—',
-      r.pyLaA?r.pyLaA.toFixed(2):'—',r.laGrowth!==null?g(r.laGrowth):'—',
-      r.laRpor?r.laRpor.toFixed(4):'—',
-      r.vaA.toFixed(2),r.vaB.toFixed(2),(r.vaVr).toFixed(2),
-      r.vaB?g(r.vaVr/r.vaB*100):'—',
-      r.pyVaA?r.pyVaA.toFixed(2):'—',r.vaGrowth!==null?g(r.vaGrowth):'—',
-      r.vaRpor?r.vaRpor.toFixed(4):'—',
-      r.totA.toFixed(2),r.totB.toFixed(2),r.totVr.toFixed(2)]);
-  });
-
-  // Year total
-  rows.push(['YEAR TOTAL',d.totRooms,
-    d.totLaA.toFixed(2),d.totLaB.toFixed(2),d.totLaVr.toFixed(2),
-    d.totLaB?g(d.totLaVr/d.totLaB*100):'—',
-    d.totPyLaA?d.totPyLaA.toFixed(2):'—',
-    d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—',
-    d.laRpor.toFixed(4),
-    d.totVaA.toFixed(2),d.totVaB.toFixed(2),d.totVaVr.toFixed(2),
-    d.totVaB?g(d.totVaVr/d.totVaB*100):'—',
-    d.totPyVaA?d.totPyVaA.toFixed(2):'—',
-    d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—',
-    d.vaRpor.toFixed(4),
-    d.totA.toFixed(2),d.totB.toFixed(2),d.totVr.toFixed(2)]);
-
-  const csv=rows.map(r=>r.map(c=>{
-    const s=String(c??'');
-    return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:s;
-  }).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download=`RS_RevenueReport_${y}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  toast(`Revenue ${y} exported to Excel ✓`);
-}
-
-function exportRevPDF(){
-  const y=getRevExportYear();
-  if(!y)return;
-  const d=getRevExportData(y);
-  const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const g=v=>v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—';
-  const q=(v,short)=>v?(short?'QAR ':'')+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
-  const gc=v=>v===null?'#64748b':v>=0?'#16a34a':'#dc2626';
-
-  // Monthly rows
-  let tableRows='';
-  d.rows.forEach((r,i)=>{
-    const bg=i%2===0?'#ffffff':'#f8fafc';
-    const hasData=r.laA>0||r.vaA>0||r.rooms>0;
-    if(!hasData) return;
-    tableRows+=`<tr style="background:${bg}">
-      <td style="padding:6px 8px;font-weight:600;color:#1e293b;white-space:nowrap">${r.month}</td>
-      <td style="padding:6px 8px;text-align:right;color:#475569">${r.rooms?r.rooms.toLocaleString():'—'}</td>
-      <!-- LAUNDRY -->
-      <td style="padding:6px 8px;text-align:right;color:#0369a1">${q(r.laA)}</td>
-      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.laB)}</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${r.laVr>=0?'#16a34a':'#dc2626'}">${r.laB?(r.laVr>=0?'+':'')+q(r.laVr):'—'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${gc(r.laGrowth)}">${g(r.laGrowth)}</td>
-      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.pyLaA)}</td>
-      <td style="padding:6px 8px;text-align:right;font-size:9px;color:#0369a1">${r.laRpor?r.laRpor.toFixed(2):'—'}</td>
-      <!-- VALET -->
-      <td style="padding:6px 8px;text-align:right;color:#7c3aed">${q(r.vaA)}</td>
-      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.vaB)}</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${r.vaVr>=0?'#16a34a':'#dc2626'}">${r.vaB?(r.vaVr>=0?'+':'')+q(r.vaVr):'—'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${gc(r.vaGrowth)}">${g(r.vaGrowth)}</td>
-      <td style="padding:6px 8px;text-align:right;color:#64748b">${q(r.pyVaA)}</td>
-      <td style="padding:6px 8px;text-align:right;font-size:9px;color:#7c3aed">${r.vaRpor?r.vaRpor.toFixed(2):'—'}</td>
-      <!-- TOTAL -->
-      <td style="padding:6px 8px;text-align:right;font-weight:700;color:#0f172a">${q(r.totA)}</td>
-      <td style="padding:6px 8px;text-align:right;font-weight:600;color:${r.totVr>=0?'#16a34a':'#dc2626'}">${r.totB?(r.totVr>=0?'+':'')+q(r.totVr):'—'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${gc(r.totGrowth)}">${g(r.totGrowth)}</td>
-    </tr>`;
-  });
-
-  const pyTotRpor=d.totPyRooms&&(d.totPyLaA+d.totPyVaA)?(d.totPyLaA+d.totPyVaA)/d.totPyRooms:0;
-
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Revenue Report ${y} — Four Seasons Hotel Doha</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    @page{size:A4 landscape;margin:10mm}
-    body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e293b;background:#fff}
-    .header{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:16px 22px;border-radius:6px;margin-bottom:14px}
-    .kpi-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
-    .kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;padding:8px 10px}
-    .kpi-l{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:3px}
-    .kpi-v{font-size:13px;font-weight:700}
-    .kpi-s{font-size:8px;color:#64748b;margin-top:1px}
-    .sec{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
-      color:#1e3a5f;padding:6px 0 5px;border-bottom:2px solid #1e3a5f;margin-bottom:8px;margin-top:14px}
-    .tbl{width:100%;border-collapse:collapse;font-size:9px}
-    .tbl th{background:#1e3a5f;color:#fff;padding:5px 7px;text-align:right;font-weight:600;font-size:8px;letter-spacing:.2px;white-space:nowrap}
-    .tbl th:first-child,.tbl th.left{text-align:left}
-    .tbl td:first-child{text-align:left}
-    .tbl .tot td{background:#e2e8f0;font-weight:700;border-top:2px solid #1e3a5f}
-    .grp{background:#dbeafe;color:#1e40af;font-size:8px;font-weight:700;letter-spacing:.5px;padding:4px 7px;text-transform:uppercase}
-    .grp2{background:#ede9fe;color:#5b21b6}
-    .grp3{background:#f0fdf4;color:#166534}
-    .footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;font-size:8px;color:#94a3b8;display:flex;justify-content:space-between}
-    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-  <\/style><\/head><body>
-
-  <div class="header">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div>
-        <div style="font-size:9px;color:rgba(255,255,255,.6);margin-bottom:2px">FOUR SEASONS HOTEL DOHA — LAUNDRY DEPARTMENT</div>
-        <div style="font-size:20px;font-weight:800;color:#f5c542;margin-bottom:3px">Revenue Report — Year ${y}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.6)">Prepared by: Reda Salah, Laundry Manager &nbsp;|&nbsp; Generated: ${now}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:2px">Prior Year: ${d.py} &nbsp;|&nbsp; Properties: Four Seasons Doha (Laundry) + Four Seasons Pearl (Valet)</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:24px;font-weight:800;color:#f5c542">CONFIDENTIAL</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.4)">RS BudgetPro V3.0</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- KPI Strip -->
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-l">Rooms Sold</div><div class="kpi-v" style="color:#1e3a5f">${d.totRooms.toLocaleString()}</div><div class="kpi-s">Year ${y}</div></div>
-    <div class="kpi" style="border-color:#0369a1"><div class="kpi-l">Laundry Revenue</div><div class="kpi-v" style="color:#0369a1">${q(d.totLaA)}</div><div class="kpi-s" style="color:${gc(d.totPyLaA?((d.totLaA-d.totPyLaA)/d.totPyLaA*100):null)}">${d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'vs LY: —'} vs LY</div></div>
-    <div class="kpi" style="border-color:#7c3aed"><div class="kpi-l">Pearl Valet Rev — FS Pearl</div><div class="kpi-v" style="color:#7c3aed">${q(d.totVaA)}</div><div class="kpi-s" style="color:${gc(d.totPyVaA?((d.totVaA-d.totPyVaA)/d.totPyVaA*100):null)}">${d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'vs LY: —'} vs LY</div></div>
-    <div class="kpi" style="border-color:#0f172a;background:#f0f9ff"><div class="kpi-l">Total Revenue</div><div class="kpi-v" style="color:#0f172a">${q(d.totA)}</div><div class="kpi-s" style="color:${gc(d.totGrowthFull)}">${g(d.totGrowthFull)} vs LY</div></div>
-    <div class="kpi"><div class="kpi-l">vs Budget</div><div class="kpi-v" style="color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totVr>=0?'+':''}${q(d.totVr)}</div><div class="kpi-s" style="color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totB?g(d.totVr/d.totB*100):''}</div></div>
-    <div class="kpi"><div class="kpi-l">RPOR Total</div><div class="kpi-v" style="color:#0f172a">${d.totRpor.toFixed(4)}</div><div class="kpi-s" style="color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">${pyTotRpor?g((d.totRpor-pyTotRpor)/pyTotRpor*100):'vs LY: —'} vs LY</div></div>
-    <div class="kpi"><div class="kpi-l">RPOR Laundry</div><div class="kpi-v" style="color:#0369a1">${d.laRpor.toFixed(4)}</div><div class="kpi-l" style="margin-top:3px">RPOR Pearl</div><div class="kpi-v" style="color:#7c3aed">${d.vaRpor.toFixed(4)}</div></div>
-  </div>
-
-  <div class="sec">Monthly Revenue Breakdown — ${y} vs Budget vs Prior Year (${d.py})</div>
-  <table class="tbl">
-    <thead>
-      <tr>
-        <th class="left" rowspan="2">Month</th>
-        <th rowspan="2">Rooms</th>
-        <th colspan="6" style="background:#1e40af;border-bottom:1px solid #3b82f6">\uD83C\uDFE8 LAUNDRY REVENUE — Four Seasons Doha</th>
-        <th colspan="6" style="background:#5b21b6;border-bottom:1px solid #8b5cf6">\uD83D\uDC8E PEARL VALET REVENUE — FS The Pearl</th>
-        <th colspan="3" style="background:#166534;border-bottom:1px solid #22c55e">\uD83D\uDCCA COMBINED TOTAL</th>
-      </tr>
-      <tr>
-        <th style="background:#1e40af">Actual</th><th style="background:#1e40af">Budget</th>
-        <th style="background:#1e40af">Variance</th><th style="background:#1e40af">Var%</th>
-        <th style="background:#1e40af">LY ${d.py}</th><th style="background:#1e40af">Growth%</th>
-        <th style="background:#5b21b6">Actual</th><th style="background:#5b21b6">Budget</th>
-        <th style="background:#5b21b6">Variance</th><th style="background:#5b21b6">Var%</th>
-        <th style="background:#5b21b6">LY ${d.py}</th><th style="background:#5b21b6">Growth%</th>
-        <th style="background:#166534">Total</th><th style="background:#166534">vs Bud</th>
-        <th style="background:#166534">Growth%</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tableRows}
-      <tr class="tot">
-        <td>YEAR TOTAL</td>
-        <td style="text-align:right">${d.totRooms.toLocaleString()}</td>
-        <td style="text-align:right;color:#0369a1">${q(d.totLaA)}</td>
-        <td style="text-align:right">${q(d.totLaB)}</td>
-        <td style="text-align:right;color:${d.totLaVr>=0?'#16a34a':'#dc2626'}">${d.totLaB?(d.totLaVr>=0?'+':'')+q(d.totLaVr):'—'}</td>
-        <td style="text-align:right;color:${d.totLaB?gc(d.totLaVr/d.totLaB*100):'#64748b'}">${d.totLaB?g(d.totLaVr/d.totLaB*100):'—'}</td>
-        <td style="text-align:right">${q(d.totPyLaA)}</td>
-        <td style="text-align:right;color:${gc(d.totPyLaA?(d.totLaA-d.totPyLaA)/d.totPyLaA*100:null)}">${d.totPyLaA?g((d.totLaA-d.totPyLaA)/d.totPyLaA*100):'—'}</td>
-        <td style="text-align:right;color:#7c3aed">${q(d.totVaA)}</td>
-        <td style="text-align:right">${q(d.totVaB)}</td>
-        <td style="text-align:right;color:${d.totVaVr>=0?'#16a34a':'#dc2626'}">${d.totVaB?(d.totVaVr>=0?'+':'')+q(d.totVaVr):'—'}</td>
-        <td style="text-align:right;color:${d.totVaB?gc(d.totVaVr/d.totVaB*100):'#64748b'}">${d.totVaB?g(d.totVaVr/d.totVaB*100):'—'}</td>
-        <td style="text-align:right">${q(d.totPyVaA)}</td>
-        <td style="text-align:right;color:${gc(d.totPyVaA?(d.totVaA-d.totPyVaA)/d.totPyVaA*100:null)}">${d.totPyVaA?g((d.totVaA-d.totPyVaA)/d.totPyVaA*100):'—'}</td>
-        <td style="text-align:right;font-weight:700">${q(d.totA)}</td>
-        <td style="text-align:right;color:${d.totVr>=0?'#16a34a':'#dc2626'}">${d.totB?(d.totVr>=0?'+':'')+q(d.totVr):'—'}</td>
-        <td style="text-align:right;color:${gc(d.totGrowthFull)}">${g(d.totGrowthFull)}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- RPOR Summary -->
-  <div class="sec">RPOR Analysis — Revenue per Occupied Room Night</div>
-  <table class="tbl" style="width:60%">
-    <thead><tr>
-      <th class="left">Property / Line</th>
-      <th>RPOR ${y}</th><th>RPOR ${d.py}</th><th>Change</th><th>Growth %</th>
-    </tr></thead>
-    <tbody>
-      <tr><td style="color:#0369a1;font-weight:600">Laundry Revenue — FS Doha</td>
-        <td style="text-align:right;color:#0369a1">${d.laRpor.toFixed(4)}</td>
-        <td style="text-align:right">${d.totPyRooms&&d.totPyLaA?(d.totPyLaA/d.totPyRooms).toFixed(4):'—'}</td>
-        <td style="text-align:right;color:${d.totPyLaA&&d.laRpor?gc((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'#64748b'}">
-          ${d.totPyRooms&&d.totPyLaA?(d.laRpor-(d.totPyLaA/d.totPyRooms)>=0?'+':'')+(d.laRpor-(d.totPyLaA/d.totPyRooms)).toFixed(4):'—'}</td>
-        <td style="text-align:right;color:${gc(d.totPyLaA&&d.laRpor?(d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100:null)}">
-          ${d.totPyRooms&&d.totPyLaA?g((d.laRpor-(d.totPyLaA/d.totPyRooms))/(d.totPyLaA/d.totPyRooms)*100):'—'}</td>
-      </tr>
-      <tr style="background:#f8fafc"><td style="color:#7c3aed;font-weight:600">Pearl Valet Revenue — FS Pearl</td>
-        <td style="text-align:right;color:#7c3aed">${d.vaRpor.toFixed(4)}</td>
-        <td style="text-align:right">${d.totPyRooms&&d.totPyVaA?(d.totPyVaA/d.totPyRooms).toFixed(4):'—'}</td>
-        <td style="text-align:right;color:${d.totPyVaA&&d.vaRpor?gc((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'#64748b'}">
-          ${d.totPyRooms&&d.totPyVaA?(d.vaRpor-(d.totPyVaA/d.totPyRooms)>=0?'+':'')+(d.vaRpor-(d.totPyVaA/d.totPyRooms)).toFixed(4):'—'}</td>
-        <td style="text-align:right;color:${gc(d.totPyVaA&&d.vaRpor?(d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100:null)}">
-          ${d.totPyRooms&&d.totPyVaA?g((d.vaRpor-(d.totPyVaA/d.totPyRooms))/(d.totPyVaA/d.totPyRooms)*100):'—'}</td>
-      </tr>
-      <tr style="background:#e2e8f0;font-weight:700"><td>TOTAL REVENUE</td>
-        <td style="text-align:right">${d.totRpor.toFixed(4)}</td>
-        <td style="text-align:right">${pyTotRpor?pyTotRpor.toFixed(4):'—'}</td>
-        <td style="text-align:right;color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">
-          ${pyTotRpor?(d.totRpor-pyTotRpor>=0?'+':'')+(d.totRpor-pyTotRpor).toFixed(4):'—'}</td>
-        <td style="text-align:right;color:${gc(pyTotRpor?(d.totRpor-pyTotRpor)/pyTotRpor*100:null)}">
-          ${pyTotRpor?g((d.totRpor-pyTotRpor)/pyTotRpor*100):'—'}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="footer">
-    <span>Four Seasons Hotel Doha · Laundry Department · Revenue Report ${y} · CONFIDENTIAL</span>
-    <span>RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</span>
-  </div>
-  <\/body><\/html>`;
-
-  const win=window.open('','_blank','width=1400,height=900');
-  win.document.write(html);
-  win.document.close();
-  win.onload=()=>{ setTimeout(()=>win.print(),600); };
-  toast(`Revenue Report ${y} PDF ready ✓`);
-}
-
-
-
-/* ════════════════════════════════════════
-   SMART INSIGHTS ENGINE
-   6 Features:
-   1. Full-Year Forecast
-   2. Budget Season Assistant
-   3. Monthly Alert System
-   4. Price Increase Impact
-   5. Occupancy-Based CPOR Analysis
-   6. Missing Data Reminders
-   ════════════════════════════════════════ */
 
 function getSmartData(y){
   const today = new Date();
@@ -11412,7 +11073,7 @@ function buildSmartTab(){
             border:1px solid rgba(245,197,66,.4);color:#f5c542;background:rgba(245,197,66,.1)"
           onmouseover="this.style.background='rgba(245,197,66,.2)'"
           onmouseout="this.style.background='rgba(245,197,66,.1)'">
-          📋 Enter ${MF[m]} Data</button>`).join('')}
+          \uD83D\uDCCB Enter ${MF[m]} Data</button>`).join('')}
       </div>
     </div>`}
   </div>`;
@@ -11438,7 +11099,7 @@ function checkStartupAlerts(){
   const vr=totA-totB;
 
   if(totA>0&&vr>totB*0.05){
-    alerts.push(`🔴 ${y} expenses are <strong>QAR ${fN(vr)} over budget</strong> (${(vr/totB*100).toFixed(1)}%)`);
+    alerts.push(`\uD83D\uDD34 ${y} expenses are <strong>QAR ${fN(vr)} over budget</strong> (${(vr/totB*100).toFixed(1)}%)`);
   }
 
   // Missing prior months
@@ -11453,7 +11114,7 @@ function checkStartupAlerts(){
 
   // Budget season
   if(currentMonth>=7){
-    alerts.push(`📋 Budget season — time to prepare <strong>${y+1} budget</strong>`);
+    alerts.push(`\uD83D\uDCCB Budget season — time to prepare <strong>${y+1} budget</strong>`);
   }
 
   if(alerts.length>0){
@@ -11666,14 +11327,14 @@ function buildLinesTable(){
       <td style="padding:8px 12px;text-align:center">${statusDot}</td>
       <td style="padding:8px 12px;text-align:center">
         ${line.locked
-          ? `<span style="font-size:10px;color:#2a3550">🔒 Core</span>`
+          ? `<span style="font-size:10px;color:#2a3550">\uD83D\uDD12 Core</span>`
           : canDelete
             ? `<button onclick="deleteLine(${i})"
                  style="padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;
                    border:1px solid rgba(255,107,107,.4);color:#ff6b6b;background:rgba(255,107,107,.08);
                    cursor:pointer" onmouseover="this.style.background='rgba(255,107,107,.2)'"
-                 onmouseout="this.style.background='rgba(255,107,107,.08)'">🗑 Delete</button>`
-            : `<span style="font-size:10px;color:#374151" title="Cannot delete — has data entered">🔒 Has data</span>`}
+                 onmouseout="this.style.background='rgba(255,107,107,.08)'">\uD83D\uDDD1 Delete</button>`
+            : `<span style="font-size:10px;color:#374151" title="Cannot delete — has data entered">\uD83D\uDD12 Has data</span>`}
       </td>
     </tr>`;
   }).join('');
@@ -11795,7 +11456,7 @@ function buildYearForecastPanel(y){
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap">
           <div style="background:#0f1a2e;border-radius:6px;padding:7px 11px;text-align:center">
-            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🧺 Laundry</div>
+            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">\uD83E\uDDFA Laundry</div>
             <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#00d4b8">${cporLa.toFixed(4)}</div>
           </div>
           <div style="background:#0f1a2e;border-radius:6px;padding:7px 11px;text-align:center">
@@ -11803,7 +11464,7 @@ function buildYearForecastPanel(y){
             <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#a3e635">${cporOp.toFixed(4)}</div>
           </div>
           <div style="background:#0f1a2e;border-radius:6px;padding:7px 11px;text-align:center">
-            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🖨 Printing</div>
+            <div style="font-size:8px;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">\uD83D\uDDA8 Printing</div>
             <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#ff6b6b">${cporPr.toFixed(4)}</div>
           </div>
           <div style="background:linear-gradient(135deg,rgba(167,139,250,.1),rgba(167,139,250,.05));border:1px solid rgba(167,139,250,.3);border-radius:6px;padding:7px 11px;text-align:center">
@@ -11826,7 +11487,7 @@ function buildYearForecastPanel(y){
   el.innerHTML=`
     <div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.25);border-radius:10px;padding:14px 16px">
       <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#f5c542;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-        📐 ${y} Year Completion Forecast
+        \uD83D\uDCD0 ${y} Year Completion Forecast
         <span style="font-size:10px;font-weight:400;color:#64748b">· ${est.lastActM+1} months actual + ${remaining} months forecasted</span>
       </div>
 
@@ -11864,7 +11525,7 @@ function buildYearForecastPanel(y){
       </div>`:''}
 
       <div style="font-size:11px;color:#64748b;line-height:1.6;background:#0f1a2e;border-radius:6px;padding:8px 12px">
-        💡 <strong style="color:#94a3b8">How this works:</strong>
+        \uD83D\uDCA1 <strong style="color:#94a3b8">How this works:</strong>
         YTD CPOR (${ytdCpor.toFixed(4)}) × projected rooms for ${MS2[est.lastActM+1]}–Dec =
         forecasted expenses → combined with ${est.lastActM+1} months of actuals =
         <strong style="color:#f5c542">estimated full year CPOR ${estCpor.toFixed(4)}</strong>
@@ -11880,6 +11541,46 @@ function buildYearForecastPanel(y){
 function isLocked(y,m){
   return !!(LOCKS[y]&&LOCKS[y][m]);
 }
+function isRevLocked(y,m){
+  return !!(REV_LOCKS[y]&&REV_LOCKS[y][m]);
+}
+function toggleRevLock(y,m){
+  const MF2=['January','February','March','April','May','June',
+             'July','August','September','October','November','December'];
+  if(isRevLocked(y,m)){
+    if(!confirm('Unlock '+MF2[m]+' '+y+' revenue? This will allow edits.')) return;
+    delete REV_LOCKS[y][m];
+    if(Object.keys(REV_LOCKS[y]).length===0) delete REV_LOCKS[y];
+    toast('\uD83D\uDD13 '+MF2[m]+' '+y+' revenue unlocked');
+  } else {
+    if(!confirm('Lock '+MF2[m]+' '+y+' revenue? Fields will become read-only.')) return;
+    if(!REV_LOCKS[y]) REV_LOCKS[y]={};
+    REV_LOCKS[y][m]={lockedAt:new Date().toISOString(),lockedBy:'Reda Salah'};
+    toast('\uD83D\uDD12 '+MF2[m]+' '+y+' revenue locked');
+  }
+  saveAll();
+  loadRev();
+}
+function lockRevFullYear(y){
+  let count=0;
+  for(let m=0;m<12;m++){
+    const rev=(REV[y]||{})[m]||{};
+    if(rev.laA||rev.valA||rev.othA){
+      if(!REV_LOCKS[y]) REV_LOCKS[y]={};
+      REV_LOCKS[y][m]={lockedAt:new Date().toISOString(),lockedBy:'Reda Salah'};
+      count++;
+    }
+  }
+  if(!count){toast('\u26A0 No revenue data to lock for '+y);return;}
+  saveAll(); loadRev();
+  toast('\uD83D\uDD12 Locked '+count+' revenue months in '+y);
+}
+function unlockRevFullYear(y){
+  if(!confirm('Unlock all revenue months for '+y+'?')) return;
+  delete REV_LOCKS[y];
+  saveAll(); loadRev();
+  toast('\uD83D\uDD13 All '+y+' revenue months unlocked');
+}
 
 async function toggleLock(y,m){
   const locked = isLocked(y,m);
@@ -11890,13 +11591,13 @@ async function toggleLock(y,m){
     if(!lok) return;
     if(!LOCKS[y]) LOCKS[y]={};
     LOCKS[y][m]={lockedAt:new Date().toISOString(),lockedBy:'Reda Salah'};
-    toast(`🔒 ${MF2[m]} ${y} locked`);
+    toast(`\uD83D\uDD12 ${MF2[m]} ${y} locked`);
   } else {
     const ulok = await modalUnlockMonth(y, m);
     if(!ulok) return;
     delete LOCKS[y][m];
     if(Object.keys(LOCKS[y]).length===0) delete LOCKS[y];
-    toast(`🔓 ${MF2[m]} ${y} unlocked`);
+    toast(`\uD83D\uDD13 ${MF2[m]} ${y} unlocked`);
   }
   saveAll();
   buildEntry(); // rebuild cards to show lock state
@@ -11914,7 +11615,7 @@ function lockFullYear(y){
   if(!months.length){toast('⚠ No data to lock for '+y);return;}
   saveAll();
   buildEntry();
-  toast(`🔒 Locked ${months.length} months in ${y}`);
+  toast(`\uD83D\uDD12 Locked ${months.length} months in ${y}`);
 }
 
 async function unlockFullYear(y){
@@ -11923,7 +11624,7 @@ async function unlockFullYear(y){
   delete LOCKS[y];
   saveAll();
   buildEntry();
-  toast(`🔓 All ${y} months unlocked`);
+  toast(`\uD83D\uDD13 All ${y} months unlocked`);
 }
 
 
@@ -11968,7 +11669,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
         display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <div>
           <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#f5c542">
-            📐 ${baseYear} Revenue Year Completion Forecast
+            \uD83D\uDCD0 ${baseYear} Revenue Year Completion Forecast
           </div>
           <div style="font-size:10px;color:#64748b;margin-top:2px">
             Actuals Jan–${MS2[lastActM]} + Forecast ${MS2[lastActM+1]}–Dec → Estimated Full-Year RPOR
@@ -11986,7 +11687,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
           <!-- Laundry -->
           <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;border-left:3px solid #0369a1">
             <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#38bdf8;margin-bottom:10px">
-              🏨 Laundry Revenue — FS Doha
+              \uD83C\uDFE8 Laundry Revenue — FS Doha
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px">
               <span style="color:#64748b">Jan–${MS2[lastActM]} Actual</span>
@@ -12018,7 +11719,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
           <!-- Pearl -->
           <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;border-left:3px solid #7c3aed">
             <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a78bfa;margin-bottom:10px">
-              💎 Pearl Valet Revenue — FS Pearl
+              \uD83D\uDC8E Pearl Valet Revenue — FS Pearl
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px">
               <span style="color:#64748b">Jan–${MS2[lastActM]} Actual</span>
@@ -12051,7 +11752,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
         <!-- Scenario selector -->
         <div style="background:#0f1a2e;border:1px solid rgba(245,197,66,.2);border-radius:8px;padding:12px 14px">
           <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f5c542;margin-bottom:10px">
-            👉 Select which RPOR to use for ${baseYear+1} Revenue Budget:
+            \uD83D\uDC49 Select which RPOR to use for ${baseYear+1} Revenue Budget:
           </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap">
             <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;flex:1;min-width:220px;
@@ -13072,7 +12773,7 @@ function modalConfirmActual(y, m, actual, forecast){
       </div>
     </div>
     <div style="font-size:11px;color:#64748b;background:#0f1a2e;border-radius:7px;padding:9px 12px">
-      💡 Clicking <strong style="color:#00d4b8">Confirm Actual</strong> saves ${actual.toLocaleString()} rooms as the confirmed actual. The forecast is archived as reference. All reports update instantly.
+      \uD83D\uDCA1 Clicking <strong style="color:#00d4b8">Confirm Actual</strong> saves ${actual.toLocaleString()} rooms as the confirmed actual. The forecast is archived as reference. All reports update instantly.
     </div>`,
     confirmText:'✓ Confirm Actual', cancelText:'Keep Forecast',
     confirmCol:'#00d4b8', confirmRgb:'0,212,184'
