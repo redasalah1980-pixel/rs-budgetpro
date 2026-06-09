@@ -8597,21 +8597,56 @@ function setCasualActual(y,m,compId,days){
   else delete DATA[y][m].casual[compId].days;
 }
 
-// Projected days: rooms→KG→days chain using prior year ratios
-function casualProjectedDays(compId,y,m){
-  const py=y-1;
-  const pyKg=Array.from({length:12},(_,mm)=>DATA[py]?.[mm]?.kg||0).reduce((a,b)=>a+b,0);
-  const pyRs=Array.from({length:12},(_,mm)=>DATA[py]?.[mm]?.roomsSold||0).reduce((a,b)=>a+b,0);
-  const pyDays=Array.from({length:12},(_,mm)=>getCasualActual(py,mm,compId)).reduce((a,b)=>a+b,0);
-  if(!pyKg||!pyRs||!pyDays) return 0;
-  const kgPerRn=pyKg/pyRs;
-  const kgPerDay=pyKg/pyDays;
-  const projRooms=DATA[y]?.[m]?.roomsSold||PROJ[y]?.[m]?.roomsSold||0;
-  const estKg=projRooms*kgPerRn;
-  return estKg?Math.round(estKg/kgPerDay):0;
+/* Budget days: stored in DATA[y][m].casual[compId].budDays */
+function getCasualBudget(y,m,compId){
+  return DATA[y]?.[m]?.casual?.[compId]?.budDays||0;
+}
+function setCasualBudget(y,m,compId,days){
+  if(!DATA[y])DATA[y]={};
+  if(!DATA[y][m])DATA[y][m]={};
+  if(!DATA[y][m].casual)DATA[y][m].casual={};
+  if(!DATA[y][m].casual[compId])DATA[y][m].casual[compId]={};
+  if(days) DATA[y][m].casual[compId].budDays=days;
+  else delete DATA[y][m].casual[compId].budDays;
+}
+
+/* Average actual days per month across all years that have data for that month */
+function casualAvgDays(compId,m){
+  let total=0,count=0;
+  YEARS.forEach(y=>{
+    const d=getCasualActual(y,m,compId);
+    if(d>0){total+=d;count++;}
+  });
+  return count?Math.round(total/count):0;
+}
+
+/* Suggestion: fill budget year with averages where no budget days set yet */
+function applyCasualSuggestion(y){
+  const comps=getCasualCompanies();
+  let applied=0;
+  comps.forEach(c=>{
+    for(let m=0;m<12;m++){
+      const avg=casualAvgDays(c.id,m);
+      if(avg>0){setCasualBudget(y,m,c.id,avg);applied++;}
+    }
+  });
+  if(applied){autoSave();buildCasualTab();toast('Budget suggestion applied \u2713');}
+  else toast('No historical data to base suggestion on');
+}
+
+function clearCasualBudget(y){
+  if(!confirm('Clear all budget days for '+y+'?')) return;
+  const comps=getCasualCompanies();
+  comps.forEach(c=>{
+    for(let m=0;m<12;m++){
+      if(DATA[y]?.[m]?.casual?.[c.id]) delete DATA[y][m].casual[c.id].budDays;
+    }
+  });
+  autoSave();buildCasualTab();toast('Budget cleared');
 }
 
 let casualY=new Date().getFullYear();
+let casualView='entry'; /* 'entry' | 'history' | 'budget' */
 
 /* ════════════════════════════════════════
    CASUAL LABOUR — BUILD TAB
@@ -8623,251 +8658,482 @@ function buildCasualTab(){
   const MF=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const MFF=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const curY=new Date().getFullYear(), curM=new Date().getMonth();
+
+  /* ── KPI totals for selected year ── */
+  let totActCost=0,totBudCost=0,totPyCost=0;
   const py=casualY-1;
-
-  // ── KPIs ──
-  let totActCost=0,totProjCost=0,totPyCost=0;
-  const compKpis={};
   comps.forEach(c=>{
-    let actD=0,actC=0,projD=0,projC=0,pyD=0,pyC=0;
     for(let m=0;m<12;m++){
-      const r=casualRate(c.id,casualY,m), rpy=casualRate(c.id,py,m);
-      const a=getCasualActual(casualY,m,c.id);
-      const p=casualProjectedDays(c.id,casualY,m);
-      const prev=getCasualActual(py,m,c.id);
-      actD+=a; actC+=a*r; projD+=p; projC+=p*r; pyD+=prev; pyC+=prev*rpy;
+      const r=casualRate(c.id,casualY,m);
+      totActCost+=getCasualActual(casualY,m,c.id)*r;
+      totBudCost+=getCasualBudget(casualY,m,c.id)*r;
+      totPyCost+=getCasualActual(py,m,c.id)*casualRate(c.id,py,m);
     }
-    compKpis[c.id]={actD,actC,projD,projC,pyD,pyC};
-    totActCost+=actC; totProjCost+=projC; totPyCost+=pyC;
   });
-  const totKg=Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.kg||0),0);
-  const totRs=Object.values(DATA[casualY]||{}).reduce((s,m)=>s+(m.roomsSold||0),0);
 
-  // ── Prior year ratios display ──
-  const pyKgTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.kg||0).reduce((a,b)=>a+b,0);
-  const pyRsTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.roomsSold||0).reduce((a,b)=>a+b,0);
-  const kgPerRnRatio=pyRsTot&&pyKgTot?pyKgTot/pyRsTot:0;
+  /* ── View: ENTRY (actual days input, monthly table) ── */
+  function buildEntryView(){
+    const monthRows=MFF.map((mf,m)=>{
+      const isFuture=casualY>curY||(casualY===curY&&m>curM);
+      const compCells=comps.map(c=>{
+        const rate=casualRate(c.id,casualY,m);
+        const actD=getCasualActual(casualY,m,c.id);
+        const pyD=getCasualActual(py,m,c.id);
+        const actC=actD*rate;
+        const pyC=pyD*casualRate(c.id,py,m);
+        const vd=pyD?actD-pyD:null;
+        const vc=vd===null?'#4a5568':vd<=0?'var(--teal)':'var(--coral)';
+        return `
+          <td style="padding:4px 3px;text-align:center">
+            <input type="text" inputmode="decimal"
+              value="${actD||''}" placeholder="—"
+              data-y="${casualY}" data-m="${m}" data-c="${c.id}" data-t="act"
+              onchange="casualSaveDay(this)"
+              style="width:52px;background:${isFuture?'rgba(255,255,255,.03)':'var(--bg3)'};
+                border:1px solid ${actD?'rgba(0,212,184,.4)':'var(--border)'};
+                border-radius:5px;padding:4px 5px;font-family:var(--ff-m);font-size:12px;
+                font-weight:700;color:var(--teal);text-align:center;outline:none;
+                ${isFuture?'opacity:.4':''}">
+          </td>
+          <td style="padding:4px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${actC?fN(actC):'—'}</td>
+          <td style="padding:4px 5px;text-align:center;font-size:10px;color:#64748b">${pyD||'—'}</td>
+          <td style="padding:4px 5px;text-align:right;font-size:10px;color:#64748b">${pyC?fN(pyC):'—'}</td>
+          <td style="padding:4px 4px;text-align:center;font-size:10px;font-weight:700;color:${vc}">${vd!==null?(vd>0?'+':'')+vd:'—'}</td>`;
+      }).join('');
+      const totAct=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
+      const totPy=comps.reduce((_,c)=>_+getCasualActual(py,m,c.id)*casualRate(c.id,py,m),0);
+      const totV=totAct&&totPy?totAct-totPy:null;
+      const tvc=totV===null?'#4a5568':totV<=0?'var(--lime)':'var(--coral)';
+      return `<tr style="background:${casualY===curY&&m===curM?'rgba(0,212,184,.04)':m%2?'rgba(255,255,255,.018)':'transparent'}">
+        <td style="padding:5px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:${casualY===curY&&m===curM?'var(--teal)':isFuture?'#4a5568':'var(--text2)'}">
+          ${casualY===curY&&m===curM?'<span style="color:var(--teal)">● </span>':''}${mf}
+        </td>
+        ${compCells}
+        <td style="padding:5px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.04)">${totAct?fN(totAct):'—'}</td>
+        <td style="padding:5px 7px;text-align:right;font-size:10px;color:#64748b">${totPy?fN(totPy):'—'}</td>
+        <td style="padding:5px 6px;text-align:center;font-size:11px;font-weight:700;color:${tvc}">${totV!==null?(totV>0?'+':'')+fN(Math.abs(totV)):'—'}</td>
+      </tr>`;
+    }).join('');
 
-  // ── KPI card ──
+    const compHdrs=comps.map(c=>`
+      <th colspan="5" style="padding:6px 4px;text-align:center;font-size:10px;font-weight:700;
+        color:var(--teal);background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.15)">
+        ${c.name}
+        <span style="font-size:8px;color:#4a5568;font-weight:400">&nbsp;QAR ${casualRate(c.id,casualY,0)}/day</span>
+      </th>`).join('');
+
+    const subHdrs=comps.map(c=>`
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);border-left:2px solid rgba(0,212,184,.1);text-align:center">Days</th>
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);text-align:right">Cost</th>
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:center">${py} Days</th>
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:right">${py} Cost</th>
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">vs ${py}</th>`).join('');
+
+    const totalsRow=comps.map(c=>{
+      let totD=0,totC=0,totPyD=0,totPyC2=0;
+      for(let m=0;m<12;m++){
+        const r=casualRate(c.id,casualY,m),rpy=casualRate(c.id,py,m);
+        const d=getCasualActual(casualY,m,c.id),dp=getCasualActual(py,m,c.id);
+        totD+=d;totC+=d*r;totPyD+=dp;totPyC2+=dp*rpy;
+      }
+      const vd=totD&&totPyD?totD-totPyD:null;
+      const vc=vd===null?'#4a5568':vd<=0?'var(--teal)':'var(--coral)';
+      return `<td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--teal);border-left:2px solid rgba(0,212,184,.15)">${totD||'—'}</td>
+        <td style="padding:7px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--teal)">${totC?fN(totC):'—'}</td>
+        <td style="padding:7px 3px;text-align:center;font-size:10px;color:#64748b">${totPyD||'—'}</td>
+        <td style="padding:7px 5px;text-align:right;font-size:10px;color:#64748b">${totPyC2?fN(totPyC2):'—'}</td>
+        <td style="padding:7px 3px;text-align:center;font-size:10px;font-weight:700;color:${vc}">${vd!==null?(vd>0?'+':'')+vd:'—'}</td>`;
+    }).join('');
+
+    const pyTotCost=comps.reduce((_,c)=>{let s=0;for(let m=0;m<12;m++)s+=getCasualActual(py,m,c.id)*casualRate(c.id,py,m);return _+s;},0);
+    const gVar=totActCost&&pyTotCost?totActCost-pyTotCost:null;
+    const gvc=gVar===null?'#4a5568':gVar<=0?'var(--lime)':'var(--coral)';
+
+    return `
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Actuals — ${casualY}</div>
+            <div style="font-size:10px;color:#4a5568;margin-top:2px">
+              Enter actual days worked each month per company &nbsp;·&nbsp;
+              <span style="color:#64748b">■</span> ${py} = last year same month for comparison
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:900px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
+                ${compHdrs}
+                <th colspan="3" style="padding:7px 5px;text-align:center;font-size:10px;font-weight:700;color:var(--lime);background:rgba(163,230,53,.06)">TOTAL</th>
+              </tr>
+              <tr style="background:var(--bg4)">
+                ${subHdrs}
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);text-align:right">Act Cost</th>
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:right">${py} Cost</th>
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">vs ${py}</th>
+              </tr>
+            </thead>
+            <tbody>${monthRows}</tbody>
+            <tfoot>
+              <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+                <td style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>
+                ${totalsRow}
+                <td style="padding:8px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.05)">${totActCost?fN(totActCost):'—'}</td>
+                <td style="padding:8px 7px;text-align:right;font-size:11px;font-weight:700;color:#64748b">${pyTotCost?fN(pyTotCost):'—'}</td>
+                <td style="padding:8px 6px;text-align:center;font-size:11px;font-weight:800;color:${gvc}">${gVar!==null?(gVar>0?'+':'')+fN(Math.abs(gVar)):'—'}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  /* ── View: HISTORY (all years side by side) ── */
+  function buildHistoryView(){
+    /* Collect years that have any casual data */
+    const dataYears=YEARS.filter(y=>comps.some(c=>Array.from({length:12},(_,m)=>getCasualActual(y,m,c.id)).some(v=>v>0)));
+
+    if(!dataYears.length) return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:40px;text-align:center;color:#4a5568">No casual labour data entered yet. Start in the Entry tab.</div>`;
+
+    /* Monthly rows — each month shows days + cost for every year */
+    const monthRows=MFF.map((mf,m)=>{
+      const yearCells=dataYears.map(y=>{
+        const totD=comps.reduce((_,c)=>_+getCasualActual(y,m,c.id),0);
+        const totC=comps.reduce((_,c)=>_+getCasualActual(y,m,c.id)*casualRate(c.id,y,m),0);
+        return `<td style="padding:5px 7px;text-align:center;font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--teal)">${totD||'—'}</td>
+                <td style="padding:5px 7px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal)">${totC?fN(totC):'—'}</td>`;
+      }).join('');
+
+      /* Trend: is this month's cost generally rising? */
+      const costs=dataYears.map(y=>comps.reduce((_,c)=>_+getCasualActual(y,m,c.id)*casualRate(c.id,y,m),0)).filter(v=>v>0);
+      const avgCost=costs.length?costs.reduce((a,b)=>a+b,0)/costs.length:0;
+      return `<tr style="background:${m%2?'rgba(255,255,255,.018)':'transparent'}">
+        <td style="padding:5px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text2)">${mf}</td>
+        ${yearCells}
+        <td style="padding:5px 7px;text-align:right;font-family:var(--ff-m);font-size:10px;color:#a78bfa;background:rgba(167,139,250,.04)">${avgCost?fN(avgCost):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    /* Yearly total row */
+    const yearTotals=dataYears.map(y=>{
+      const totD=comps.reduce((_,c)=>{let s=0;for(let m=0;m<12;m++)s+=getCasualActual(y,m,c.id);return _+s;},0);
+      const totC=comps.reduce((_,c)=>{let s=0;for(let m=0;m<12;m++)s+=getCasualActual(y,m,c.id)*casualRate(c.id,y,m);return _+s;},0);
+      return `<td style="padding:8px 7px;text-align:center;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal)">${totD||'—'}</td>
+              <td style="padding:8px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal)">${totC?fN(totC):'—'}</td>`;
+    }).join('');
+
+    /* Annual avg column total */
+    let grandAvgSum=0,grandAvgCount=0;
+    MFF.forEach((_,m)=>{
+      const costs=dataYears.map(y=>comps.reduce((_,c)=>_+getCasualActual(y,m,c.id)*casualRate(c.id,y,m),0)).filter(v=>v>0);
+      if(costs.length){grandAvgSum+=costs.reduce((a,b)=>a+b,0)/costs.length;grandAvgCount++;}
+    });
+
+    return `
+      <div style="background:var(--bg3);border:1px solid rgba(167,139,250,.2);border-radius:9px;padding:11px 14px;margin-bottom:14px;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+        <div style="font-size:10px;font-weight:700;color:#a78bfa">📅 Years with data:</div>
+        ${dataYears.map(y=>{
+          const totC=comps.reduce((_,c)=>{let s=0;for(let m=0;m<12;m++)s+=getCasualActual(y,m,c.id)*casualRate(c.id,y,m);return _+s;},0);
+          return `<div style="font-size:10px;color:#64748b"><span style="color:#a78bfa;font-family:var(--ff-m);font-weight:700">${y}</span> — QAR ${fN(totC)}</div>`;
+        }).join('')}
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+        <div style="padding:11px 16px;border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">All-Years Comparison — Days & Cost by Month</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:2px">Each column pair = total days + total cost (all companies combined) · <span style="color:#a78bfa">Avg Cost</span> = monthly average across all years</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:700px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
+                ${dataYears.map(y=>`<th colspan="2" style="padding:6px 4px;text-align:center;font-size:10px;font-weight:700;color:var(--teal);background:rgba(0,212,184,.06);border-left:1px solid rgba(0,212,184,.15)">${y}</th>`).join('')}
+                <th style="padding:6px 5px;text-align:right;font-size:10px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.06)">Avg Cost</th>
+              </tr>
+              <tr style="background:var(--bg4)">
+                <th></th>
+                ${dataYears.map(()=>`
+                  <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#94a3b8;text-align:center;border-left:1px solid rgba(0,212,184,.1)">Days</th>
+                  <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#94a3b8;text-align:right">Cost QAR</th>`).join('')}
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:right">QAR</th>
+              </tr>
+            </thead>
+            <tbody>${monthRows}</tbody>
+            <tfoot>
+              <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+                <td style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">TOTAL</td>
+                ${yearTotals}
+                <td style="padding:8px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.05)">${grandAvgCount?fN(grandAvgSum):'—'}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px">Company Breakdown by Year</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:600px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b">Company</th>
+                ${dataYears.map(y=>`<th colspan="2" style="padding:6px 5px;text-align:center;font-size:10px;font-weight:700;color:var(--amber);background:rgba(255,179,71,.06);border-left:1px solid rgba(255,179,71,.15)">${y}</th>`).join('')}
+              </tr>
+              <tr style="background:var(--bg4)">
+                <th></th>
+                ${dataYears.map(()=>`
+                  <th style="padding:4px 3px;font-size:8px;color:#94a3b8;text-align:center;border-left:1px solid rgba(255,179,71,.1)">Days</th>
+                  <th style="padding:4px 3px;font-size:8px;color:#94a3b8;text-align:right">Cost QAR</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${comps.map((c,ci)=>{
+                const cells=dataYears.map(y=>{
+                  const totD=Array.from({length:12},(_,m)=>getCasualActual(y,m,c.id)).reduce((a,b)=>a+b,0);
+                  const totC=Array.from({length:12},(_,m)=>getCasualActual(y,m,c.id)*casualRate(c.id,y,m)).reduce((a,b)=>a+b,0);
+                  return `<td style="padding:6px 5px;text-align:center;font-family:var(--ff-m);font-size:11px;font-weight:700;color:var(--amber);border-left:1px solid rgba(255,179,71,.1)">${totD||'—'}</td>
+                          <td style="padding:6px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--amber)">${totC?fN(totC):'—'}</td>`;
+                }).join('');
+                return `<tr style="background:${ci%2?'rgba(255,255,255,.018)':'transparent'}">
+                  <td style="padding:6px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text2)">${c.name}</td>
+                  ${cells}
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  /* ── View: BUDGET (plan next year — enter budget days, see cost) ── */
+  function buildBudgetView(){
+    const nextY=casualY;
+
+    /* Check if there's suggestion data available */
+    const hasSuggestionData=comps.some(c=>Array.from({length:12},(_,m)=>casualAvgDays(c.id,m)).some(v=>v>0));
+
+    const monthRows=MFF.map((mf,m)=>{
+      const compCells=comps.map(c=>{
+        const rate=casualRate(c.id,nextY,m);
+        const budD=getCasualBudget(nextY,m,c.id);
+        const avgD=casualAvgDays(c.id,m);
+        const budC=budD*rate;
+        return `
+          <td style="padding:4px 3px;text-align:center">
+            <input type="text" inputmode="decimal"
+              value="${budD||''}" placeholder="${avgD||'—'}"
+              data-y="${nextY}" data-m="${m}" data-c="${c.id}" data-t="bud"
+              onchange="casualSaveDay(this)"
+              style="width:58px;background:var(--bg3);
+                border:1px solid ${budD?'rgba(255,179,71,.5)':'rgba(255,179,71,.18)'};
+                border-radius:5px;padding:4px 5px;font-family:var(--ff-m);font-size:12px;
+                font-weight:700;color:var(--amber);text-align:center;outline:none">
+          </td>
+          <td style="padding:4px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--amber)">${budC?fN(budC):'—'}</td>
+          <td style="padding:4px 5px;text-align:center;font-size:10px;color:#4a5568">${avgD||'—'}</td>`;
+      }).join('');
+
+      const totBudD=comps.reduce((_,c)=>_+getCasualBudget(nextY,m,c.id),0);
+      const totBudC=comps.reduce((_,c)=>_+getCasualBudget(nextY,m,c.id)*casualRate(c.id,nextY,m),0);
+      const totAvgC=comps.reduce((_,c)=>_+casualAvgDays(c.id,m)*casualRate(c.id,nextY,m),0);
+      const variance=totBudC&&totAvgC?totBudC-totAvgC:null;
+      const vc=variance===null?'#4a5568':Math.abs(variance)<1?'var(--teal)':variance>0?'var(--coral)':'var(--teal)';
+
+      return `<tr style="background:${m%2?'rgba(255,255,255,.018)':'transparent'}">
+        <td style="padding:5px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:var(--text2)">${mf}</td>
+        ${compCells}
+        <td style="padding:5px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--amber);background:rgba(255,179,71,.04)">${totBudC?fN(totBudC):'—'}</td>
+        <td style="padding:5px 7px;text-align:right;font-size:10px;color:#a78bfa;background:rgba(167,139,250,.04)">${totAvgC?fN(totAvgC):'—'}</td>
+        <td style="padding:5px 6px;text-align:center;font-size:10px;font-weight:700;color:${vc}">${variance!==null?(variance>0?'+':'')+fN(Math.abs(variance)):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    const compHdrs=comps.map(c=>`
+      <th colspan="3" style="padding:6px 4px;text-align:center;font-size:10px;font-weight:700;
+        color:var(--amber);background:rgba(255,179,71,.07);border-left:2px solid rgba(255,179,71,.2)">
+        ${c.name}
+        <span style="font-size:8px;color:#4a5568;font-weight:400">&nbsp;QAR ${casualRate(c.id,nextY,0)}/day</span>
+      </th>`).join('');
+
+    const subHdrs=comps.map(()=>`
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--amber);border-left:2px solid rgba(255,179,71,.12);text-align:center">Bud Days</th>
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--amber);text-align:right">Bud Cost</th>
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:center">Avg Days</th>`).join('');
+
+    const totalsRow=comps.map(c=>{
+      let totBD=0,totBC=0,totAD=0;
+      for(let m=0;m<12;m++){
+        const r=casualRate(c.id,nextY,m);
+        totBD+=getCasualBudget(nextY,m,c.id);
+        totBC+=getCasualBudget(nextY,m,c.id)*r;
+        totAD+=casualAvgDays(c.id,m);
+      }
+      return `<td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--amber);border-left:2px solid rgba(255,179,71,.2)">${totBD||'—'}</td>
+        <td style="padding:7px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--amber)">${totBC?fN(totBC):'—'}</td>
+        <td style="padding:7px 3px;text-align:center;font-size:10px;color:#a78bfa">${totAD||'—'}</td>`;
+    }).join('');
+
+    let grandBudCost=0,grandAvgCost=0;
+    comps.forEach(c=>{
+      for(let m=0;m<12;m++){
+        grandBudCost+=getCasualBudget(nextY,m,c.id)*casualRate(c.id,nextY,m);
+        grandAvgCost+=casualAvgDays(c.id,m)*casualRate(c.id,nextY,m);
+      }
+    });
+    const gVar=grandBudCost&&grandAvgCost?grandBudCost-grandAvgCost:null;
+    const gvc=gVar===null?'#4a5568':Math.abs(gVar)<1?'var(--teal)':gVar>0?'var(--coral)':'var(--teal)';
+
+    return `
+      <!-- BUDGET SUGGESTION BAR -->
+      <div style="background:${hasSuggestionData?'rgba(167,139,250,.07)':'rgba(255,255,255,.03)'};border:1px solid ${hasSuggestionData?'rgba(167,139,250,.25)':'var(--border)'};border-radius:10px;padding:13px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:${hasSuggestionData?'#a78bfa':'#4a5568'}">🧠 Budget Suggestion — Average of All Years</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:3px">
+            ${hasSuggestionData
+              ?`Based on your historical data, the <span style="color:#a78bfa">Avg Days</span> column shows the monthly average per company across all years. Click Apply to pre-fill budget days.`
+              :'No historical data yet. Enter actual days in the Entry tab first, then come back to plan the budget.'}
+          </div>
+        </div>
+        ${hasSuggestionData?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="applyCasualSuggestion(${nextY})" style="padding:7px 16px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(167,139,250,.4);color:#a78bfa;background:rgba(167,139,250,.1);cursor:pointer"
+            onmouseover="this.style.background='rgba(167,139,250,.2)'" onmouseout="this.style.background='rgba(167,139,250,.1)'">✨ Apply Suggestion</button>
+          <button onclick="clearCasualBudget(${nextY})" style="padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.25);color:var(--coral);background:transparent;cursor:pointer"
+            onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='transparent'">✕ Clear All</button>
+        </div>`:''}
+      </div>
+
+      <!-- KPI ROW -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
+        <div style="background:#1a2236;border:1px solid rgba(255,179,71,.2);border-radius:10px;padding:12px 14px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">Budget Total ${nextY}</div>
+          <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--amber)">${grandBudCost?'QAR '+fN(grandBudCost):'Not set'}</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:3px">Annual casual labour budget</div>
+        </div>
+        <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:12px 14px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">Avg Suggestion</div>
+          <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:#a78bfa">${grandAvgCost?'QAR '+fN(grandAvgCost):'—'}</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:3px">Based on historical average</div>
+        </div>
+        ${comps.map(c=>{
+          let bc=0; for(let m=0;m<12;m++) bc+=getCasualBudget(nextY,m,c.id)*casualRate(c.id,nextY,m);
+          return `<div style="background:#1a2236;border:1px solid rgba(255,179,71,.15);border-radius:10px;padding:12px 14px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">${c.name}</div>
+            <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--amber)">${bc?'QAR '+fN(bc):'Not set'}</div>
+            <div style="font-size:10px;color:#4a5568;margin-top:3px">QAR ${casualRate(c.id,nextY,0)}/day</div>
+          </div>`;
+        }).join('')}
+        <div style="background:#1a2236;border:1px solid ${gVar===null?'var(--border)':gVar<=0?'rgba(0,212,184,.2)':'rgba(255,107,107,.2)'};border-radius:10px;padding:12px 14px">
+          <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">vs Suggestion</div>
+          <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:${gvc}">${gVar!==null?(gVar>0?'+':'')+fN(gVar):'—'}</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:3px">${gVar!==null?(gVar>0?'Over suggestion':'Under / on track'):'—'}</div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Budget Plan — ${nextY}</div>
+          <div style="font-size:10px;color:#4a5568;margin-top:2px">
+            Enter planned days per company per month &nbsp;·&nbsp;
+            <span style="color:#a78bfa">■</span> Avg Days = historical average (placeholder hint in input field)
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:800px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
+                ${compHdrs}
+                <th colspan="3" style="padding:7px 5px;text-align:center;font-size:10px;font-weight:700;color:var(--lime);background:rgba(163,230,53,.06)">TOTAL</th>
+              </tr>
+              <tr style="background:var(--bg4)">
+                ${subHdrs}
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--amber);text-align:right">Bud Cost</th>
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:right">Avg Cost</th>
+                <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">Variance</th>
+              </tr>
+            </thead>
+            <tbody>${monthRows}</tbody>
+            <tfoot>
+              <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
+                <td style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>
+                ${totalsRow}
+                <td style="padding:8px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--amber);background:rgba(255,179,71,.05)">${grandBudCost?fN(grandBudCost):'—'}</td>
+                <td style="padding:8px 7px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.05)">${grandAvgCost?fN(grandAvgCost):'—'}</td>
+                <td style="padding:8px 6px;text-align:center;font-size:11px;font-weight:800;color:${gvc}">${gVar!==null?(gVar>0?'+':'')+fN(Math.abs(gVar)):'—'}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>`;
+  }
+
+  /* ── KPI summary strip (always visible) ── */
+  const totActDays=comps.reduce((_,c)=>{let s=0;for(let m=0;m<12;m++)s+=getCasualActual(casualY,m,c.id);return _+s;},0);
+  const totBudDays=comps.reduce((_,c)=>{let s=0;for(let m=0;m<12;m++)s+=getCasualBudget(casualY,m,c.id);return _+s;},0);
+  const costPerDay=totActDays?totActCost/totActDays:0;
   const kpiCard=(label,val,sub,col)=>`
-    <div style="background:#1a2236;border:1px solid ${col}30;border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
+    <div style="background:#1a2236;border:1px solid ${col}28;border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${col},transparent)"></div>
       <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:5px">${label}</div>
-      <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${col};line-height:1.2">${val}</div>
+      <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:${col};line-height:1.2">${val}</div>
       <div style="font-size:10px;color:#4a5568;margin-top:3px">${sub}</div>
     </div>`;
 
-  // ── Month table ──
-  const monthRows=MF.map((ms,m)=>{
-    const isFuture=casualY>curY||(casualY===curY&&m>curM);
-    const kg=DATA[casualY]?.[m]?.kg||0;
-    const rs=DATA[casualY]?.[m]?.roomsSold||PROJ[casualY]?.[m]?.roomsSold||0;
-
-    const compCells=comps.map(c=>{
-      const rate=casualRate(c.id,casualY,m);
-      const ratePy=casualRate(c.id,py,m);
-      const actD=getCasualActual(casualY,m,c.id);
-      const projD=casualProjectedDays(c.id,casualY,m);
-      const pyD=getCasualActual(py,m,c.id);
-      const actC=actD*rate, projC=projD*rate, pyC=pyD*ratePy;
-
-      // vs projected variance
-      const vProj=projD&&actD?(actD-projD):null;
-      const vProjCol=vProj===null?'#4a5568':vProj<=0?'var(--teal)':'var(--coral)';
-      // vs prior year variance
-      const vPy=pyD&&actD?(actD-pyD):null;
-      const vPyCol=vPy===null?'#4a5568':vPy<=0?'var(--teal)':'var(--coral)';
-
-      return `
-        <td style="padding:5px 3px;text-align:center">
-          <input type="text" inputmode="decimal"
-            value="${actD||''}" placeholder="—"
-            data-y="${casualY}" data-m="${m}" data-c="${c.id}"
-            onchange="casualSaveDay(this)"
-            style="width:50px;background:${isFuture?'rgba(255,255,255,.03)':'var(--bg3)'};
-              border:1px solid ${actD?'rgba(0,212,184,.35)':'var(--border)'};
-              border-radius:5px;padding:4px 4px;font-family:var(--ff-m);font-size:11px;
-              font-weight:700;color:var(--teal);text-align:center;outline:none;
-              ${isFuture?'opacity:.45':''}">
-        </td>
-        <td style="padding:5px 4px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--teal);font-weight:600">${actC?fN(actC):'—'}</td>
-        <td style="padding:5px 4px;text-align:center;font-size:10px;color:#a78bfa">${projD||'—'}</td>
-        <td style="padding:5px 4px;text-align:right;font-size:10px;color:#a78bfa">${projC?fN(projC):'—'}</td>
-        <td style="padding:5px 4px;text-align:center;font-size:10px;color:#64748b">${pyD||'—'}</td>
-        <td style="padding:5px 4px;text-align:right;font-size:10px;color:#64748b">${pyC?fN(pyC):'—'}</td>
-        <td style="padding:5px 3px;text-align:center;font-size:10px;font-weight:700;color:${vProjCol}">${vProj!==null?(vProj>0?'+':'')+vProj:'—'}</td>`;
-    }).join('');
-
-    const totActM=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-    const totProjM=comps.reduce((_,c)=>_+casualProjectedDays(c.id,casualY,m)*casualRate(c.id,casualY,m),0);
-    const totPyM=comps.reduce((_,c)=>_+getCasualActual(py,m,c.id)*casualRate(c.id,py,m),0);
-    const totVarM=totProjM&&totActM?totActM-totProjM:null;
-    const tvc=totVarM===null?'#4a5568':totVarM<=0?'var(--lime)':'var(--coral)';
-
-    return `<tr style="background:${isFuture?'rgba(255,255,255,.01)':m%2?'rgba(255,255,255,.018)':'transparent'}${isFuture?';opacity:.4':''}">
-      <td style="padding:5px 10px;font-family:var(--ff-d);font-size:11px;font-weight:700;color:${casualY===curY&&m===curM?'var(--teal)':isFuture?'#4a5568':'var(--text2)'}">
-        ${casualY===curY&&m===curM?'<span style="color:var(--teal)">● </span>':''}${MFF[m]}
-      </td>
-      <td style="padding:5px 6px;text-align:right;font-size:10px;color:#38bdf8">${kg?kg.toLocaleString():'—'}</td>
-      <td style="padding:5px 6px;text-align:right;font-size:10px;color:#a78bfa">${rs?rs.toLocaleString():'—'}</td>
-      ${compCells}
-      <td style="padding:5px 6px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.04)">${totActM?fN(totActM):'—'}</td>
-      <td style="padding:5px 6px;text-align:right;font-family:var(--ff-m);font-size:10px;color:#a78bfa;background:rgba(167,139,250,.04)">${totProjM?fN(totProjM):'—'}</td>
-      <td style="padding:5px 6px;text-align:right;font-size:10px;color:#4a5568">${totPyM?fN(totPyM):'—'}</td>
-      <td style="padding:5px 6px;text-align:right;font-size:11px;font-weight:700;color:${tvc}">${totVarM!==null?(totVarM>0?'+':'')+fN(totVarM):'—'}</td>
-    </tr>`;
-  }).join('');
-
-  // Column headers per company
-  const compHdrs=comps.map(c=>`
-    <th colspan="7" style="padding:6px 4px;text-align:center;font-size:10px;font-weight:700;
-      color:var(--teal);background:rgba(0,212,184,.06);border-left:2px solid rgba(0,212,184,.15)">
-      ${c.name}
-      <span style="font-size:8px;color:#4a5568;font-weight:400">&nbsp;QAR ${casualRate(c.id,casualY,0)}/day</span>
-    </th>`).join('');
-
-  const subHdrs=comps.map(c=>`
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);border-left:2px solid rgba(0,212,184,.1);text-align:center">Act Days</th>
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);text-align:right">Act Cost</th>
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:center">Proj Days</th>
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:right">Proj Cost</th>
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:center">${py} Days</th>
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:right">${py} Cost</th>
-    <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">vs Proj</th>`).join('');
-
-  // Totals row
-  const totalsRow=comps.map(c=>{
-    const k=compKpis[c.id];
-    return `<td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--teal);border-left:2px solid rgba(0,212,184,.15)">${k.actD||'—'}</td>
-      <td style="padding:7px 4px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--teal)">${k.actC?fN(k.actC):'—'}</td>
-      <td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:700;color:#a78bfa">${k.projD||'—'}</td>
-      <td style="padding:7px 4px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:700;color:#a78bfa">${k.projC?fN(k.projC):'—'}</td>
-      <td style="padding:7px 3px;text-align:center;font-size:10px;font-weight:700;color:#64748b">${k.pyD||'—'}</td>
-      <td style="padding:7px 4px;text-align:right;font-size:10px;font-weight:700;color:#64748b">${k.pyC?fN(k.pyC):'—'}</td>
-      <td style="padding:7px 3px;text-align:center;font-size:10px;font-weight:700;color:${k.actD&&k.projD?(k.actD<=k.projD?'var(--teal)':'var(--coral)'):'#4a5568'}">${k.actD&&k.projD?(k.actD-k.projD>0?'+':'')+(k.actD-k.projD):'—'}</td>`;
-  }).join('');
-
-  const gVarC=totActCost&&totProjCost?totActCost-totProjCost:null;
-  const gvc=gVarC===null?'#4a5568':gVarC<=0?'var(--lime)':'var(--coral)';
-
-  // Company cards
+  /* ── Company cards ── */
   const compCards=comps.map(c=>{
     const latestRate=c.rates.sort((a,b)=>(b.fromY*12+b.fromM)-(a.fromY*12+a.fromM))[0];
-    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;flex:1;min-width:180px">
+    let totD=0,totC=0;
+    for(let m=0;m<12;m++){totD+=getCasualActual(casualY,m,c.id);totC+=getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m);}
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;flex:1;min-width:170px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--text)">${c.name}</div>
         <button onclick="openCasualCompModal('${c.id}')" style="padding:3px 9px;border-radius:5px;font-size:10px;font-weight:700;border:1px solid rgba(255,179,71,.3);color:var(--amber);background:rgba(255,179,71,.08);cursor:pointer">✏ Edit</button>
       </div>
       <div style="font-size:11px;color:#4a5568">Rate: <strong style="color:var(--amber);font-family:var(--ff-m)">QAR ${latestRate?.rate||0}/day</strong></div>
-      <div style="font-size:10px;color:#4a5568;margin-top:2px">${c.rates.length} rate period${c.rates.length>1?'s':''}</div>
+      <div style="font-size:10px;color:#4a5568;margin-top:1px">${totD} days · QAR ${totC?fN(totC):'0'} (${casualY})</div>
     </div>`;
   }).join('');
 
-  // Ratios info panel
-  const ratiosPanel=`<div style="background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:9px;padding:12px 14px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
-    <div style="font-size:10px;font-weight:700;color:#38bdf8;flex-shrink:0">📐 ${py} Ratios used for ${casualY} projection:</div>
-    ${kgPerRnRatio?`<div style="font-size:10px;color:#4a5568"><span style="color:#38bdf8;font-family:var(--ff-m);font-weight:700">${kgPerRnRatio.toFixed(3)}</span> KG / Room Night</div>`:'<div style="font-size:10px;color:var(--coral)">No ${py} KG data — enter in Monthly Entry</div>'}
-    ${comps.map(c=>{
-      const pyKgT=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.kg||0).reduce((a,b)=>a+b,0);
-      const pyDT=Array.from({length:12},(_,m)=>getCasualActual(py,m,c.id)).reduce((a,b)=>a+b,0);
-      const kpd=pyKgT&&pyDT?pyKgT/pyDT:0;
-      return `<div style="font-size:10px;color:#4a5568">${c.name}: <span style="color:var(--amber);font-family:var(--ff-m);font-weight:700">${kpd?kpd.toFixed(1):'—'}</span> KG/day</div>`;
-    }).join('')}
-    <div style="font-size:10px;color:#4a5568;margin-left:auto">Rooms from: <span style="color:var(--violet)">Monthly Entry actuals → Projection Planner</span></div>
-  </div>`;
-
-  // ── Render ──
+  /* ── Render full tab ── */
   el.innerHTML=`<div class="main" style="padding-bottom:80px">
 
+    <!-- HEADER -->
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <div class="pt">👷 Casual Labour <span>Actual · Projected · Prior Year — separate from main expenses</span></div>
+      <div class="pt">👷 Casual Labour <span>Expense Tracking · Year Comparison · Budget Planning</span></div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div class="ypills" id="yp-casual"></div>
-        <button onclick="openCasualCompModal('new')" style="padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.35);color:var(--lime);background:rgba(163,230,53,.07);cursor:pointer">➕ Add Company</button>
+        <button onclick="openCasualCompModal('new')" style="padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(163,230,53,.35);color:var(--lime);background:rgba(163,230,53,.07);cursor:pointer">➕ Company</button>
         <button onclick="printCasualPDF()" style="padding:6px 12px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.3);color:var(--coral);background:rgba(255,107,107,.06);cursor:pointer">🖨 Print</button>
       </div>
     </div>
 
-    
+    <!-- COMPANY CARDS + KPIs -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
       ${compCards}
-      <div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.15);border-radius:9px;padding:12px 14px;flex:2;min-width:220px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:8px">Total Casual Cost — ${casualY}</div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
-          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">Actual</div><div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--teal)">${totActCost?'QAR '+fN(totActCost):'—'}</div></div>
-          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">Projected</div><div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:#a78bfa">${totProjCost?'QAR '+fN(totProjCost):'—'}</div></div>
-          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">${py} Actual</div><div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:#64748b">${totPyCost?'QAR '+fN(totPyCost):'—'}</div></div>
-          <div><div style="font-size:9px;color:#4a5568;margin-bottom:2px">vs Projected</div>
-            <div style="font-family:var(--ff-m);font-size:16px;font-weight:700;color:${gVarC===null?'#4a5568':gVarC<=0?'var(--lime)':'var(--coral)'}">
-              ${gVarC!==null?(gVarC>0?'+':'')+fN(gVarC):'—'}
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:16px">
+      ${kpiCard('Actual Cost — '+casualY, totActCost?'QAR '+fN(totActCost):'—', totActDays+' days total', 'var(--teal)')}
+      ${kpiCard('Budget Plan — '+casualY, totBudCost?'QAR '+fN(totBudCost):'Not set', totBudDays+' days planned', 'var(--amber)')}
+      ${kpiCard('Prior Year — '+py, totPyCost?'QAR '+fN(totPyCost):'—', 'For reference', '#64748b')}
+      ${kpiCard('Cost / Day', costPerDay?'QAR '+(costPerDay).toFixed(2):'—', 'All companies blended', '#38bdf8')}
     </div>
 
-    
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px">
-      ${comps.map(c=>{
-        const k=compKpis[c.id];
-        const vd=k.actD&&k.projD?k.actD-k.projD:null;
-        const vc=vd===null?'#4a5568':vd<=0?'var(--teal)':'var(--coral)';
-        return kpiCard(c.name+' — Actual',k.actC?'QAR '+fN(k.actC):'—',`${k.actD} days worked`,`var(--teal)`)+
-               kpiCard(c.name+' — Projected',k.projC?'QAR '+fN(k.projC):'—',`${k.projD} days projected`,`#a78bfa`);
-      }).join('')}
-      ${kpiCard('Cost / KG',totKg&&totActCost?'QAR '+(totActCost/totKg).toFixed(3):'—',`Total KG: ${totKg.toLocaleString()}`,'#38bdf8')}
-      ${kpiCard('Cost / Room Night',totRs&&totActCost?'QAR '+(totActCost/totRs).toFixed(2):'—',`${totRs.toLocaleString()} rooms`,'#a78bfa')}
+    <!-- VIEW SWITCHER -->
+    <div style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:4px;width:fit-content">
+      <button onclick="casualView='entry';buildCasualTab()" style="padding:7px 18px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:none;cursor:pointer;transition:all .15s;background:${casualView==='entry'?'var(--bg4)':'transparent'};color:${casualView==='entry'?'var(--teal)':'#64748b'}">📝 Entry</button>
+      <button onclick="casualView='history';buildCasualTab()" style="padding:7px 18px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:none;cursor:pointer;transition:all .15s;background:${casualView==='history'?'var(--bg4)':'transparent'};color:${casualView==='history'?'#a78bfa':'#64748b'}">📊 Year History</button>
+      <button onclick="casualView='budget';buildCasualTab()" style="padding:7px 18px;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:none;cursor:pointer;transition:all .15s;background:${casualView==='budget'?'var(--bg4)':'transparent'};color:${casualView==='budget'?'var(--amber)':'#64748b'}">💰 Budget Plan</button>
     </div>
 
-    
-    ${ratiosPanel}
-
-    
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
-      <div style="padding:11px 16px;border-bottom:1px solid var(--border)">
-        <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Detail — ${casualY}</div>
-        <div style="font-size:10px;color:#4a5568;margin-top:2px">
-          <span style="color:var(--teal)">■</span> Actual = days you enter &nbsp;·&nbsp;
-          <span style="color:#a78bfa">■</span> Projected = auto from rooms→KG ratio &nbsp;·&nbsp;
-          <span style="color:#64748b">■</span> ${py} = last year same month
-        </div>
-      </div>
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;min-width:1000px">
-          <thead>
-            <tr style="background:var(--bg3)">
-              <th rowspan="2" style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;color:#64748b;min-width:90px">Month</th>
-              <th rowspan="2" style="padding:7px 5px;text-align:right;font-size:9px;color:#38bdf8">KG</th>
-              <th rowspan="2" style="padding:7px 5px;text-align:right;font-size:9px;color:#a78bfa">Rooms</th>
-              ${compHdrs}
-              <th colspan="4" style="padding:7px 5px;text-align:center;font-size:10px;font-weight:700;color:var(--lime);background:rgba(163,230,53,.06)">TOTAL</th>
-            </tr>
-            <tr style="background:var(--bg4)">
-              ${subHdrs}
-              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--teal);text-align:right">Act Cost</th>
-              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:right">Proj Cost</th>
-              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#64748b;text-align:right">${py} Cost</th>
-              <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#4a5568;text-align:center">vs Proj</th>
-            </tr>
-          </thead>
-          <tbody>${monthRows}</tbody>
-          <tfoot>
-            <tr style="background:var(--bg3);border-top:2px solid var(--border2)">
-              <td colspan="3" style="padding:8px 10px;font-family:var(--ff-d);font-size:11px;font-weight:800;color:var(--text)">FULL YEAR</td>
-              ${totalsRow}
-              <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:800;color:var(--teal);background:rgba(0,212,184,.05)">${totActCost?fN(totActCost):'—'}</td>
-              <td style="padding:8px 6px;text-align:right;font-family:var(--ff-m);font-size:11px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.05)">${totProjCost?fN(totProjCost):'—'}</td>
-              <td style="padding:8px 6px;text-align:right;font-size:11px;font-weight:700;color:#64748b">${totPyCost?fN(totPyCost):'—'}</td>
-              <td style="padding:8px 6px;text-align:center;font-size:11px;font-weight:800;color:${gvc}">${gVarC!==null?(gVarC>0?'+':'')+fN(gVarC):'—'}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
+    <!-- ACTIVE VIEW CONTENT -->
+    ${casualView==='entry'?buildEntryView():casualView==='history'?buildHistoryView():buildBudgetView()}
 
   </div>`;
 
-  // Year pills
+  /* Year pills */
   const pillsEl=document.getElementById('yp-casual');
   if(pillsEl){
     pillsEl.innerHTML='';
@@ -8882,9 +9148,10 @@ function buildCasualTab(){
 }
 
 function casualSaveDay(el){
-  const y=+el.dataset.y, m=+el.dataset.m, c=el.dataset.c;
+  const y=+el.dataset.y, m=+el.dataset.m, c=el.dataset.c, t=el.dataset.t;
   const v=parseInt(el.value.replace(/,/g,''))||0;
-  setCasualActual(y,m,c,v);
+  if(t==='bud') setCasualBudget(y,m,c,v);
+  else setCasualActual(y,m,c,v);
   autoSave();
   buildCasualTab();
 }
@@ -9019,42 +9286,34 @@ function printCasualPDF(){
   const now=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   const LOGO=document.querySelector('[alt="RS Logo"]')?.src||'';
   const py=casualY-1;
+  const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
 
-  let totActC=0,totProjC=0,totPyC=0;
-  const rows=MF.map((ms,m)=>{
-    const kg=DATA[casualY]?.[m]?.kg||0;
-    const rs=DATA[casualY]?.[m]?.roomsSold||PROJ[casualY]?.[m]?.roomsSold||0;
+  let totActC=0,totBudC=0,totPyC=0;
+  const rows=MFF.map((mf,m)=>{
     const compCells=comps.map(c=>{
       const r=casualRate(c.id,casualY,m), rpy=casualRate(c.id,py,m);
       const aD=getCasualActual(casualY,m,c.id);
-      const pD=casualProjectedDays(c.id,casualY,m);
+      const bD=getCasualBudget(casualY,m,c.id);
       const pyD=getCasualActual(py,m,c.id);
-      totActC+=aD*r; totProjC+=pD*r; totPyC+=pyD*rpy;
-      const v=pD&&aD?aD-pD:null;
-      const vc=v===null?'#9ca3af':v<=0?'#059669':'#dc2626';
-      const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
-      return `<td style="padding:5px 4px;text-align:center;font-size:9px;color:#374151">${aD||'—'}</td>
+      totActC+=aD*r; totBudC+=bD*r; totPyC+=pyD*rpy;
+      const vc=aD&&pyD?(aD-pyD<=0?'#059669':'#dc2626'):'#9ca3af';
+      return `<td style="padding:5px 4px;text-align:center;font-size:9px;color:#374151;font-weight:700">${aD||'—'}</td>
         <td style="padding:5px 4px;text-align:right;font-size:9px;color:#059669;font-weight:600">${q(aD*r)}</td>
-        <td style="padding:5px 4px;text-align:center;font-size:9px;color:#7c3aed">${pD||'—'}</td>
-        <td style="padding:5px 4px;text-align:right;font-size:9px;color:#7c3aed">${q(pD*r)}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:9px;color:#d97706">${bD||'—'}</td>
+        <td style="padding:5px 4px;text-align:right;font-size:9px;color:#d97706">${q(bD*r)}</td>
         <td style="padding:5px 4px;text-align:center;font-size:9px;color:#6b7280">${pyD||'—'}</td>
         <td style="padding:5px 4px;text-align:right;font-size:9px;color:#6b7280">${q(pyD*rpy)}</td>
-        <td style="padding:5px 4px;text-align:center;font-size:9px;font-weight:700;color:${vc}">${v!==null?(v>0?'+':'')+v:'—'}</td>`;
+        <td style="padding:5px 4px;text-align:center;font-size:9px;font-weight:700;color:${vc}">${aD&&pyD?(aD-pyD>0?'+':'')+(aD-pyD):'—'}</td>`;
     }).join('');
     const tA=comps.reduce((_,c)=>_+getCasualActual(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
-    const tP=comps.reduce((_,c)=>_+casualProjectedDays(c.id,casualY,m)*casualRate(c.id,casualY,m),0);
+    const tB=comps.reduce((_,c)=>_+getCasualBudget(casualY,m,c.id)*casualRate(c.id,casualY,m),0);
     const tPy=comps.reduce((_,c)=>_+getCasualActual(py,m,c.id)*casualRate(c.id,py,m),0);
-    const tv=tP&&tA?tA-tP:null; const tvc=tv===null?'#9ca3af':tv<=0?'#059669':'#dc2626';
-    const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
     return `<tr style="background:${m%2?'#f8fafc':'#fff'}">
-      <td style="padding:5px 8px;font-size:10px;font-weight:600;color:#1e293b">${MFF[m]}</td>
-      <td style="padding:5px 5px;text-align:right;font-size:9px;color:#0284c7">${kg.toLocaleString()||'—'}</td>
-      <td style="padding:5px 5px;text-align:right;font-size:9px;color:#7c3aed">${rs.toLocaleString()||'—'}</td>
+      <td style="padding:5px 8px;font-size:10px;font-weight:600;color:#1e293b">${mf}</td>
       ${compCells}
       <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:800;color:#059669;background:#f0fdf4">${q(tA)}</td>
-      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:700;color:#7c3aed;background:#faf5ff">${q(tP)}</td>
+      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:700;color:#d97706;background:#fffbeb">${q(tB)}</td>
       <td style="padding:5px 5px;text-align:right;font-size:10px;color:#6b7280">${q(tPy)}</td>
-      <td style="padding:5px 5px;text-align:right;font-size:10px;font-weight:800;color:${tvc}">${tv!==null?(tv>0?'+':'')+tv.toLocaleString('en-US',{minimumFractionDigits:2}):'—'}</td>
     </tr>`;
   }).join('');
 
@@ -9062,44 +9321,38 @@ function printCasualPDF(){
   const subHdrs=comps.map(()=>`
     <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0;text-align:center">Act Days</th>
     <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#059669;border:1px solid #e2e8f0">Act Cost</th>
-    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#7c3aed;border:1px solid #e2e8f0;text-align:center">Proj Days</th>
-    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#7c3aed;border:1px solid #e2e8f0">Proj Cost</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#d97706;border:1px solid #e2e8f0;text-align:center">Bud Days</th>
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#d97706;border:1px solid #e2e8f0">Bud Cost</th>
     <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6b7280;border:1px solid #e2e8f0;text-align:center">${py} Days</th>
     <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6b7280;border:1px solid #e2e8f0">${py} Cost</th>
-    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6366f1;border:1px solid #e2e8f0;text-align:center">vs Proj</th>`).join('');
-
-  const pyKgTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.kg||0).reduce((a,b)=>a+b,0);
-  const pyRsTot=Array.from({length:12},(_,m)=>DATA[py]?.[m]?.roomsSold||0).reduce((a,b)=>a+b,0);
-  const kgRnR=pyRsTot&&pyKgTot?pyKgTot/pyRsTot:0;
-  const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
-  const gv=totActC&&totProjC?totActC-totProjC:null;
+    <th style="padding:4px 2px;font-size:7px;font-weight:700;color:#6366f1;border:1px solid #e2e8f0;text-align:center">vs ${py}</th>`).join('');
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">\x3ctitle>Casual Labour ${casualY}<\/title>
   \x3cstyle>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}<\/style>
   <\/head><body style="padding:10px">
-  <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c,#1e1040);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
+  <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
     <div style="display:flex;align-items:center;gap:12px">
       ${LOGO?`<img src="${LOGO}" style="width:40px;height:40px;border-radius:8px">`:''}
       <div>
         <div style="font-size:8px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Four Seasons Hotel Doha — Laundry Department</div>
         <div style="font-size:20px;font-weight:900;color:#f5c542">Casual Labour Report — ${casualY}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">Actual · Projected · Prior Year ${py} · ${now}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35);margin-top:2px">Actual · Budget · Prior Year ${py} · ${now}</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-      ${[['Actual Cost',q(totActC),'#4ade80'],['Projected Cost',q(totProjC),'#c084fc'],['Prior Year '+py,q(totPyC),'#94a3b8'],['vs Projected',gv!==null?(gv>0?'+':'')+q(gv):'—',gv===null?'#94a3b8':gv<=0?'#4ade80':'#f87171'],['KG/RN Ratio',kgRnR?kgRnR.toFixed(3):'—','#38bdf8']]
+      ${[['Actual Cost',q(totActC),'#4ade80'],['Budget Plan',q(totBudC),'#fbbf24'],['Prior Year '+py,q(totPyC),'#94a3b8']]
         .map(([l,v,c])=>`<div style="background:rgba(255,255,255,.06);border-radius:7px;padding:7px 11px;text-align:right"><div style="font-size:7px;color:rgba(255,255,255,.4);margin-bottom:2px">${l}</div><div style="font-family:'Courier New',monospace;font-size:12px;font-weight:800;color:${c}">${v}</div></div>`).join('')}
     </div>
   </div>
   <table style="width:100%;font-size:9px">
     <thead>
-      <tr style="background:#0f172a"><th rowspan="2" style="padding:5px 8px;text-align:left;color:#94a3b8;min-width:70px">Month</th><th rowspan="2" style="padding:5px 4px;color:#38bdf8">KG</th><th rowspan="2" style="padding:5px 4px;color:#a78bfa">Rooms</th>${compHdrs}<th colspan="4" style="padding:5px 4px;text-align:center;font-size:9px;font-weight:700;color:#a3e635;background:rgba(163,230,53,.1);border:1px solid #e2e8f0">TOTAL</th></tr>
-      <tr style="background:#1e293b">${subHdrs}<th style="padding:4px 2px;font-size:7px;color:#4ade80;border:1px solid #e2e8f0">Tot Act</th><th style="padding:4px 2px;font-size:7px;color:#c084fc;border:1px solid #e2e8f0">Tot Proj</th><th style="padding:4px 2px;font-size:7px;color:#94a3b8;border:1px solid #e2e8f0">Tot ${py}</th><th style="padding:4px 2px;font-size:7px;color:#818cf8;border:1px solid #e2e8f0;text-align:center">vs Proj</th></tr>
+      <tr style="background:#0f172a"><th rowspan="2" style="padding:5px 8px;text-align:left;color:#94a3b8;min-width:70px">Month</th>${compHdrs}<th colspan="3" style="padding:5px 4px;text-align:center;font-size:9px;font-weight:700;color:#a3e635;background:rgba(163,230,53,.1);border:1px solid #e2e8f0">TOTAL</th></tr>
+      <tr style="background:#1e293b">${subHdrs}<th style="padding:4px 2px;font-size:7px;color:#4ade80;border:1px solid #e2e8f0">Tot Act</th><th style="padding:4px 2px;font-size:7px;color:#fbbf24;border:1px solid #e2e8f0">Tot Budget</th><th style="padding:4px 2px;font-size:7px;color:#94a3b8;border:1px solid #e2e8f0">Tot ${py}</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table>
   <div style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:7px 14px;font-size:8px;color:#94a3b8">
-    Projected days = Rooms \xd7 ${kgRnR?kgRnR.toFixed(3):'—'} KG/RN (${py} ratio) \xf7 Company KG/Day ratio (${py}) &nbsp;\xb7&nbsp; Rooms from Monthly Entry actuals or Projection Planner &nbsp;\xb7&nbsp; RS BudgetPro V3.0
+    RS BudgetPro V3.0 &nbsp;·&nbsp; Four Seasons Hotel Doha &nbsp;·&nbsp; Casual Labour expenses are tracked separately from main laundry budget
   </div>
   <\/body><\/html>`;
 
