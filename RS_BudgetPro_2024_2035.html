@@ -3010,10 +3010,10 @@ function makeCard(y,m){
         <label><span class="ld" style="background:var(--sky)"></span>Total KG Processed</label>
         <input type="text" inputmode="decimal" placeholder="0" value="${fmtInp(row.kg,true)}" data-f="kg" class="${row.kg?'filled':''}" oninput="hCard(this,${y},${m})" onblur="hCardBlur(this,${y},${m})" ${locked?"disabled style=\"opacity:.4;cursor:not-allowed;\"":""} tabindex="${m*6+2}">
       </div>
-      <!-- Actual + Budget side by side for each line -->
+      
       <div class="csl" style="color:var(--amber);margin-bottom:4px">Expenses (QAR) — Actual / Budget</div>
 
-      <!-- Laundry Supplies -->
+      
       <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;margin-bottom:6px;border-left:3px solid var(--amber)">
         <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);margin-bottom:6px">
           \uD83E\uDDF4 Laundry Supplies${hasInc?" <span style='color:var(--amber);font-size:9px'>▲ Inc</span>":''}
@@ -3048,9 +3048,9 @@ function makeCard(y,m){
         </div>`:''}
       </div>
 
-      <!-- Operating + Printing side by side -->
+      
       <div class="fg" style="gap:6px">
-        <!-- Operating -->
+        
         <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;border-left:3px solid var(--lime)">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--lime);margin-bottom:6px">
             ⚙️ Operating ${getSpecialAmt(y,m,'op')>0?'<span style="color:var(--lime);font-size:8px;background:var(--lime-bg);padding:1px 4px;border-radius:4px">+Spec</span>':''}
@@ -3076,7 +3076,7 @@ function makeCard(y,m){
               tabindex="${m*6+4}">
           </div>
         </div>
-        <!-- Printing -->
+        
         <div style="background:var(--bg4);border-radius:7px;padding:8px 10px;border-left:3px solid var(--coral)">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--coral);margin-bottom:6px">
             \uD83D\uDDA8️ Printing
@@ -3118,7 +3118,7 @@ function makeCard(y,m){
           data-f="notes" data-y="${y}" data-m="${m}"
           oninput="hNote(this,${y},${m})"
           style="width:100%;background:#0f1a2e;border:1px dashed #2a3550;border-radius:6px;color:#94a3b8;font-family:Outfit,sans-serif;font-size:11px;padding:7px 9px;resize:none;line-height:1.5;box-sizing:border-box;display:block"
-        >${row.notes||''}</textarea>
+        >${row.notes||''}<\/textarea>
       </div>
     </div>`;
   return card;
@@ -3879,7 +3879,7 @@ function buildDash(){
 
   document.getElementById('dash-body').innerHTML=`
 
-    <!-- ══ TODAY PANEL ══ -->
+    
     ${(()=>{
       const now = new Date();
       const curM = now.getMonth();
@@ -3942,7 +3942,7 @@ function buildDash(){
 
       return `<div style="background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:var(--rl);padding:14px 18px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:16px;align-items:start">
 
-        <!-- Date + greeting -->
+        
         <div>
           <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:4px">${dayName}</div>
           <div style="font-family:var(--ff-d);font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px">${dateStr}</div>
@@ -3953,7 +3953,7 @@ function buildDash(){
           </div>
         </div>
 
-        <!-- Current month -->
+        
         <div style="border-left:1px solid var(--border);padding-left:16px">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--teal);margin-bottom:8px">${MF2_tp[curM]} ${curY} — Current Month</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -3984,7 +3984,7 @@ function buildDash(){
           </div>
         </div>
 
-        <!-- YTD summary -->
+        
         <div style="border-left:1px solid var(--border);padding-left:16px">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--amber);margin-bottom:8px">YTD ${curY} — Jan to ${MF2_tp[curM>0?curM-1:0]}</div>
           <div style="margin-bottom:8px">
@@ -4013,7 +4013,7 @@ function buildDash(){
           </div>
         </div>
 
-        <!-- Quick action: open Quick Entry -->
+        
         <div style="border-left:1px solid var(--border);padding-left:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
           <div style="font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:2px">Quick Actions</div>
           <button onclick="openQME()" style="padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.08);cursor:pointer;white-space:nowrap;width:100%;text-align:left" onmouseover="this.style.background='rgba(0,212,184,.18)'" onmouseout="this.style.background='rgba(0,212,184,.08)'">⚡ Quick Entry</button>
@@ -4074,7 +4074,7 @@ function buildDash(){
       </div>`;
     })()}
 
-    <!-- ══ OVERSPEND ALERTS ══ -->
+    
     ${(()=>{
       const curM = new Date().getMonth();
       const alerts=[];
@@ -4121,7 +4121,7 @@ function buildDash(){
       return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">${alertHtml}${missingHtml}</div>`;
     })()}
 
-    <!-- ══ KPI STRIP ══ -->
+    
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:18px">
 
       <div style="background:#1a2236;border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
@@ -4152,13 +4152,13 @@ function buildDash(){
         <div style="font-size:10px;color:${vr>0?'#ff6b6b':'#00d4b8'};margin-top:3px">${totB?((vr>0?'+':'')+((vr/totB)*100).toFixed(1)+'% vs budget'):'—'}</div>
       </div>
 
-      <!-- CPOR card with multi-year sparkline -->
+      
       <div style="background:#1a2236;border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#a78bfa,transparent)"></div>
         <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">CPOR Actual</div>
         <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#a78bfa">${cporA?cporA.toFixed(4):'—'}</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px">${pyCpor?((cporA>pyCpor?'▲':'▼')+Math.abs(((cporA-pyCpor)/pyCpor*100)).toFixed(1)+'% YoY'):'—'}</div>
-        <!-- Multi-year CPOR sparkline -->
+        
         ${(()=>{
           const sparkYears = YEARS.filter(y=>y<=dashY).slice(-5);
           const sparkVals = sparkYears.map(y=>{
@@ -4195,7 +4195,7 @@ function buildDash(){
         })()}
       </div>
 
-      <!-- Enhanced KG card -->
+      
       <div style="background:#1a2236;border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#38bdf8,transparent)"></div>
         <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:4px">KG Efficiency</div>
@@ -4228,7 +4228,7 @@ function buildDash(){
 
     </div>
 
-    <!-- ══ CHARTS ROW 1: Expenses + CPOR ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       ${chartCard(
         '📊 Total Expenses — Actual vs Budget',
@@ -4244,7 +4244,7 @@ function buildDash(){
       )}
     </div>
 
-    <!-- ══ CHARTS ROW 2: Line breakdown charts ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
       ${chartCard(
         '🧴 Laundry Supplies',
@@ -4266,7 +4266,7 @@ function buildDash(){
       )}
     </div>
 
-    <!-- ══ CHARTS ROW 3: KG + Occupancy ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
       ${chartCard(
         '⚖️ KG Processed per Month',
@@ -4282,7 +4282,7 @@ function buildDash(){
       )}
     </div>
 
-    <!-- ══ MONTHLY DETAIL TABLE ══ -->
+    
     <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px;margin-bottom:4px">
       <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
         <span>📋 Monthly Detail — ${dashY}</span>
@@ -4343,8 +4343,8 @@ function printDashboard(){
   if(!el||!el.innerHTML){ toast('Open Dashboard tab first'); return; }
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Dashboard ${y} — Four Seasons Hotel Doha Laundry</title>
-  <style>
+  \x3ctitle>Dashboard ${y} — Four Seasons Hotel Doha Laundry<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A4 landscape;margin:8mm}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;color:#1e293b;background:#fff}
@@ -4464,7 +4464,7 @@ function exportCSV(){
     // Year total row
     const vrCol=vc(s.vr||0);
     yearBlocks+=`
-      <!-- Year ${y} -->
+      
       <tr>
         <td colspan="16" style="padding:0">
           <div style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);padding:8px 14px;
@@ -4506,8 +4506,8 @@ function exportCSV(){
   });
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Full Data Export — Four Seasons Hotel Doha Laundry ${dateFile}</title>
-  <style>
+  \x3ctitle>Full Data Export — Four Seasons Hotel Doha Laundry ${dateFile}<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A3 landscape;margin:8mm}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1e293b;background:#f8fafc}
@@ -4557,7 +4557,7 @@ function exportCSV(){
     </div>
   </div>
 
-  <!-- Grand Summary KPIs -->
+  
   <div class="kpi-grid">
     ${(()=>{
       let totRs=0,totKg=0,totA=0,totB=0,totVr=0,years=0;
@@ -4581,7 +4581,7 @@ function exportCSV(){
     })()}
   </div>
 
-  <!-- Main Data Table -->
+  
   <div class="section">
     <table class="tbl">
       <thead>
@@ -4807,7 +4807,7 @@ function makeRevCard(y,m){
     </div>
     <div class="rev-card-body">
 
-      <!-- Arc + month total -->
+      
       <div class="rev-arc-wrap">
         <div class="rev-arc">
           <svg width="64" height="64" viewBox="0 0 64 64">
@@ -4828,13 +4828,13 @@ function makeRevCard(y,m){
         </div>
       </div>
 
-      <!-- Revenue streams -->
+      
       <div class="rev-streams">
         ${streamHTML('Laundry Revenue',laA,laB,laPct,'var(--teal)','#00907d')}
         ${pearlActive(y,m)?streamHTML('Pearl Valet Revenue — FS Pearl',valA,valB,valPct,'var(--violet)','#7c3aed'):`<div style="background:var(--bg4);border-radius:8px;padding:10px 12px;border-left:3px solid var(--border2)"><span style="font-size:10px;color:var(--text3)">💎 Pearl Valet — Not yet operational (started Aug 2024)</span></div>`}
       </div>
 
-      <!-- Input fields: Actual + Budget side by side -->
+      
       <div class="csl" style="color:var(--teal)">Actual (QAR)</div>
       <div class="fg">
         <div class="fld" style="--fc:var(--teal)">
@@ -4871,7 +4871,7 @@ function makeRevCard(y,m){
       </div>
     </div>
 
-    <!-- Others Revenue (FS Doha only) -->
+    
     <div style="background:rgba(163,230,53,.04);border:1px solid rgba(163,230,53,.15);border-radius:10px;padding:12px 14px">
       <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a3e635;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:6px">
@@ -5162,7 +5162,7 @@ function buildReport(){
     </div>
   </div>
 
-  <!-- KPI strip -->
+  
   <div class="rpt-kpi-row">
     <div class="rpt-kpi-cell"><div class="rk-l">Rooms Sold</div><div class="rk-v">${yd.totRs.toLocaleString()}</div><div class="rk-s">Occ: ${yd.occ.toFixed(1)}%</div></div>
     <div class="rpt-kpi-cell"><div class="rk-l">Total KG</div><div class="rk-v">${f0(yd.totKg)}</div></div>
@@ -5176,7 +5176,7 @@ function buildReport(){
     <div class="rpt-kpi-cell"><div class="rk-l">Pearl Valet Revenue — FS Pearl</div><div class="rk-v">${v(yd.totRevVaA)}</div><div class="rk-s">Budget: ${v(yd.totRevVaB)}</div></div>
   </div>
 
-  <!-- MAIN TABLE -->
+  
   <div style="overflow-x:auto">
   <table class="rv-table">
     <thead>
@@ -5189,17 +5189,17 @@ function buildReport(){
       <tr>${mSubHdrs}<th class="rv-sh rv-sha">Actual</th><th class="rv-sh rv-shb">Budget</th><th class="rv-sh rv-shv">Var</th></tr>
     </thead>
     <tbody>
-      <!-- OCCUPANCY METRICS -->
+      
       ${roomsRow}${occRow}${kgRow}${cporRow}
 
-      <!-- REVENUE -->
+      
       ${buildSection('REVENUE',[
         {label:'Laundry Revenue',     keyA:'revLaA',keyB:'revLaB',inv:false,accent:'#00d4b8'},
         {label:'Other Pearl Valet Rev — FS Pearl', keyA:'revVaA',keyB:'revVaB',inv:false,accent:'#a78bfa'},
       ],'#00d4b8')}
       ${buildTotalRow('TOTAL REVENUE','totRevA','totRevB',false,'#00d4b8')}
 
-      <!-- EXPENSES -->
+      
       ${buildSection('OPERATING EXPENSES',[
         {label:'Laundry Supplies',     keyA:'laA',keyB:'laB',inv:true,accent:'#ffb347'},
         {label:'Operating Supplies',   keyA:'opA',keyB:'opB',inv:true,accent:'#a3e635'},
@@ -5500,7 +5500,7 @@ function printReport(){
         </tbody>
       </table>
 
-      <!-- Rooms & KG summary -->
+      
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px">
         ${[
           ['Rooms Sold', qi(yd.totRs), '#7c3aed','#faf5ff'],
@@ -5528,11 +5528,11 @@ function printReport(){
   // ── assemble full document ────────────────────────────────────────────────
   const html = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
-    <title>RS BudgetPro — Budget Performance Report ${y}</title>
-    <style>${CSS}<\/style>
+    \x3ctitle>RS BudgetPro — Budget Performance Report ${y}<\/title>
+    \x3cstyle>${CSS}<\/style>
   <\/head><body>
 
-    <!-- PAGE 1: Jan – Jun -->
+    
     <div class="pg" style="padding:12px 14px">
       ${pageHeader('January – June')}
       ${kpiStrip()}
@@ -5541,7 +5541,7 @@ function printReport(){
       ${footer()}
     </div>
 
-    <!-- PAGE 2: Jul – Dec -->
+    
     <div class="pg" style="padding:12px 14px">
       ${pageHeader('July – December')}
       ${legend()}
@@ -5549,7 +5549,7 @@ function printReport(){
       ${footer()}
     </div>
 
-    <!-- PAGE 3: Full Year Summary -->
+    
     <div style="padding:12px 14px">
       ${pageHeader('Full Year Summary')}
       ${fullYearTotals()}
@@ -6050,8 +6050,8 @@ function exportRevProjPDF(){
   const q=v=>v?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Revenue Budget Projection ${projYear} — Four Seasons Hotel Doha</title>
-  <style>
+  \x3ctitle>Revenue Budget Projection ${projYear} — Four Seasons Hotel Doha<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A4 landscape;margin:10mm}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e293b;background:#fff}
@@ -6092,7 +6092,7 @@ function exportRevProjPDF(){
     </div>
   </div>
 
-  <!-- Step indicator -->
+  
   <div class="steps">
     <div class="step"><div class="step-num" style="background:#00d4b8;color:#0f172a">✓</div><span style="color:#00d4b8">Years Selected</span></div>
     <div class="step-line"></div>
@@ -6106,7 +6106,7 @@ function exportRevProjPDF(){
     </div>
   </div>
 
-  <!-- KPI strip -->
+  
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-l">Budget Year</div><div class="kpi-v" style="color:#1e3a5f">${projYear}</div><div style="font-size:8px;color:#64748b">Base: ${baseYear}</div></div>
     <div class="kpi"><div class="kpi-l">Total Rooms Projected</div><div class="kpi-v" style="color:#7c3aed">${totRooms.toLocaleString()}</div></div>
@@ -7227,13 +7227,13 @@ function buildTrendsTab(){
   }
 
   el.innerHTML=`
-    <!-- ══ HEADER ══ -->
+    
     <div class="ph">
       <div class="pt">Trends & Efficiency <span>Year-on-year cost & efficiency · Actuals only · ${ydata.length} year${ydata.length>1?'s':''}: ${ydata.map(d=>d.y).join(', ')}</span></div>
       <button class="pill pill-sky" onclick="buildTrendsTab()" style="border-radius:6px;padding:6px 14px;font-size:12px">↺ Refresh</button>
     </div>
 
-    <!-- ══ KPI STRIP ══ -->
+    
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px">
       ${kpiCard('CPOR Actual '+latest.y, latest.cporA.toFixed(4), chgStr(latest.cporA,prev?.cporA,true),'#a78bfa',null,'\uD83D\uDCCA')}
       ${kpiCard('CPOR Budget '+latest.y, latest.cporB.toFixed(4),
@@ -7247,7 +7247,7 @@ function buildTrendsTab(){
       ${kpiCard('Occupancy', latest.occ.toFixed(1)+'%', chgStr(latest.occ,prev?.occ,false),'#ffb347',null,'\uD83C\uDFE8')}
     </div>
 
-    <!-- ══ MAIN CPOR CHART ══ -->
+    
     <div style="margin-bottom:14px">
       ${card(
         '\uD83D\uDCCA CPOR — Actual vs Budget (QAR per Room Night)',
@@ -7259,7 +7259,7 @@ function buildTrendsTab(){
       )}
     </div>
 
-    <!-- ══ LINE BREAKDOWN CPOR ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px">
       ${card('\uD83E\uDDF4 Laundry Supplies CPOR','#00d4b8',
         svgChart(W,160,PL,PB,laItems,f4,['#00d4b8','rgba(0,212,184,.5)'],true),W,160,
@@ -7275,7 +7275,7 @@ function buildTrendsTab(){
         leg('#ff6b6b','Actual')+leg('rgba(255,107,107,.5)','Budget'))}
     </div>
 
-    <!-- ══ EFFICIENCY CHARTS ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       ${card('⚖️ Cost per KG (QAR)','#38bdf8',
         svgChart(W,H,PL,PB,costItems,f2,['#38bdf8'],false),W,H,
@@ -7287,7 +7287,7 @@ function buildTrendsTab(){
         leg('#a3e635','KG per Room Night'))}
     </div>
 
-    <!-- ══ OCCUPANCY + EXPENSES ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
       ${card('\uD83C\uDFE8 Occupancy % — Year on Year','#ffb347',
         svgChart(W,H,PL,PB,occItems,v=>v.toFixed(1)+'%',
@@ -7302,7 +7302,7 @@ function buildTrendsTab(){
         leg('#00d4b8','Total Expenses'))}
     </div>
 
-    <!-- ══ FULL TREND SUMMARY TABLE ══ -->
+    
     <div style="background:#1a2236;border:1px solid #2a3550;border-radius:10px;padding:16px 18px">
       <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
         <span>\uD83D\uDCCB Full Trend Summary</span>
@@ -7532,8 +7532,8 @@ function printPulsePDF(){
   const ytdNetA   = ytdRevA-ytdExpA, ytdNetB=ytdRevB-ytdExpB;
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Performance Pulse — ${y} — RS BudgetPro</title>
-  <style>
+  \x3ctitle>Performance Pulse — ${y} — RS BudgetPro<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A3 landscape;margin:8mm}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b;font-size:11px}
@@ -7544,7 +7544,7 @@ function printPulsePDF(){
     .page-break{page-break-before:always}
   <\/style><\/head><body>
 
-  <!-- ═══ HEADER ═══ -->
+  
   <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1e1b4b 100%);padding:18px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
     <div style="display:flex;align-items:center;gap:14px">
       ${LOGO?`<img src="${LOGO}" style="width:48px;height:48px;border-radius:10px;object-fit:cover">` : ''}
@@ -7562,7 +7562,7 @@ function printPulsePDF(){
     </div>
   </div>
 
-  <!-- ═══ YTD KPI CARDS ═══ -->
+  
   <div style="margin:0 0 16px;padding:0 2px">
     <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:8px">YTD SUMMARY${isCurrentYear?' (Jan – '+MS[ytdLimit]+')':' (Full Year)'}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -7574,7 +7574,7 @@ function printPulsePDF(){
     </div>
   </div>
 
-  <!-- ═══ MONTHLY DETAIL TABLE ═══ -->
+  
   <div style="margin-bottom:16px">
     <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px">MONTHLY DETAIL — ${y}</div>
     <div style="overflow:hidden;border-radius:8px;border:1px solid #e2e8f0">
@@ -7601,7 +7601,7 @@ function printPulsePDF(){
         </thead>
         <tbody>
           ${monthRows}
-          <!-- TOTALS ROW -->
+          
           <tr style="background:linear-gradient(135deg,#0f172a,#1e293b);border-top:3px solid #334155">
             <td style="padding:9px 10px;font-size:10px;font-weight:900;color:#f5c542;border-right:2px solid rgba(255,255,255,.1)">FULL YEAR</td>
             <td style="padding:8px;text-align:center;color:#94a3b8;font-size:9px">—</td>
@@ -7625,7 +7625,7 @@ function printPulsePDF(){
     </div>
   </div>
 
-  <!-- ═══ YEAR SUMMARY TABLE ═══ -->
+  
   <div class="page-break">
     <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#64748b;margin-bottom:6px;margin-top:8px">YEAR SUMMARY — ${y} — FINANCE STANDARD VARIANCE</div>
     <div style="overflow:hidden;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px">
@@ -7655,7 +7655,7 @@ function printPulsePDF(){
       </table>
     </div>
 
-    <!-- Footer -->
+    
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:8px;color:#94a3b8">Four Seasons Hotel Doha · Laundry Department · Performance Pulse Report · CONFIDENTIAL</div>
       <div style="font-size:8px;color:#94a3b8">RS BudgetPro V3.0 · Prepared by Reda Salah · ${now}</div>
@@ -7884,7 +7884,7 @@ function buildPulseMonthGrid(){
         onmouseover="if(!${isFuture})this.style.background='rgba(255,255,255,.015)'"
         onmouseout="this.style.background='${isCurrent?'rgba(0,212,184,.03)':'transparent'}'">
 
-        <!-- Month header row -->
+        
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
           <div style="display:flex;align-items:center;gap:7px">
             ${isCurrent
@@ -7910,9 +7910,9 @@ function buildPulseMonthGrid(){
           </div>
         </div>
 
-        <!-- Bars grid: left = revenue lines, right = expense -->
+        
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 24px">
-          <!-- Revenue bars -->
+          
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);margin-bottom:6px;opacity:.7">Revenue (QAR)</div>
             ${miniBar('\uD83C\uDFE8 FS Doha', d.laRevA, d.laRevB, 'var(--teal)', '0,212,184')}
@@ -7921,7 +7921,7 @@ function buildPulseMonthGrid(){
               : `<div style="font-size:9px;color:var(--text3);margin-bottom:5px;padding-left:87px;opacity:.5">\uD83D\uDC8E Pearl — not yet operational</div>`}
             ${miniBar('\uD83D\uDCCE Others', d.othRevA, d.othRevB, 'var(--sky)', '56,189,248')}
           </div>
-          <!-- Expense bars -->
+          
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--amber);margin-bottom:6px;opacity:.7">Expenses (QAR)</div>
             ${(()=>{
@@ -8101,7 +8101,7 @@ function buildGuideTab(){
   // ── CONTENT ──────────────────────────────────────────────
   el.innerHTML = `<div style="max-width:900px;margin:0 auto;padding:24px 28px 80px">
 
-  <!-- ════ HERO ════ -->
+  
   <div style="background:linear-gradient(135deg,#0f172a 0%,#1a2f4a 50%,#1a1040 100%);
     border-radius:16px;padding:32px 36px;margin-bottom:36px;position:relative;overflow:hidden">
     <div style="position:absolute;right:-40px;top:-40px;width:220px;height:220px;border-radius:50%;
@@ -8124,7 +8124,7 @@ function buildGuideTab(){
     </div>
   </div>
 
-  <!-- ════ PART 1: THE BIG PICTURE ════ -->
+  
   ${section('Part 1 — What does this system do?','Start here. Read this before anything else.')}
 
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:20px 24px;margin-bottom:18px">
@@ -8154,7 +8154,7 @@ function buildGuideTab(){
     </div>
   </div>
 
-  <!-- ════ PART 2: THE ONE RULE ════ -->
+  
   ${section('Part 2 — The one rule you must never break','This is the most important thing in the whole guide.')}
 
   <div style="background:linear-gradient(135deg,rgba(255,107,107,.08),rgba(245,197,66,.06));
@@ -8179,7 +8179,7 @@ function buildGuideTab(){
     ${warn('If you put future forecasts in Monthly Entry, the budget calculations will break. If you put actuals in Projection Planner, the data will conflict. Keep them separate — always.')}
   </div>
 
-  <!-- ════ PART 3: THE FORMULA ════ -->
+  
   ${section('Part 3 — How budgets are calculated automatically','You do not need to calculate anything manually. But understanding this helps.')}
 
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:20px 24px;margin-bottom:18px">
@@ -8209,7 +8209,7 @@ function buildGuideTab(){
     </div>
   </div>
 
-  <!-- ════ PART 4: DAILY USE ════ -->
+  
   ${section('Part 4 — What to do every month','Your regular routine. Takes about 10 minutes per month.')}
 
   ${card('\uD83D\uDCCB','Step 1 — Enter this month\'s actuals','Do this as soon as the month closes','#00d4b8',`
@@ -8265,7 +8265,7 @@ function buildGuideTab(){
     ${tip('Others can be a negative number — just type -305 for a negative adjustment. It will show in brackets.')}
   `)}
 
-  <!-- ════ PART 5: BUDGET PLANNING ════ -->
+  
   ${section('Part 5 — Planning next year\'s budget','The most important thing you do all year. Usually done in August.')}
 
   ${card('\uD83E\uDDD9','The easiest way — Budget Wizard','4 steps, about 5 minutes, covers everything','#a3e635',`
@@ -8323,7 +8323,7 @@ function buildGuideTab(){
     ${step(5,'#00d4b8','The revenue projection now uses those exact rooms — no double entry')}
   `)}
 
-  <!-- ════ PART 6: ADJUSTMENTS ════ -->
+  
   ${section('Part 6 — Budget adjustments','Supplier increases and one-off items that affect the budget')}
 
   ${card('⚙','Adding a supplier price increase','When a chemical or linen supplier raises their prices','#ffb347',`
@@ -8353,7 +8353,7 @@ function buildGuideTab(){
     ${tip('Special items appear in the Budget PDF with a line showing exactly what was added and why — Finance can see it clearly.')}
   `)}
 
-  <!-- ════ PART 7: ANALYSIS TABS ════ -->
+  
   ${section('Part 7 — Viewing your data','The analysis tabs — use these to understand what\'s happening')}
 
   ${card('\uD83C\uDFAF','Dashboard','Your home screen — see everything at a glance','#ff6b6b',`
@@ -8440,7 +8440,7 @@ function buildGuideTab(){
     ${tip('Select the year from the dropdown at the top right. Click ↺ Refresh after entering new data.')}
   `)}
 
-  <!-- ════ PART 8: SETTINGS ════ -->
+  
   ${section('Part 8 — Settings & base data','The foundation. Touch this carefully.')}
 
   ${card('⚙️','Settings & Base Data','Where the budget foundation is set','#a78bfa',`
@@ -8457,7 +8457,7 @@ function buildGuideTab(){
     ${warn('Changing the base data in this tab instantly recalculates ALL budgets for 2025 onwards. Only do this with confirmed Finance numbers.')}
   `)}
 
-  <!-- ════ PART 9: REPORTS & PDFs ════ -->
+  
   ${section('Part 9 — Printing reports for Finance','Which PDF to print for which situation')}
 
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;margin-bottom:18px;overflow:hidden">
@@ -8480,7 +8480,7 @@ function buildGuideTab(){
     </div>
   </div>
 
-  <!-- ════ PART 10: DATA SAFETY ════ -->
+  
   ${section('Part 10 — Keeping your data safe','How saving works and what to do if something goes wrong')}
 
   ${card('\uD83D\uDCBE','How saving works','You should never lose data','#a3e635',`
@@ -8504,7 +8504,7 @@ function buildGuideTab(){
     ${warn('Always export a backup before restoring. Restoring overwrites everything in Firebase with the backup file.')}
   `)}
 
-  <!-- ════ PART 11: FAQ ════ -->
+  
   ${section('Part 11 — Quick answers to common questions','')}
 
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
@@ -8539,7 +8539,7 @@ function buildGuideTab(){
       </div>`).join('')}
   </div>
 
-  <!-- ════ FOOTER ════ -->
+  
   <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border-radius:12px;
     padding:16px 24px;display:flex;align-items:center;justify-content:space-between;
     flex-wrap:wrap;gap:10px;margin-top:32px">
@@ -8788,7 +8788,7 @@ function buildCasualTab(){
       </div>
     </div>
 
-    <!-- Company cards -->
+    
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
       ${compCards}
       <div style="background:rgba(0,212,184,.05);border:1px solid rgba(0,212,184,.15);border-radius:9px;padding:12px 14px;flex:2;min-width:220px">
@@ -8806,7 +8806,7 @@ function buildCasualTab(){
       </div>
     </div>
 
-    <!-- KPI strip -->
+    
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:14px">
       ${comps.map(c=>{
         const k=compKpis[c.id];
@@ -8819,10 +8819,10 @@ function buildCasualTab(){
       ${kpiCard('Cost / Room Night',totRs&&totActCost?'QAR '+(totActCost/totRs).toFixed(2):'—',`${totRs.toLocaleString()} rooms`,'#a78bfa')}
     </div>
 
-    <!-- Ratios panel -->
+    
     ${ratiosPanel}
 
-    <!-- Main table -->
+    
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden">
       <div style="padding:11px 16px;border-bottom:1px solid var(--border)">
         <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:var(--text)">Monthly Detail — ${casualY}</div>
@@ -9074,8 +9074,8 @@ function printCasualPDF(){
   const q=n=>n?n.toLocaleString('en-US',{minimumFractionDigits:2}):'—';
   const gv=totActC&&totProjC?totActC-totProjC:null;
 
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Casual Labour ${casualY}</title>
-  <style>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}<\/style>
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">\x3ctitle>Casual Labour ${casualY}<\/title>
+  \x3cstyle>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}<\/style>
   <\/head><body style="padding:10px">
   <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c,#1e1040);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
     <div style="display:flex;align-items:center;gap:12px">
@@ -9133,7 +9133,7 @@ function printCasualPDF(){
       <div class="pt">Backup & Restore <span>Protect your data · Firebase cloud + local export</span></div>
     </div>
 
-    <!-- ══ STATUS BANNER ══ -->
+    
     <div style="background:${isLive?'rgba(0,212,184,.06)':'rgba(255,107,107,.06)'};
       border:1px solid ${isLive?'rgba(0,212,184,.25)':'rgba(255,107,107,.25)'};
       border-radius:10px;padding:14px 18px;margin-bottom:18px;
@@ -9163,7 +9163,7 @@ function printCasualPDF(){
       </button>
     </div>
 
-    <!-- ══ DATA SUMMARY ══ -->
+    
     <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden;margin-bottom:16px">
       <div style="background:linear-gradient(135deg,rgba(0,212,184,.08),rgba(0,212,184,.04));
         padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px">
@@ -9201,10 +9201,10 @@ function printCasualPDF(){
       </div>
     </div>
 
-    <!-- ══ EXPORT + IMPORT ROW ══ -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
 
-      <!-- Export -->
+      
       <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden">
         <div style="background:linear-gradient(135deg,rgba(56,189,248,.08),rgba(56,189,248,.04));
           padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px">
@@ -9246,7 +9246,7 @@ function printCasualPDF(){
         </div>
       </div>
 
-      <!-- Import -->
+      
       <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden">
         <div style="background:linear-gradient(135deg,rgba(255,179,71,.08),rgba(255,179,71,.04));
           padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px">
@@ -9284,7 +9284,7 @@ function printCasualPDF(){
 
     </div>
 
-    <!-- ══ GITHUB INFO ══ -->
+    
     <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden;margin-bottom:16px">
       <div style="background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(167,139,250,.04));
         padding:14px 18px;border-bottom:1px solid #2a3550;display:flex;align-items:center;gap:10px">
@@ -9326,7 +9326,7 @@ function printCasualPDF(){
       </div>
     </div>
 
-    <!-- ══ DANGER ZONE ══ -->
+    
     <div style="background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:12px;overflow:hidden">
       <div style="background:rgba(255,107,107,.04);
         padding:14px 18px;border-bottom:1px solid rgba(255,107,107,.15);display:flex;align-items:center;gap:10px">
@@ -9623,7 +9623,7 @@ function renderFbPopup(){
         cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>
     </div>
 
-    <!-- Status row -->
+    
     <div style="background:${isLive?'rgba(0,212,184,.06)':'rgba(255,107,107,.06)'};
       border:1px solid ${isLive?'rgba(0,212,184,.2)':'rgba(255,107,107,.2)'};
       border-radius:8px;padding:10px 12px;margin-bottom:12px;
@@ -9642,7 +9642,7 @@ function renderFbPopup(){
       </div>
     </div>
 
-    <!-- Info rows -->
+    
     <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;
         padding:5px 0;border-bottom:1px solid rgba(42,53,80,.4)">
@@ -9671,7 +9671,7 @@ function renderFbPopup(){
       </div>
     </div>
 
-    <!-- Actions -->
+    
     <div style="display:flex;gap:8px">
       <button onclick="syncNow()" style="flex:1;background:rgba(0,212,184,.1);border:1px solid rgba(0,212,184,.3);
         border-radius:6px;color:var(--teal);padding:8px;font-family:'Syne',sans-serif;font-size:11px;
@@ -10081,8 +10081,8 @@ function exportBudgetPDF(){
   }
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Budget ${y} — Four Seasons Hotel Doha Laundry</title>
-  <style>
+  \x3ctitle>Budget ${y} — Four Seasons Hotel Doha Laundry<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A4 landscape;margin:12mm}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1e293b;background:#fff}
@@ -10428,8 +10428,8 @@ function exportRevPDF(){
   }
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Revenue Report ${y} — Four Seasons Hotel Doha</title>
-  <style>
+  \x3ctitle>Revenue Report ${y} — Four Seasons Hotel Doha<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A4 landscape;margin:8mm}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:9.5px;color:#1e293b;background:#fff}
@@ -10802,7 +10802,7 @@ function buildSmartTab(){
 
   el.innerHTML=`
 
-  <!-- ══ YEAR SELECTOR + STATUS ══ -->
+  
   <div style="background:linear-gradient(135deg,#1a2236,#1e1b4b);border:1px solid #2a3550;border-radius:12px;
     padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
@@ -10830,7 +10830,7 @@ function buildSmartTab(){
     </div>
   </div>
 
-  <!-- ══ SECTION 1: PERFORMANCE ALERTS ══ -->
+  
   <div style="background:#1a2236;border:1px solid rgba(255,107,107,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
     ${secHdr('\uD83D\uDEA8','Performance Alerts','#ff6b6b','255,107,107','Critical items requiring immediate attention')}
     ${overBudget?alertRow('\uD83D\uDD34','#ff6b6b','255,107,107',
@@ -10860,7 +10860,7 @@ function buildSmartTab(){
     ${monthsWithData===0?alertRow('ℹ️','#64748b','100,116,139','No Data Yet',`No actuals entered for ${smartY}. Go to Monthly Entry to start entering data.`,jumpBtn('Monthly Entry','entry')):''}
   </div>
 
-  <!-- ══ SECTION 2: FULL-YEAR FORECAST ══ -->
+  
   ${monthsWithData>0?`
   <div style="background:#1a2236;border:1px solid rgba(0,212,184,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
     ${secHdr('\uD83D\uDD2E','Full-Year Forecast','#00d4b8','0,212,184',`Where will ${smartY} end up at current pace?`)}
@@ -10873,7 +10873,7 @@ function buildSmartTab(){
       ${kpiCard('\uD83D\uDCC5','Months Remaining',12-monthsWithData+' months','to end of year','#f5c542','245,197,66')}
     </div>
 
-    <!-- Line breakdown progress -->
+    
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
       ${[
         ['\uD83D\uDFE1 Laundry Supplies',totLaA,totLaB,'255,179,71','#ffb347'],
@@ -10901,7 +10901,7 @@ function buildSmartTab(){
     </div>
   </div>`:``}
 
-  <!-- ══ SECTION 3: MONTHLY DETAIL TABLE ══ -->
+  
   ${monthsWithData>0?`
   <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px;overflow:hidden">
     ${secHdr('\uD83D\uDCCB','Monthly Breakdown','#a78bfa','167,139,250',`All entered months for ${smartY} — actuals vs budget`)}
@@ -10942,7 +10942,7 @@ function buildSmartTab(){
     </div>
   </div>`:``}
 
-  <!-- ══ SECTION 4: OCCUPANCY ANALYSIS ══ -->
+  
   ${monthsWithData>0?`
   <div style="background:#1a2236;border:1px solid rgba(56,189,248,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
     ${secHdr('\uD83C\uDFE8','Occupancy vs CPOR Analysis','#38bdf8','56,189,248','Months where cost per room is high relative to occupancy')}
@@ -10977,7 +10977,7 @@ function buildSmartTab(){
     </div>
   </div>`:``}
 
-  <!-- ══ SECTION 5: BUDGET SEASON ASSISTANT ══ -->
+  
   <div style="background:#1a2236;border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
     ${secHdr('\uD83D\uDCCB','Budget Season Assistant','#a78bfa','167,139,250',`Prepare ${nextY} budget — step by step`)}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
@@ -11026,7 +11026,7 @@ function buildSmartTab(){
     </div>
   </div>
 
-  <!-- ══ SECTION 6: PRICE INCREASE IMPACT ══ -->
+  
   <div style="background:#1a2236;border:1px solid rgba(255,179,71,.2);border-radius:12px;padding:18px 20px;margin-bottom:16px">
     ${secHdr('📈','Price Increase Impact','#ffb347','255,179,71','How supplier increases affect your budget')}
     ${activeIncs.length===0?`<div style="background:rgba(100,116,139,.06);border:1px solid rgba(100,116,139,.2);border-radius:8px;padding:12px 14px;font-size:11px;color:#64748b">
@@ -11051,7 +11051,7 @@ function buildSmartTab(){
     }).join('')}
   </div>
 
-  <!-- ══ SECTION 7: DATA ENTRY REMINDERS ══ -->
+  
   <div style="background:#1a2236;border:1px solid rgba(245,197,66,.2);border-radius:12px;padding:18px 20px;margin-bottom:40px">
     ${secHdr('📝','Data Entry Reminders','#f5c542','245,197,66','Past months missing actuals — enter data to improve accuracy')}
     ${missingMonths.length===0?`<div style="display:flex;align-items:center;gap:10px;background:rgba(0,212,184,.06);border:1px solid rgba(0,212,184,.2);border-radius:8px;padding:12px 14px">
@@ -11681,10 +11681,10 @@ function buildRevCompletionPanel(baseYear, lastActM){
       </div>
       <div style="padding:14px 16px">
 
-        <!-- Side by side: Laundry + Pearl -->
+        
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
 
-          <!-- Laundry -->
+          
           <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;border-left:3px solid #0369a1">
             <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#38bdf8;margin-bottom:10px">
               \uD83C\uDFE8 Laundry Revenue — FS Doha
@@ -11716,7 +11716,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
             </div>
           </div>
 
-          <!-- Pearl -->
+          
           <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;border-left:3px solid #7c3aed">
             <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#a78bfa;margin-bottom:10px">
               \uD83D\uDC8E Pearl Valet Revenue — FS Pearl
@@ -11749,7 +11749,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
           </div>
         </div>
 
-        <!-- Scenario selector -->
+        
         <div style="background:#0f1a2e;border:1px solid rgba(245,197,66,.2);border-radius:8px;padding:12px 14px">
           <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f5c542;margin-bottom:10px">
             \uD83D\uDC49 Select which RPOR to use for ${baseYear+1} Revenue Budget:
@@ -11793,7 +11793,7 @@ function buildRevCompletionPanel(baseYear, lastActM){
               No revenue budget set for ${MS2[lastActM+1]}–Dec ${baseYear}. Set budget in Revenue tab first.
             </div>`}
           </div>
-          <!-- Hidden input to store selected scenario -->
+          
           <input type="hidden" id="rp-rev-scenario" value="A">
         </div>
 
@@ -11873,21 +11873,21 @@ function buildRevPL(){
     const totVr = totA-totB;
     const totVrDisp = totVr<0?`<span style="color:#ff6b6b">(${Math.abs(totVr).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`:totVr?`<span style="color:#00d4b8">+${totVr.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`:'—';
     return `
-    <!-- ${label} Actual -->
+    
     <tr style="background:rgba(255,255,255,.01)" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background='rgba(255,255,255,.01)'">
       <td style="padding:6px 12px;font-size:11px;font-weight:600;color:${labelCol};white-space:nowrap">${label}</td>
       <td style="padding:6px 8px;font-size:10px;color:#64748b;white-space:nowrap">Actual</td>
       ${actCells}
       <td style="text-align:right;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${totA<0?'#ff6b6b':labelCol};border-left:1px solid #2a3550">${totActDisp}</td>
     </tr>
-    <!-- ${label} Budget -->
+    
     <tr style="background:transparent" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
       <td style="padding:3px 12px 6px;font-size:10px;color:#4a5568"></td>
       <td style="padding:3px 8px 6px;font-size:10px;color:#64748b;white-space:nowrap">Budget</td>
       ${budCells}
       <td style="text-align:right;padding:3px 10px 6px;font-family:'DM Mono',monospace;font-size:11px;color:#64748b;border-left:1px solid #2a3550">${totB?totB.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'}</td>
     </tr>
-    <!-- ${label} Variance -->
+    
     <tr style="background:transparent;border-bottom:1px solid #2a3550">
       <td style="padding:3px 12px 8px;font-size:10px;color:#4a5568"></td>
       <td style="padding:3px 8px 8px;font-size:10px;color:#64748b;white-space:nowrap">Variance</td>
@@ -11950,24 +11950,24 @@ function buildRevPL(){
           ${buildDataRow('💎 Pearl Valet Revenue','#a78bfa',valActVals,valBudVals,totValA,totValB)}
           ${buildDataRow('📎 Others','#a3e635',othActVals,othBudVals,totOthA,totOthB)}
 
-          <!-- Divider -->
+          
           <tr><td colspan="15" style="background:linear-gradient(90deg,#f5c542,#00d4b8);height:1px;padding:0"></td></tr>
 
-          <!-- Total Actual -->
+          
           <tr style="background:rgba(0,212,184,.06)">
             <td style="padding:9px 12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#00d4b8">TOTAL REVENUES</td>
             <td style="padding:9px 8px;font-size:10px;color:#64748b">Actual</td>
             ${totActCells}
             <td style="text-align:right;padding:9px 10px;font-family:'DM Mono',monospace;font-size:13px;font-weight:800;color:#00d4b8;border-left:1px solid #2a3550">${grandTotA<0?'('+Math.abs(grandTotA).toLocaleString('en-US',{minimumFractionDigits:2})+')':(grandTotA||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
           </tr>
-          <!-- Total Budget -->
+          
           <tr style="background:rgba(255,179,71,.04)">
             <td style="padding:4px 12px 9px;font-size:10px;color:#4a5568"></td>
             <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Budget</td>
             ${totBudCells}
             <td style="text-align:right;padding:4px 10px 9px;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:#ffb347;border-left:1px solid #2a3550">${(grandTotB||0).toLocaleString('en-US',{minimumFractionDigits:2})}</td>
           </tr>
-          <!-- Total Variance -->
+          
           <tr style="background:rgba(245,197,66,.04);border-top:1px solid rgba(245,197,66,.15)">
             <td style="padding:4px 12px 9px;font-size:10px;color:#4a5568"></td>
             <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Variance</td>
@@ -12021,8 +12021,8 @@ function printRevPL(){
 
   const grandVr=grandTotA-grandTotB;
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Revenue P&L Schedule ${y}</title>
-  <style>
+  \x3ctitle>Revenue P&L Schedule ${y}<\/title>
+  \x3cstyle>
     *{box-sizing:border-box;margin:0;padding:0}
     @page{size:A3 landscape;margin:8mm}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}
@@ -12045,7 +12045,7 @@ function printRevPL(){
     </div>
   </div>
 
-  <!-- KPI strip -->
+  
   <div style="display:flex;gap:10px;margin-bottom:10px">
     ${[['Total Actual',grandTotA<0?'('+Math.abs(grandTotA).toLocaleString('en-US',{minimumFractionDigits:2})+')':grandTotA.toLocaleString('en-US',{minimumFractionDigits:2}),'#059669'],
        ['Total Budget',grandTotB.toLocaleString('en-US',{minimumFractionDigits:2}),'#d97706'],
@@ -12249,7 +12249,7 @@ function buildEntryPL(){
 
   el.innerHTML=`
   <div style="background:#0f1a2e;border:1px solid #2a3550;border-radius:12px;overflow:hidden">
-    <!-- Header -->
+    
     <div style="background:linear-gradient(135deg,#1e3a5f,#1e1b4b);padding:14px 18px;
       display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div>
@@ -12284,7 +12284,7 @@ function buildEntryPL(){
             <th style="background:#0f172a;color:#f5c542;font-size:9px;font-weight:700;
               text-align:right;padding:8px 10px;white-space:nowrap;border-left:1px solid #2a3550;min-width:90px">FULL YEAR</th>
           </tr>
-          <!-- Stats row -->
+          
           <tr style="background:#141e30;border-bottom:1px solid #2a3550">
             <td style="padding:5px 12px;font-size:9px;color:#4a5568">Rooms Sold</td>
             <td style="padding:5px 8px;font-size:9px;color:#4a5568"></td>
@@ -12303,10 +12303,10 @@ function buildEntryPL(){
           ${buildSection('🟢 Operating Supplies','#a3e635',rows.map(r=>r.opA),rows.map(r=>r.opB),totOpA,totOpB)}
           ${buildSection('🔴 Printing &amp; Stationery','#ff6b6b',rows.map(r=>r.prA),rows.map(r=>r.prB),totPrA,totPrB)}
 
-          <!-- Gradient divider -->
+          
           <tr><td colspan="15" style="background:linear-gradient(90deg,#f5c542,#00d4b8);height:2px;padding:0"></td></tr>
 
-          <!-- Total Actual -->
+          
           <tr style="background:rgba(0,212,184,.06)">
             <td style="padding:9px 12px;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#00d4b8">TOTAL EXPENSES</td>
             <td style="padding:9px 8px;font-size:10px;color:#64748b">Actual</td>
@@ -12314,7 +12314,7 @@ function buildEntryPL(){
             <td style="text-align:right;padding:9px 10px;font-family:'DM Mono',monospace;
               font-size:13px;font-weight:800;color:#00d4b8;border-left:1px solid #2a3550">${q2(grandA)}</td>
           </tr>
-          <!-- Total Budget -->
+          
           <tr style="background:rgba(255,179,71,.04)">
             <td style="padding:4px 12px 9px"></td>
             <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Budget</td>
@@ -12322,7 +12322,7 @@ function buildEntryPL(){
             <td style="text-align:right;padding:4px 10px 9px;font-family:'DM Mono',monospace;
               font-size:12px;font-weight:700;color:#ffb347;border-left:1px solid #2a3550">${q2(grandB)}</td>
           </tr>
-          <!-- Total Variance -->
+          
           <tr style="background:rgba(245,197,66,.04);border-top:1px solid rgba(245,197,66,.15)">
             <td style="padding:4px 12px 9px"></td>
             <td style="padding:4px 8px 9px;font-size:10px;color:#64748b">Variance</td>
@@ -12331,14 +12331,14 @@ function buildEntryPL(){
               font-size:12px;font-weight:700;color:${grandVr>0?'#ff6b6b':'#00d4b8'};border-left:1px solid #2a3550">${vrDisp(grandVr)}</td>
           </tr>
 
-          <!-- CPOR Row -->
+          
           <tr style="background:#141e30;border-top:1px solid #2a3550">
             <td colspan="2" style="padding:6px 12px;font-size:10px;font-weight:700;color:#a78bfa;font-family:'Syne',sans-serif">CPOR (Cost per Room)</td>
             ${cporCells}
             <td style="text-align:right;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;
               font-weight:700;color:#a78bfa;border-left:1px solid #2a3550">${cporA?cporA.toFixed(4):'—'}</td>
           </tr>
-          <!-- KG Row -->
+          
           <tr style="background:#141e30">
             <td colspan="2" style="padding:6px 12px;font-size:10px;font-weight:700;color:#38bdf8;font-family:'Syne',sans-serif">KG Processed</td>
             ${kgCells}
@@ -12349,7 +12349,7 @@ function buildEntryPL(){
       </table>
     </div>
 
-    <!-- Legend -->
+    
     <div style="padding:10px 16px;border-top:1px solid #2a3550;display:flex;gap:16px;font-size:10px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#00d4b8"></div><span style="color:#64748b">Variance under budget (good)</span></div>
       <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:2px;background:#ff6b6b"></div><span style="color:#64748b">Over budget</span></div>
@@ -12396,8 +12396,8 @@ function printEntryPL(){
   };
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Expenses P&L Schedule ${y}</title>
-  <style>*{box-sizing:border-box;margin:0;padding:0}
+  \x3ctitle>Expenses P&L Schedule ${y}<\/title>
+  \x3cstyle>*{box-sizing:border-box;margin:0;padding:0}
   @page{size:A3 landscape;margin:8mm}
   body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}
   table{border-collapse:collapse;width:100%}
