@@ -8039,7 +8039,6 @@ function buildGuideTab(){
   const el = document.getElementById('guide-body');
   if(!el) return;
 
-  // ── helpers ──────────────────────────────────────────────
   const step = (n,col,txt) =>
     `<div style="display:flex;gap:10px;margin-bottom:9px;align-items:flex-start">
       <div style="min-width:22px;height:22px;border-radius:50%;background:${col}22;border:1px solid ${col}55;
@@ -8048,19 +8047,19 @@ function buildGuideTab(){
       <div style="font-size:11.5px;color:#94a3b8;line-height:1.7">${txt}</div>
     </div>`;
 
-  const tip = (txt) =>
+  const tip = txt =>
     `<div style="margin-top:10px;background:rgba(245,197,66,.06);border-left:3px solid rgba(245,197,66,.5);
       border-radius:0 8px 8px 0;padding:9px 13px;font-size:11px;color:#94a3b8;line-height:1.7">
-      <strong style="color:#f5c542">\uD83D\uDCA1 Remember: </strong>${txt}
+      <strong style="color:#f5c542">💡 Remember: </strong>${txt}
     </div>`;
 
-  const warn = (txt) =>
+  const warn = txt =>
     `<div style="margin-top:10px;background:rgba(255,107,107,.06);border-left:3px solid rgba(255,107,107,.5);
       border-radius:0 8px 8px 0;padding:9px 13px;font-size:11px;color:#94a3b8;line-height:1.7">
       <strong style="color:#ff6b6b">⚠️ Important: </strong>${txt}
     </div>`;
 
-  const good = (txt) =>
+  const good = txt =>
     `<div style="margin-top:10px;background:rgba(0,212,184,.06);border-left:3px solid rgba(0,212,184,.5);
       border-radius:0 8px 8px 0;padding:9px 13px;font-size:11px;color:#94a3b8;line-height:1.7">
       <strong style="color:#00d4b8">✅ Good to know: </strong>${txt}
@@ -8098,10 +8097,9 @@ function buildGuideTab(){
     `<span style="display:inline-block;background:${col}18;border:1px solid ${col}40;border-radius:12px;
       padding:2px 8px;font-size:10px;font-weight:700;color:${col};margin:2px">${txt}</span>`;
 
-  // ── CONTENT ──────────────────────────────────────────────
   el.innerHTML = `<div style="max-width:900px;margin:0 auto;padding:24px 28px 80px">
 
-  
+  <!-- HERO -->
   <div style="background:linear-gradient(135deg,#0f172a 0%,#1a2f4a 50%,#1a1040 100%);
     border-radius:16px;padding:32px 36px;margin-bottom:36px;position:relative;overflow:hidden">
     <div style="position:absolute;right:-40px;top:-40px;width:220px;height:220px;border-radius:50%;
@@ -8112,7 +8110,7 @@ function buildGuideTab(){
       <h1 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:900;color:#f5c542;
         margin-bottom:10px;line-height:1.2">How to use every part<br>of this system</h1>
       <p style="font-size:13px;color:rgba(255,255,255,.45);max-width:560px;line-height:1.7;margin-bottom:16px">
-        Written in plain English. Step by step. No technical jargon. If you can read this, you can use the system.
+        Written in plain English. Step by step. Formulas included. No technical jargon.
       </p>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         ${pill('Four Seasons Hotel Doha','#00d4b8')}
@@ -8124,7 +8122,31 @@ function buildGuideTab(){
     </div>
   </div>
 
-  
+  <!-- TABLE OF CONTENTS -->
+  <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:18px 22px;margin-bottom:28px">
+    <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#f5c542;margin-bottom:12px;letter-spacing:.5px">CONTENTS</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px">
+      ${[
+        ['Part 1','What does this system do?','#00d4b8'],
+        ['Part 2','The one rule you must never break','#ff6b6b'],
+        ['Part 3','How budgets are calculated (CPOR)','#a78bfa'],
+        ['Part 4','What to do every month','#00d4b8'],
+        ['Part 5','Planning next year\'s main budget','#a3e635'],
+        ['Part 6','Casual Labour — tracking & budgeting','#ffb347'],
+        ['Part 7','Budget adjustments (increases & specials)','#ffb347'],
+        ['Part 8','Viewing your data (dashboard & reports)','#ff6b6b'],
+        ['Part 9','Quick-reference cheat sheet','#38bdf8'],
+        ['Part 10','Keeping your data safe','#a3e635'],
+        ['Part 11','Common questions & answers','#a78bfa'],
+      ].map(([part,title,col])=>`
+        <div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid #1e2d45">
+          <span style="font-size:9px;font-weight:700;color:${col};min-width:40px">${part}</span>
+          <span style="font-size:11px;color:#64748b">${title}</span>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- PART 1 -->
   ${section('Part 1 — What does this system do?','Start here. Read this before anything else.')}
 
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:20px 24px;margin-bottom:18px">
@@ -8139,12 +8161,13 @@ function buildGuideTab(){
     </p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:4px">
       ${[
-        ['#00d4b8','\uD83D\uDCCB','Track actuals','Enter what you really spent each month'],
-        ['#f5c542','\uD83D\uDD2E','Plan budgets','Auto-calculates next year from prior year data'],
-        ['#a78bfa','\uD83D\uDCCA','Compare','Actual vs Budget with color-coded variance'],
-        ['#ff6b6b','\uD83D\uDCC4','Report','Print Finance-ready PDFs for meetings'],
-        ['#38bdf8','\uD83D\uDCBE','Stay safe','Firebase cloud saves everything automatically'],
-        ['#a3e635','\uD83E\uDDD9','Save time','Budget Wizard builds a full year in 4 clicks'],
+        ['#00d4b8','📋','Track actuals','Enter what you really spent each month'],
+        ['#f5c542','🔮','Plan budgets','Auto-calculates next year from prior year data'],
+        ['#a78bfa','📊','Compare','Actual vs Budget with color-coded variance'],
+        ['#ff6b6b','📄','Report','Print Finance-ready PDFs for meetings'],
+        ['#38bdf8','💾','Stay safe','Firebase cloud saves everything automatically'],
+        ['#a3e635','🧙','Save time','Budget Wizard builds a full year in 4 clicks'],
+        ['#ffb347','👷','Casual Labour','Track agency days, costs, and plan casual budget'],
       ].map(([col,icon,title,desc])=>`
         <div style="background:#0f1a2e;border-radius:8px;padding:11px 13px;border-left:3px solid ${col}">
           <div style="font-size:16px;margin-bottom:5px">${icon}</div>
@@ -8154,7 +8177,7 @@ function buildGuideTab(){
     </div>
   </div>
 
-  
+  <!-- PART 2 -->
   ${section('Part 2 — The one rule you must never break','This is the most important thing in the whole guide.')}
 
   <div style="background:linear-gradient(135deg,rgba(255,107,107,.08),rgba(245,197,66,.06));
@@ -8170,7 +8193,7 @@ function buildGuideTab(){
           <strong style="color:#94a3b8">Only enter here after the month has closed.</strong></div>
       </div>
       <div style="background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2);border-radius:8px;padding:14px">
-        <div style="font-size:12px;font-weight:700;color:#f5c542;margin-bottom:6px">\uD83D\uDD2E FORECASTS go in Projection Planner</div>
+        <div style="font-size:12px;font-weight:700;color:#f5c542;margin-bottom:6px">🔮 FORECASTS go in Projection Planner</div>
         <div style="font-size:11px;color:#64748b;line-height:1.7">Future estimated rooms. What you think will happen.
           Projected rooms for next month or next year.
           <strong style="color:#94a3b8">Only enter here for future months.</strong></div>
@@ -8179,7 +8202,7 @@ function buildGuideTab(){
     ${warn('If you put future forecasts in Monthly Entry, the budget calculations will break. If you put actuals in Projection Planner, the data will conflict. Keep them separate — always.')}
   </div>
 
-  
+  <!-- PART 3 -->
   ${section('Part 3 — How budgets are calculated automatically','You do not need to calculate anything manually. But understanding this helps.')}
 
   <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;padding:20px 24px;margin-bottom:18px">
@@ -8192,16 +8215,15 @@ function buildGuideTab(){
       'Total Expenses ÷ Total Rooms Sold = CPOR',
       'Example: QAR 416,082 ÷ 46,536 rooms = 8.9411 CPOR','#a78bfa')}
 
-    ${formula('Step 2 — Multiply by next year projected rooms',
+    ${formula('Step 2 — Multiply by next year projected rooms + price increase',
       'CPOR × Projected Rooms × Price Multiplier = Monthly Budget',
       'Example: 8.9411 × 4,137 rooms × 1.035 = QAR 38,235 budget for that month','#ffb347')}
 
     ${formula('Step 3 — Revenue uses RPOR the same way',
-      'Total Revenue ÷ Rooms Sold = RPOR → RPOR × Projected Rooms = Revenue Budget',
-      'Example: QAR 283,116 ÷ 10,887 rooms = 26.005 RPOR → 26.005 × 4,500 = QAR 117,023','#00d4b8')}
+      'Total Revenue ÷ Rooms Sold = RPOR  →  RPOR × Projected Rooms = Revenue Budget',
+      'Example: QAR 283,116 ÷ 10,887 rooms = 26.005 RPOR  →  26.005 × 4,500 = QAR 117,023','#00d4b8')}
 
-    <div style="background:rgba(163,230,53,.06);border:1px solid rgba(163,230,53,.2);border-radius:8px;
-      padding:12px 14px;margin-top:8px">
+    <div style="background:rgba(163,230,53,.06);border:1px solid rgba(163,230,53,.2);border-radius:8px;padding:12px 14px;margin-top:8px">
       <div style="font-size:11px;color:#a3e635;font-weight:700;margin-bottom:4px">What this means in practice:</div>
       <div style="font-size:11px;color:#64748b;line-height:1.7">You enter rooms sold each month in Monthly Entry →
         the system already knows the CPOR from prior year → it multiplies automatically →
@@ -8209,15 +8231,14 @@ function buildGuideTab(){
     </div>
   </div>
 
-  
+  <!-- PART 4 -->
   ${section('Part 4 — What to do every month','Your regular routine. Takes about 10 minutes per month.')}
 
-  ${card('\uD83D\uDCCB','Step 1 — Enter this month\'s actuals','Do this as soon as the month closes','#00d4b8',`
+  ${card('📋','Step 1 — Enter this month\'s actuals','Do this as soon as the month closes','#00d4b8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       At the start of each month, you enter last month's confirmed numbers. There are two ways to do this —
       use whichever feels easier.
     </p>
-
     <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;margin-bottom:12px">
       <div style="font-size:11px;font-weight:700;color:#00d4b8;margin-bottom:8px">Method A — Quick Entry (fastest)</div>
       ${step(1,'#00d4b8','Click the <strong style="color:#00d4b8">⚡ Quick Entry</strong> button in the top header — it\'s always visible no matter which tab you are on')}
@@ -8225,106 +8246,242 @@ function buildGuideTab(){
       ${step(3,'#00d4b8','Fill in <strong style="color:#a78bfa">Rooms Sold</strong> and <strong style="color:#38bdf8">KG Processed</strong>')}
       ${step(4,'#00d4b8','Fill in the 3 expense actuals: <strong style="color:#00d4b8">Laundry Supplies</strong>, <strong style="color:#a3e635">Operating</strong>, <strong style="color:#ff6b6b">Printing</strong>')}
       ${step(5,'#00d4b8','Fill in revenue: <strong>Laundry Revenue</strong>, <strong style="color:#a78bfa">Pearl Valet</strong>, <strong style="color:#38bdf8">Others</strong>')}
-      ${step(6,'#00d4b8','Click <strong>\uD83D\uDCBE Save &amp; Next Month →</strong> to save and jump to the next month automatically')}
+      ${step(6,'#00d4b8','Click <strong>💾 Save &amp; Next Month →</strong> to save and jump to the next month automatically')}
     </div>
-
     <div style="background:#0f1a2e;border-radius:8px;padding:12px 14px;margin-bottom:12px">
       <div style="font-size:11px;font-weight:700;color:#00d4b8;margin-bottom:8px">Method B — Monthly Entry tab (more detail)</div>
-      ${step(1,'#00d4b8','Click the <strong>Monthly Entry</strong> tab (first tab, marked ACT)')}
+      ${step(1,'#00d4b8','Click the <strong>Monthly Entry</strong> tab')}
       ${step(2,'#00d4b8','Select the year using the year buttons at the top')}
       ${step(3,'#00d4b8','Find the month\'s card and type directly into each field')}
-      ${step(4,'#00d4b8','The budget columns auto-fill — you can leave them as-is or override manually')}
-      ${step(5,'#00d4b8','No save button needed on the cards — changes auto-save as you type')}
+      ${step(4,'#00d4b8','The budget columns auto-fill — you can leave them or override manually')}
+      ${step(5,'#00d4b8','No save button needed — changes auto-save as you type')}
     </div>
-
     ${tip('Numbers should be in Finance format: <strong>128,625.83</strong> — the system formats them automatically when you leave the field.')}
     ${warn('Only enter numbers that Finance has confirmed. Do not enter estimates or future months here — those go in Projection Planner.')}
   `)}
 
-  ${card('\uD83D\uDD12','Step 2 — Lock the month after Finance confirms','Prevent accidental changes to submitted data','#f5c542',`
+  ${card('🔒','Step 2 — Lock the month after Finance confirms','Prevent accidental changes to submitted data','#f5c542',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Once you have submitted a month to Finance and they confirm the numbers, lock it so nobody can accidentally change it.
     </p>
     ${step(1,'#f5c542','Go to <strong>Monthly Entry</strong> tab')}
     ${step(2,'#f5c542','Find the month card you want to lock')}
-    ${step(3,'#f5c542','Click the <strong style="color:#f5c542">\uD83D\uDD12 Lock</strong> button on that card')}
+    ${step(3,'#f5c542','Click the <strong style="color:#f5c542">🔒 Lock</strong> button on that card')}
     ${step(4,'#f5c542','The card turns slightly faded and all fields become read-only')}
-    ${step(5,'#f5c542','To lock the whole year at once, use the <strong>\uD83D\uDD12 Lock Year</strong> button in the tab header')}
-    ${tip('You can unlock any time with the \uD83D\uDD13 Unlock button. Locking is just a protection — it does not affect any calculations.')}
+    ${step(5,'#f5c542','To lock the whole year at once, use the <strong>🔒 Lock Year</strong> button in the tab header')}
+    ${tip('You can unlock any time with the 🔓 Unlock button. Locking is just a protection — it does not affect any calculations.')}
   `)}
 
-  ${card('\uD83D\uDCB0','Step 3 — Enter revenue actuals','Track what each property actually earned','#38bdf8',`
+  ${card('💰','Step 3 — Enter revenue actuals','Track what each property actually earned','#38bdf8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Revenue is tracked separately from expenses. Go to the <strong>Revenue</strong> tab to enter monthly revenue figures.
     </p>
     ${step(1,'#38bdf8','Click the <strong>Revenue</strong> tab')}
-    ${step(2,'#38bdf8','Each month has a card with 3 rows: <strong style="color:#00d4b8">\uD83C\uDFE8 Laundry Revenue</strong> (FS Doha), <strong style="color:#a78bfa">\uD83D\uDC8E Pearl Valet</strong>, <strong style="color:#38bdf8">\uD83D\uDCCE Others</strong>')}
+    ${step(2,'#38bdf8','Each month has 3 rows: <strong style="color:#00d4b8">🏨 Laundry Revenue</strong> (FS Doha), <strong style="color:#a78bfa">💎 Pearl Valet</strong>, <strong style="color:#38bdf8">📎 Others</strong>')}
     ${step(3,'#38bdf8','Enter the <strong>Actual</strong> amount and the <strong>Budget</strong> amount side by side')}
     ${step(4,'#38bdf8','Variance calculates automatically — teal = above budget (good), red = below budget')}
-    ${step(5,'#38bdf8','Pearl Valet only appears from August 2024 onwards — this is correct, Pearl opened then')}
+    ${step(5,'#38bdf8','Pearl Valet only appears from August 2024 onwards — Pearl opened then, this is correct')}
     ${tip('Others can be a negative number — just type -305 for a negative adjustment. It will show in brackets.')}
   `)}
 
-  
-  ${section('Part 5 — Planning next year\'s budget','The most important thing you do all year. Usually done in August.')}
+  ${card('👷','Step 4 — Enter casual labour days','Track daily agency workers separately from main expenses','#ffb347',`
+    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
+      Casual labour (Alaska, Mr. Valet and others) is tracked separately from your main budget. Go to the
+      <strong>Casual Labour</strong> tab each month to record days worked.
+    </p>
+    ${step(1,'#ffb347','Click the <strong>👷 Casual Labour</strong> tab')}
+    ${step(2,'#ffb347','Make sure you are on the <strong>📝 Entry</strong> view (default)')}
+    ${step(3,'#ffb347','Select the year with the year pills')}
+    ${step(4,'#ffb347','For each company (Alaska / Mr. Valet), type the actual days worked in that month\'s input field')}
+    ${step(5,'#ffb347','Cost is calculated automatically: <strong style="color:var(--amber)">Days × Daily Rate = Cost</strong>')}
+    ${step(6,'#ffb347','The prior year same month is shown next to each entry so you can compare instantly')}
+    ${tip('Daily rates are set per company and can have multiple periods with different rates. Edit rates via the ✏ Edit button on the company card.')}
+    ${warn('Casual labour costs do NOT appear in your main CPOR budget. They are tracked here separately so Finance can see the full picture.')}
+  `)}
 
-  ${card('\uD83E\uDDD9','The easiest way — Budget Wizard','4 steps, about 5 minutes, covers everything','#a3e635',`
+  <!-- PART 5 -->
+  ${section('Part 5 — Planning next year\'s main budget','The most important thing you do all year. Usually done in August.')}
+
+  ${card('🧙','The easiest way — Budget Wizard','4 steps, about 5 minutes, covers everything','#a3e635',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       The Budget Wizard guides you through building a complete budget for any future year.
       It calculates expenses and revenue budgets automatically — you just review and confirm.
     </p>
-    ${step(1,'#a3e635','Go to <strong>Dashboard</strong> tab → look at the Today Panel → click <strong style="color:#a3e635">\uD83E\uDDD9 Budget Wizard</strong>')}
-    ${step(2,'#a3e635','<strong>Step 1 of wizard:</strong> Select the year (e.g. 2027). Review the projected rooms per month. Change any room number by clicking it and typing.')}
-    ${step(3,'#a3e635','<strong>Step 2 of wizard:</strong> The system shows you the auto-calculated expense budget for every month based on CPOR × rooms. Review it — if it looks right, click Next.')}
-    ${step(4,'#a3e635','<strong>Step 3 of wizard:</strong> The system shows the revenue budget based on RPOR × rooms. Review it. Click Next.')}
-    ${step(5,'#a3e635','<strong>Step 4 of wizard:</strong> A summary shows total rooms, total expense budget, total revenue budget, and net. Click <strong>Save Budget</strong> — done.')}
-    ${tip('The wizard does not overwrite any actual data you have entered. It only writes the budget fields (laB, opB, prB, laRB, valRB).')}
+    ${step(1,'#a3e635','Go to <strong>Dashboard</strong> tab → Today Panel → click <strong style="color:#a3e635">🧙 Budget Wizard</strong>')}
+    ${step(2,'#a3e635','<strong>Step 1:</strong> Select the year (e.g. 2027). Review projected rooms per month. Change any room number by clicking it.')}
+    ${step(3,'#a3e635','<strong>Step 2:</strong> System shows auto-calculated expense budget (CPOR × rooms). Review — click Next.')}
+    ${step(4,'#a3e635','<strong>Step 3:</strong> System shows revenue budget (RPOR × rooms). Review — click Next.')}
+    ${step(5,'#a3e635','<strong>Step 4:</strong> Summary — total rooms, total expense budget, total revenue budget, net. Click <strong>Save Budget</strong>.')}
+    ${tip('The wizard does not overwrite any actual data. It only writes the budget fields.')}
   `)}
 
-  ${card('\uD83C\uDFAF','Compare scenarios before deciding','Run 3 occupancy options side by side','#a3e635',`
+  ${card('🎯','Compare scenarios before deciding','Run 3 occupancy options side by side','#a3e635',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      Before committing to a budget, use the Scenario Planner to see what the numbers look like
-      under conservative, base, and optimistic occupancy assumptions.
+      Before committing, use the Scenario Planner to see what numbers look like under conservative,
+      base, and optimistic occupancy assumptions.
     </p>
     ${step(1,'#a3e635','Click the <strong>Scenarios</strong> tab')}
-    ${step(2,'#a3e635','Select the budget year at the top')}
-    ${step(3,'#a3e635','Set your <strong style="color:#38bdf8">Conservative %</strong> (worst realistic case, e.g. 60%), <strong style="color:#00d4b8">Base %</strong> (most likely, e.g. 68%), <strong style="color:#f5c542">Optimistic %</strong> (best case, e.g. 76%)')}
-    ${step(4,'#a3e635','Optionally add an Expense Adjustment % (e.g. +5% for known supplier increases) and Revenue Growth %')}
-    ${step(5,'#a3e635','The table updates instantly — showing Rooms / Expense Budget / Revenue Budget / NET for all 12 months under all 3 scenarios')}
-    ${step(6,'#a3e635','When you decide which scenario to use, click <strong>Apply [Scenario] to [Year] Budget</strong> — it writes the budget directly into the system')}
-    ${tip('Use this when presenting budget options to management. Show all 3 — let them choose which one to submit to Finance.')}
+    ${step(2,'#a3e635','Select the budget year')}
+    ${step(3,'#a3e635','Set: <strong style="color:#38bdf8">Conservative %</strong> (e.g. 60%), <strong style="color:#00d4b8">Base %</strong> (e.g. 68%), <strong style="color:#f5c542">Optimistic %</strong> (e.g. 76%)')}
+    ${step(4,'#a3e635','Add an Expense Adjustment % (e.g. +5% for supplier increases) and Revenue Growth % if needed')}
+    ${step(5,'#a3e635','Table updates instantly — Rooms / Expense / Revenue / NET under all 3 scenarios')}
+    ${step(6,'#a3e635','When decided, click <strong>Apply [Scenario] to [Year] Budget</strong>')}
+    ${tip('Use this when presenting options to management. Show all 3 — let them choose which to submit to Finance.')}
   `)}
 
-  ${card('\uD83D\uDD2E','The August workflow — Year Completion Forecast','How to prepare next year budget mid-year','#f5c542',`
+  ${card('🔮','The August workflow — Year Completion Forecast','How to prepare next year budget mid-year','#f5c542',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      In August, you have 7 months of real data (Jan–Jul) but 5 months still to go (Aug–Dec).
-      The system handles this automatically — it blends your real data with projected remaining months
-      to estimate what the full year CPOR will be, and uses <em>that</em> for next year's budget.
+      In August you have 7 months of real data (Jan–Jul) but 5 months still to go (Aug–Dec).
+      The system handles this automatically — it blends real data with projections to estimate the full-year CPOR,
+      then uses <em>that</em> for next year's budget.
     </p>
     ${step(1,'#f5c542','Make sure Jan–Jul actuals are entered in <strong>Monthly Entry</strong>')}
     ${step(2,'#f5c542','Go to <strong>Projection Planner</strong> tab')}
-    ${step(3,'#f5c542','Look at the <strong style="color:#f5c542">Year Completion Forecast</strong> panel at the top — it shows your YTD actual CPOR')}
-    ${step(4,'#f5c542','In the table below, enter your projected rooms for Aug, Sep, Oct, Nov, Dec of the current year')}
-    ${step(5,'#f5c542','The Forecast panel updates instantly — it now shows the estimated full-year CPOR including those projected months')}
-    ${step(6,'#f5c542','That estimated CPOR automatically flows into next year\'s budget calculations')}
-    ${step(7,'#f5c542','Now use the Budget Wizard or Scenario Planner to build next year\'s budget')}
-    ${tip('You do not need to wait until December to start next year\'s budget. The Year Completion Forecast gives you an accurate estimate even in August.')}
+    ${step(3,'#f5c542','The <strong style="color:#f5c542">Year Completion Forecast</strong> panel shows your YTD actual CPOR')}
+    ${step(4,'#f5c542','In the table, enter projected rooms for Aug–Dec of the current year')}
+    ${step(5,'#f5c542','Forecast panel updates instantly — shows estimated full-year CPOR blending real + projected months')}
+    ${step(6,'#f5c542','That CPOR automatically flows into next year\'s budget calculations')}
+    ${step(7,'#f5c542','Now use Budget Wizard or Scenario Planner to build next year\'s budget')}
+    ${tip('You do not need to wait until December. The Year Completion Forecast gives you an accurate estimate even in August.')}
   `)}
 
-  ${card('\uD83D\uDD17','Link rooms to revenue planning','One entry, used everywhere','#00d4b8',`
+  ${card('🔗','Link rooms to revenue planning','One entry, used everywhere','#00d4b8',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Once you have projected rooms in the Projection Planner, you do not need to enter them again
       for the revenue budget. Use the Sync button to connect them automatically.
     </p>
     ${step(1,'#00d4b8','Go to <strong>Projection Planner</strong> tab')}
     ${step(2,'#00d4b8','Enter your projected rooms for future years in the table')}
-    ${step(3,'#00d4b8','Click the <strong style="color:#00d4b8">\uD83D\uDD17 Sync Rooms → Revenue Planner</strong> button in the legend area')}
-    ${step(4,'#00d4b8','The system takes you to the Revenue tab automatically with your rooms already loaded')}
-    ${step(5,'#00d4b8','The revenue projection now uses those exact rooms — no double entry')}
+    ${step(3,'#00d4b8','Click the <strong style="color:#00d4b8">🔗 Sync Rooms → Revenue Planner</strong> button')}
+    ${step(4,'#00d4b8','Revenue tab is updated automatically with those exact rooms — no double entry')}
   `)}
 
-  
-  ${section('Part 6 — Budget adjustments','Supplier increases and one-off items that affect the budget')}
+  <!-- PART 6 — CASUAL LABOUR (NEW) -->
+  ${section('Part 6 — Casual Labour Tab','Tracking agency worker costs and planning the casual budget for future years.')}
+
+  <div style="background:rgba(255,179,71,.04);border:1px solid rgba(255,179,71,.2);border-radius:12px;padding:18px 22px;margin-bottom:18px">
+    <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#ffb347;margin-bottom:10px">Why casual labour is tracked separately</div>
+    <p style="font-size:12px;color:#64748b;line-height:1.8">
+      Alaska and Mr. Valet (and any other agency) are paid per day, not included in your CPOR budget.
+      This tab tracks those costs month by month, compares across years, and uses your occupancy forecast
+      to suggest a budget for next year. The main budget and the casual budget are always kept apart.
+    </p>
+  </div>
+
+  ${card('📝','View 1 — Entry','Record actual days worked per company per month','#ffb347',`
+    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
+      This is where you enter the raw data. Do this once a month, just like entering main actuals.
+    </p>
+    ${step(1,'#ffb347','Click <strong>👷 Casual Labour</strong> tab → click <strong>📝 Entry</strong>')}
+    ${step(2,'#ffb347','Select the year with the year pills at the top')}
+    ${step(3,'#ffb347','Type actual days worked for each company in the input box for that month')}
+    ${step(4,'#ffb347','Cost calculates instantly: <strong>Days × Daily Rate = QAR Cost</strong>')}
+    ${step(5,'#ffb347','The prior year same month is shown next to each entry so you can see if you\'re higher or lower than last year')}
+    ${step(6,'#ffb347','The <strong>vs Prior Year</strong> column shows the difference in days — <span style="color:#00d4b8">teal = same or less</span>, <span style="color:#ff6b6b">red = more days than last year</span>')}
+
+    ${formula('Cost formula (per company, per month)',
+      'Actual Days × Daily Rate (QAR) = Actual Cost',
+      'Example: Alaska 18 days × QAR 95/day = QAR 1,710.00','#ffb347')}
+
+    ${tip('You can change a company\'s daily rate at any time — click ✏ Edit on the company card. You can set multiple rate periods (e.g. QAR 95 until Dec 2025, then QAR 100 from Jan 2026).')}
+  `)}
+
+  ${card('📊','View 2 — Year History','See all years side by side in one table','#a78bfa',`
+    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
+      This view is your main tool for understanding trends. Before setting a budget for next year,
+      spend 2 minutes here — it shows you exactly what each month has cost in every year you have data for.
+    </p>
+    ${step(1,'#a78bfa','Click <strong>📊 Year History</strong> view')}
+    ${step(2,'#a78bfa','The top table shows all years as columns. Each row is a month. Each cell shows: <strong>Total Days (all companies)</strong> and <strong>Total Cost QAR</strong>')}
+    ${step(3,'#a78bfa','The <strong style="color:#a78bfa">Avg Cost</strong> column on the right shows the average cost for that month across all years with data')}
+    ${step(4,'#a78bfa','The bottom table breaks down by company — so you can see Alaska vs Mr. Valet year by year')}
+
+    ${formula('Average cost formula (used in Avg Cost column)',
+      'Sum of all monthly costs across years ÷ Number of years with data = Avg Cost',
+      'Example: Jan costs were 1,710 (2024) + 1,900 (2025) = 3,610 ÷ 2 years = QAR 1,805 avg','#a78bfa')}
+
+    ${good('Look for patterns — which months are always expensive? Is summer cheaper because occupancy drops? These patterns are what you use when building the budget.')}
+  `)}
+
+  ${card('💰','View 3 — Budget Plan','Build the casual labour budget for any future year','#ffb347',`
+    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
+      This is where you set how many days of casual labour you are budgeting for next year.
+      The system links to the Projection Planner to adjust suggestions based on your expected occupancy.
+    </p>
+
+    <div style="font-size:11px;font-weight:700;color:#ffb347;margin:10px 0 8px">How to build the casual budget:</div>
+    ${step(1,'#ffb347','First — make sure you have set forecast rooms in <strong>Projection Planner</strong> for the budget year')}
+    ${step(2,'#ffb347','Click <strong>💰 Budget Plan</strong> view and select the year you are budgeting (e.g. 2027)')}
+    ${step(3,'#ffb347','Click <strong style="color:#00d4b8">✨ Apply Suggestion</strong> — the system fills every month automatically')}
+    ${step(4,'#ffb347','Review each month — adjust any number you want to change manually by typing over it')}
+    ${step(5,'#ffb347','The <strong style="color:#a78bfa">Sug Days</strong> column shows the suggestion for each month so you always see what the system recommended')}
+
+    <div style="margin-top:14px;margin-bottom:8px;font-size:11px;font-weight:700;color:#ffb347">The suggestion formula — how it works:</div>
+
+    ${formula('Step 1 — Historical average days per month',
+      'Sum of actual days for that month across all years ÷ Number of years with data = Avg Days',
+      'Example: January had 18 (2024) + 20 (2025) = 38 ÷ 2 = 19 avg days for Alaska in January','#a78bfa')}
+
+    ${formula('Step 2 — Historical average rooms per month',
+      'Sum of actual rooms sold for that month across all years ÷ Number of years = Avg Rooms',
+      'Example: January had 3,100 (2024) + 3,250 (2025) = 6,350 ÷ 2 = 3,175 avg rooms in January','#38bdf8')}
+
+    ${formula('Step 3 — Occupancy adjustment factor',
+      'Forecast Rooms for budget year ÷ Avg Historical Rooms = Adjustment Factor',
+      'Example: January 2027 forecast = 3,500 rooms ÷ 3,175 avg = ×1.10 adjustment factor','#f5c542')}
+
+    ${formula('Step 4 — Suggested budget days',
+      'Avg Days × Adjustment Factor = Suggested Budget Days',
+      'Example: 19 avg days × 1.10 = 21 suggested days for Alaska in January 2027','#ffb347')}
+
+    ${formula('Step 5 — Budget cost',
+      'Suggested Days × Daily Rate for that year = Budget Cost',
+      'Example: 21 days × QAR 95/day = QAR 1,995 casual budget for Alaska in January 2027','#ffb347')}
+
+    <div style="background:rgba(255,179,71,.06);border:1px solid rgba(255,179,71,.2);border-radius:8px;padding:12px 14px;margin-top:10px">
+      <div style="font-size:11px;color:#ffb347;font-weight:700;margin-bottom:5px">The occupancy adjustment strip</div>
+      <div style="font-size:11px;color:#64748b;line-height:1.7">
+        At the top of Budget Plan, a 3-row table shows for every month:<br>
+        Row 1 <span style="color:#38bdf8">■</span> Avg Hist Rooms — your historical monthly average &nbsp;·&nbsp;
+        Row 2 <span style="color:#a78bfa">■</span> Forecast Rooms — from Projection Planner &nbsp;·&nbsp;
+        Row 3 <span style="color:#ffb347">■</span> Adj Factor — the multiplier being applied (×1.10, ×0.95, etc.)
+      </div>
+    </div>
+
+    ${tip('The input placeholder (greyed text) always shows the suggested days even after you type a different number — so you can always see what the system recommended.')}
+    ${warn('Budget days are stored separately from actual days. Applying a suggestion never overwrites your actuals. You can always click ✕ Clear to reset and start again.')}
+  `)}
+
+  ${card('🔗','Projection Planner → Casual Labour connection','How the two tabs work together','#00d4b8',`
+    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:12px">
+      This is the most important thing to understand about the casual budget workflow:
+    </p>
+    <div style="background:#0f1a2e;border-radius:8px;padding:14px 16px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-bottom:8px">
+        <div style="background:rgba(0,212,184,.15);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#00d4b8;white-space:nowrap">Past months</div>
+        <div style="font-size:11px;color:#64748b">Actual rooms from Monthly Entry are used — the real numbers</div>
+      </div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-bottom:8px">
+        <div style="background:rgba(167,139,250,.15);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#a78bfa;white-space:nowrap">Future months</div>
+        <div style="font-size:11px;color:#64748b">Forecast rooms from Projection Planner are used — what you expect</div>
+      </div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center">
+        <div style="background:rgba(255,107,107,.15);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#ff6b6b;white-space:nowrap">Missing months</div>
+        <div style="font-size:11px;color:#64748b">Falls back to plain average — suggestion still works, just less precise</div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;font-weight:700;color:#00d4b8;margin-bottom:8px">Real example — building the 2027 casual budget in August 2026:</div>
+    ${step('→','#00d4b8','Jan–Jul 2026 have actual rooms in Monthly Entry — those are used directly')}
+    ${step('→','#00d4b8','Aug–Dec 2026 are not happened yet — you enter forecast rooms in Projection Planner')}
+    ${step('→','#00d4b8','For 2027 months — you enter all 12 months of forecast rooms in Projection Planner')}
+    ${step('→','#00d4b8','Then go to Casual Labour → Budget Plan → select 2027 → click Apply Suggestion')}
+    ${step('→','#00d4b8','The system uses all of the above automatically — actuals where available, forecasts where not')}
+    ${good('You do not need to do anything special. The system reads actual rooms first, then projection. Just make sure your Projection Planner has all 12 months of 2027 filled in before applying the suggestion.')}
+  `)}
+
+  <!-- PART 7 -->
+  ${section('Part 7 — Budget adjustments','Supplier increases and one-off items that affect the main budget')}
 
   ${card('⚙','Adding a supplier price increase','When a chemical or linen supplier raises their prices','#ffb347',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
@@ -8334,201 +8491,132 @@ function buildGuideTab(){
     ${step(1,'#ffb347','Click the <strong>Budget Adjustments</strong> tab')}
     ${step(2,'#ffb347','Click <strong>+ Add Price Increase</strong>')}
     ${step(3,'#ffb347','Enter the percentage increase (e.g. <strong>5</strong> for 5%)')}
-    ${step(4,'#ffb347','Set the <strong>start date</strong> (e.g. January 2026) and <strong>end date</strong> (e.g. December 2026 or leave open-ended)')}
-    ${step(5,'#ffb347','Click Save — the budget for Laundry Supplies in all those months now includes the increase')}
-    ${step(6,'#ffb347','Month cards will show a small <strong>▲ Inc</strong> badge when a price increase is active')}
-    ${tip('If you have two increases stacking (e.g. 5% in Jan and 3.5% in April), add them separately. The system multiplies them: 1.05 × 1.035 = 8.675% total. This is exactly how real supplier contracts work.')}
+    ${step(4,'#ffb347','Set the <strong>start date</strong> (e.g. January 2026) and <strong>end date</strong>')}
+    ${step(5,'#ffb347','Click Save — the Laundry Supplies budget for all those months now includes the increase')}
+
+    ${formula('How stacking increases work',
+      'Budget × (1 + Increase 1%) × (1 + Increase 2%) = Final Budget',
+      'Example: QAR 10,000 × 1.05 × 1.035 = QAR 10,867.50 (5% then 3.5% stacked)','#ffb347')}
+
+    ${tip('If you have two increases stacking (e.g. 5% in Jan and 3.5% in April), add them separately. The system multiplies them correctly — this is exactly how real supplier contracts work.')}
   `)}
 
-  ${card('\uD83D\uDCCC','Adding a special fixed item','A one-off cost that is added to a specific month','#a78bfa',`
+  ${card('📌','Adding a special fixed item','A one-off cost added to a specific month','#a78bfa',`
     <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
       Sometimes there is a fixed cost that does not follow the CPOR formula — like an annual equipment
       service or a one-time purchase. Add it as a Special Item.
     </p>
-    ${step(1,'#a78bfa','Click the <strong>Budget Adjustments</strong> tab')}
-    ${step(2,'#a78bfa','Find the <strong>Special Items</strong> section')}
-    ${step(3,'#a78bfa','Click <strong>+ Add Special Item</strong>')}
-    ${step(4,'#a78bfa','Enter a name (e.g. "Annual equipment service"), the QAR amount, and which months it applies to')}
-    ${step(5,'#a78bfa','It gets added to the Operating Supplies budget for those months')}
+    ${step(1,'#a78bfa','Click the <strong>Budget Adjustments</strong> tab → Special Items section')}
+    ${step(2,'#a78bfa','Click <strong>+ Add Special Item</strong>')}
+    ${step(3,'#a78bfa','Enter a name (e.g. "Annual equipment service"), the QAR amount, and which months it applies to')}
+    ${step(4,'#a78bfa','It gets added to the Operating Supplies budget for those months')}
     ${tip('Special items appear in the Budget PDF with a line showing exactly what was added and why — Finance can see it clearly.')}
   `)}
 
-  
-  ${section('Part 7 — Viewing your data','The analysis tabs — use these to understand what\'s happening')}
+  <!-- PART 8 -->
+  ${section('Part 8 — Viewing your data','The analysis tabs — use these to understand what\'s happening')}
 
-  ${card('\uD83C\uDFAF','Dashboard','Your home screen — see everything at a glance','#ff6b6b',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      The Dashboard is the best place to start every day. It shows you instantly what is happening,
-      what needs attention, and how the year is tracking.
-    </p>
-
-    <div style="font-size:11px;font-weight:700;color:#ff6b6b;margin-bottom:8px;margin-top:4px">What you see on the Dashboard:</div>
-    ${step('→','#ff6b6b','<strong style="color:#00d4b8">Today Panel</strong> — today\'s date, current month\'s rooms / expenses / revenue / CPOR, YTD progress bar, and quick buttons to jump to any important screen')}
-    ${step('→','#ff6b6b','<strong style="color:#ff6b6b">Budget Health Check</strong> — a row of year cards. Each year shows its status: ✓ On track / ◑ Partial data / ◐ Revenue budget missing / ▲ Over budget. Click any year to jump to it.')}
-    ${step('→','#ff6b6b','<strong>Overspend Alerts</strong> — if any expense line is running more than 10% ahead of budget pace, a red warning appears automatically')}
-    ${step('→','#ff6b6b','<strong>KPI Cards</strong> — 7 key metrics: Rooms Sold, Total Actual, Total Budget, Variance, CPOR (with sparkline trend), KG Efficiency, Line Breakdown')}
-    ${step('→','#ff6b6b','<strong>Charts</strong> — 7 bar charts showing all 12 months: expenses vs budget, CPOR, each expense line, KG processed, occupancy %')}
-    ${step('→','#ff6b6b','<strong>Monthly Detail Table</strong> — all 12 months × all metrics in one scrollable table at the bottom')}
+  ${card('🎯','Dashboard','Your home screen — see everything at a glance','#ff6b6b',`
+    ${step('→','#ff6b6b','<strong style="color:#00d4b8">Today Panel</strong> — current month rooms / expenses / revenue / CPOR, YTD progress, quick jump buttons')}
+    ${step('→','#ff6b6b','<strong style="color:#ff6b6b">Budget Health Check</strong> — year cards showing ✓ On track / ◑ Partial / ▲ Over budget')}
+    ${step('→','#ff6b6b','<strong>Overspend Alerts</strong> — auto red warning if any expense line is running 10%+ ahead of budget pace')}
+    ${step('→','#ff6b6b','<strong>KPI Cards</strong> — 7 key metrics: Rooms Sold, Total Actual, Budget, Variance, CPOR trend, KG, Line Breakdown')}
+    ${step('→','#ff6b6b','<strong>Charts</strong> — 7 bar charts: expenses vs budget, CPOR, each expense line, KG, occupancy %')}
     ${tip('When your GM asks "how are we doing?" — open Dashboard and show the screen. Everything is there.')}
   `)}
 
-  ${card('⚡','Performance Pulse','See revenue AND expenses together — the full financial picture','#00d4b8',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      Performance Pulse is different from Dashboard because it shows
-      <strong style="color:#e2e8f0">both revenue and expenses side by side</strong>.
-      It is the best tab for Finance meetings.
-    </p>
-    ${step(1,'#00d4b8','Click the <strong>⚡ Pulse</strong> tab')}
-    ${step(2,'#00d4b8','Select the year using the year buttons at the top right')}
-    ${step(3,'#00d4b8','The <strong>top KPI cards</strong> show: YTD Revenue vs Budget, YTD Expenses vs Budget, YTD Net, and this month\'s data')}
-    ${step(4,'#00d4b8','The <strong>Monthly Progress Grid</strong> shows each month with progress bars — one for each revenue line (FS Doha, Pearl, Others) and one for each expense line (Laundry, Operating, Printing)')}
-    ${step(5,'#00d4b8','Each bar fills up as a percentage of budget — 100% means exactly on budget, above 100% means over budget (red), below means under (good colors)')}
-    ${step(6,'#00d4b8','The <strong>Year Summary Table</strong> at the bottom is Finance-standard format: Actual / Budget / Variance / % Achieved for every single line')}
-    ${step(7,'#00d4b8','Click <strong style="color:#ff6b6b">\uD83D\uDDA8 Print PDF Report</strong> for a colored A3 landscape PDF — perfect for Finance meeting presentations')}
-    ${tip('The PDF includes everything: KPI cards, monthly progress table with all bars, and the year summary table. Print it and bring it to your Finance meeting.')}
+  ${card('⚡','Performance Pulse','Revenue AND expenses together — the full financial picture','#00d4b8',`
+    ${step(1,'#00d4b8','Click the <strong>⚡ Pulse</strong> tab → select the year')}
+    ${step(2,'#00d4b8','Top KPI cards: YTD Revenue vs Budget, YTD Expenses vs Budget, YTD Net, this month\'s data')}
+    ${step(3,'#00d4b8','Monthly Progress Grid: each month with fill bars — 100% = on budget, above = over (red)')}
+    ${step(4,'#00d4b8','Year Summary Table: Finance-standard format — Actual / Budget / Variance / % for every line')}
+    ${step(5,'#00d4b8','Click <strong>🖨 Print PDF Report</strong> — colored A3 landscape PDF for Finance meetings')}
+    ${tip('The PDF includes everything. Print it and bring it to your Finance meeting — no extra formatting needed.')}
   `)}
 
-  ${card('\uD83D\uDCCA','Multi-Year Overview','See all 12 years in one table','#a78bfa',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      Shows every year from 2024 to 2035 in a single table — useful for showing long-term trends
-      and for the formal annual budget submission.
-    </p>
-    ${step(1,'#a78bfa','Click the <strong>Multi-Year</strong> tab')}
-    ${step(2,'#a78bfa','The table shows: Year / Rooms / Occ% / Laundry (Actual + Budget) / Operating / Printing / Total / CPOR')}
-    ${step(3,'#a78bfa','Select a year using the year dropdown → click <strong style="color:#ff6b6b">\uD83D\uDDA8 Budget PDF</strong> for the formal annual budget document')}
-    ${step(4,'#a78bfa','The Budget PDF is specifically designed for Finance submission — it has KPI summary, price increases, monthly breakdown, and year vs prior year')}
-    ${step(5,'#a78bfa','Click <strong style="color:#a3e635">\uD83D\uDCCA Budget Excel</strong> for an Excel/CSV version')}
-    ${tip('Use the Budget PDF in your August Finance meeting when you present next year\'s proposed budget.')}
+  ${card('📊','Multi-Year Overview','See all 12 years in one table','#a78bfa',`
+    ${step(1,'#a78bfa','Click <strong>Multi-Year</strong> tab')}
+    ${step(2,'#a78bfa','Table shows: Year / Rooms / Occ% / Laundry (Actual + Budget) / Operating / Printing / Total / CPOR')}
+    ${step(3,'#a78bfa','Select a year → click <strong>🖨 Budget PDF</strong> for the formal annual budget document')}
+    ${step(4,'#a78bfa','Click <strong>📊 Budget Excel</strong> for spreadsheet version')}
+    ${tip('Use the Budget PDF in your August Finance meeting when presenting next year\'s proposed budget.')}
   `)}
 
-  ${card('\uD83D\uDCC4','Budget Report','Full P&L — all 12 months side by side','#a78bfa',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      The Budget Report is a detailed Finance-format table showing all 12 months as columns,
-      with actual vs budget vs prior year for every expense line.
-    </p>
-    ${step(1,'#a78bfa','Click the <strong>Budget Report</strong> tab')}
-    ${step(2,'#a78bfa','Select the year using the year buttons')}
-    ${step(3,'#a78bfa','Each expense line shows 3 rows: <strong style="color:#00d4b8">Actual</strong>, <strong style="color:#ffb347">Budget</strong>, <strong>Variance</strong>')}
-    ${step(4,'#a78bfa','Teal numbers = under budget (good). Red numbers = over budget.')}
-    ${step(5,'#a78bfa','Click <strong>\uD83D\uDCC4 Print PDF</strong> for A3 landscape Finance format')}
-    ${step(6,'#a78bfa','Click <strong>\uD83D\uDCCA Export Excel</strong> for spreadsheet')}
+  ${card('📄','Budget Report','Full P&L — all 12 months side by side','#a78bfa',`
+    ${step(1,'#a78bfa','Click <strong>Budget Report</strong> tab → select year')}
+    ${step(2,'#a78bfa','Each expense line shows 3 rows: <strong style="color:#00d4b8">Actual</strong>, <strong style="color:#ffb347">Budget</strong>, <strong>Variance</strong>')}
+    ${step(3,'#a78bfa','Teal = under budget (good). Red = over budget.')}
+    ${step(4,'#a78bfa','Click <strong>📄 Print PDF</strong> for A3 landscape Finance format')}
+    ${step(5,'#a78bfa','Click <strong>📊 Export Excel</strong> for spreadsheet')}
   `)}
 
-  ${card('\uD83D\uDCC8','Trends & Efficiency','How CPOR and KG are moving over the years','#38bdf8',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      Trends shows you the multi-year story — whether costs are going up, down, or staying stable.
-      Use this when Finance asks why CPOR is rising.
-    </p>
-    ${step('→','#38bdf8','KPI cards with year-on-year comparison for CPOR, KG, Occupancy, Cost per KG')}
-    ${step('→','#38bdf8','Main chart: CPOR actual vs budget for every year entered')}
-    ${step('→','#38bdf8','Breakdown by line: which of the 3 expense lines is driving CPOR up or down')}
-    ${step('→','#38bdf8','KG efficiency chart showing laundry volume and cost per KG over time')}
-    ${step('→','#38bdf8','Full Trend Summary Table with every metric for every year')}
-  `)}
+  <!-- PART 9 -->
+  ${section('Part 9 — Quick-reference cheat sheet','What to do in every common situation')}
 
-  ${card('\uD83E\uDDE0','Smart Insights','The system spots problems and opportunities for you','#f5c542',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      Smart Insights analyses your data and surfaces the things that need your attention — automatically.
-      Open it after entering any month's actuals.
-    </p>
-    ${step('→','#f5c542','<strong>\uD83D\uDEA8 Alerts</strong> — over budget warning, missing data, budget season reminder (auto-triggered in August)')}
-    ${step('→','#f5c542','<strong>\uD83D\uDD2E Full-Year Forecast</strong> — projects where each expense line will end the year if current pace continues')}
-    ${step('→','#f5c542','<strong>\uD83D\uDCCB Budget Season Assistant</strong> — recommends next year budget amounts per line based on your current CPOR')}
-    ${step('→','#f5c542','<strong>\uD83C\uDFE8 Occupancy Analysis</strong> — which months have high cost but low occupancy (biggest inefficiency)')}
-    ${step('→','#f5c542','<strong>\uD83D\uDCC8 Price Increase Impact</strong> — how much QAR your supplier increases are adding to the budget')}
-    ${step('→','#f5c542','<strong>\uD83D\uDCDD Missing Data</strong> — which past months still have no actuals entered, with one-click link to go fix them')}
-    ${tip('Select the year from the dropdown at the top right. Click ↺ Refresh after entering new data.')}
-  `)}
-
-  
-  ${section('Part 8 — Settings & base data','The foundation. Touch this carefully.')}
-
-  ${card('⚙️','Settings & Base Data','Where the budget foundation is set','#a78bfa',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      This is where you enter the 2024 annual actuals that form the base for all future budget calculations.
-      <strong style="color:#e2e8f0">Only change these if Finance gives you updated confirmed numbers.</strong>
-    </p>
-    ${step(1,'#a78bfa','Enter the <strong>2024 full-year actual</strong> for Laundry Supplies, Operating Supplies, and Printing')}
-    ${step(2,'#a78bfa','Enter the <strong>2024 total Rooms Sold</strong>')}
-    ${step(3,'#a78bfa','The CPOR per line calculates automatically on the right — these become the budget drivers for 2025')}
-    ${step(4,'#a78bfa','The CPOR cascades: 2025 actuals drive 2026 budget, 2026 drives 2027, and so on')}
-    ${step(5,'#a78bfa','<strong>Expense Line Manager</strong> at the bottom — click ➕ to add a custom expense line if Finance adds a new budget category')}
-    ${step(6,'#a78bfa','<strong>CPOR Baseline Method</strong> at very bottom — choose between Single Year (uses only prior year) or Rolling Average (averages 2 or 3 years). Ask Finance which they prefer.')}
-    ${warn('Changing the base data in this tab instantly recalculates ALL budgets for 2025 onwards. Only do this with confirmed Finance numbers.')}
-  `)}
-
-  
-  ${section('Part 9 — Printing reports for Finance','Which PDF to print for which situation')}
-
-  <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;margin-bottom:18px;overflow:hidden">
-    <div style="padding:14px 20px;border-bottom:1px solid #2a3550;font-family:'Syne',sans-serif;
-      font-size:13px;font-weight:700;color:#e2e8f0">Which PDF should I print?</div>
-    <div style="padding:0">
-      ${[
-        ['Finance asks for this month\'s actual vs budget','Budget Report → select current year → \uD83D\uDCC4 Print PDF','#a78bfa'],
-        ['Monthly Finance meeting presentation','⚡ Pulse tab → \uD83D\uDDA8 Print PDF Report → full colored report','#00d4b8'],
-        ['Annual budget submission (August)','Multi-Year → select next year → \uD83D\uDDA8 Budget PDF','#a78bfa'],
-        ['GM asks how we are doing','Dashboard → \uD83D\uDDA8 Print Dashboard','#ff6b6b'],
-        ['Finance wants revenue breakdown','Revenue tab → Revenue P&L → \uD83D\uDDA8 Print PDF','#38bdf8'],
-        ['Need Excel for Finance spreadsheet','Budget Report → \uD83D\uDCCA Export Excel','#a3e635'],
-      ].map(([situation,action,col],i)=>`
-        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
-          padding:12px 20px;border-bottom:1px solid #1e2d45;background:${i%2?'rgba(255,255,255,.01)':'transparent'}">
-          <div style="font-size:11px;color:#94a3b8">${situation}</div>
-          <div style="font-size:10px;font-weight:700;color:${col};white-space:nowrap;text-align:right">${action}</div>
-        </div>`).join('')}
-    </div>
+  <div style="background:#1a2236;border:1px solid #2a3550;border-radius:12px;overflow:hidden;margin-bottom:18px">
+    <div style="padding:12px 20px;background:#1e2d45;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f5c542">SITUATION → WHAT TO DO</div>
+    ${[
+      ['Finance asks for this month\'s actual vs budget','Budget Report → select current year → 📄 Print PDF','#a78bfa'],
+      ['Monthly Finance meeting presentation','⚡ Pulse tab → 🖨 Print PDF Report → full colored report','#00d4b8'],
+      ['Annual budget submission (August)','Multi-Year → select next year → 🖨 Budget PDF','#a78bfa'],
+      ['GM asks how we are doing','Dashboard → 🖨 Print Dashboard','#ff6b6b'],
+      ['Finance wants revenue breakdown','Revenue tab → Revenue P&L → 🖨 Print PDF','#38bdf8'],
+      ['Need Excel for Finance spreadsheet','Budget Report → 📊 Export Excel','#a3e635'],
+      ['Build next year\'s casual labour budget','Casual Labour → 💰 Budget Plan → set forecast rooms in Projection Planner → Apply Suggestion','#ffb347'],
+      ['Enter last month\'s casual days','Casual Labour → 📝 Entry → select year/month → type days per company','#ffb347'],
+      ['See if casual costs are trending up','Casual Labour → 📊 Year History → look at Avg Cost column per month','#a78bfa'],
+      ['Supplier raised prices','Budget Adjustments → Add Price Increase → set % and date range','#ffb347'],
+    ].map(([situation,action,col],i)=>`
+      <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+        padding:12px 20px;border-bottom:1px solid #1e2d45;background:${i%2?'rgba(255,255,255,.01)':'transparent'}">
+        <div style="font-size:11px;color:#94a3b8">${situation}</div>
+        <div style="font-size:10px;font-weight:700;color:${col};text-align:right;min-width:200px">${action}</div>
+      </div>`).join('')}
   </div>
 
-  
+  <!-- PART 10 -->
   ${section('Part 10 — Keeping your data safe','How saving works and what to do if something goes wrong')}
 
-  ${card('\uD83D\uDCBE','How saving works','You should never lose data','#a3e635',`
-    <p style="font-size:12px;color:#64748b;line-height:1.8;margin-bottom:14px">
-      The system saves automatically every time you change something. You do not need to click save after
-      every field. But there are two layers of saving — understanding them helps if something ever goes wrong.
-    </p>
-    ${step('→','#a3e635','<strong>Firebase (cloud)</strong> — the main storage. Every change saves to Firebase within a second. This is the real source of truth. Data is safe even if you close the browser, turn off the computer, or switch devices.')}
-    ${step('→','#a3e635','<strong>localStorage (offline backup)</strong> — a copy saved in your browser. Used if Firebase is temporarily unavailable. Gets updated whenever Firebase saves.')}
-    ${step('→','#a3e635','<strong>\uD83D\uDD25 LIVE indicator</strong> in the header — green means connected to Firebase. Orange flame means saving. ⚡ OFFLINE means only using local cache.')}
-    ${step('→','#a3e635','<strong>\uD83D\uDCBE Save Now button</strong> at the bottom of every page — click this if you want to force an immediate save to both Firebase and local.')}
-    ${tip('Even if the page shows ⚡ OFFLINE, your data is still saved locally and will sync to Firebase the next time you have connection.')}
+  ${card('💾','How saving works','You should never lose data','#a3e635',`
+    ${step('→','#a3e635','<strong>Firebase (cloud)</strong> — main storage. Every change saves within a second. Safe even if you close the browser or switch devices.')}
+    ${step('→','#a3e635','<strong>localStorage (offline backup)</strong> — a copy saved in your browser. Used if Firebase is temporarily unavailable.')}
+    ${step('→','#a3e635','<strong>🔥 LIVE indicator</strong> in the header — green = connected to Firebase. ⚡ OFFLINE = only local cache.')}
+    ${step('→','#a3e635','<strong>💾 Save Now button</strong> at the bottom of every page — click to force an immediate save.')}
+    ${tip('Even if the page shows ⚡ OFFLINE, your data is still saved locally and will sync to Firebase when you reconnect.')}
   `)}
 
-  ${card('\uD83D\uDDC4','Backup & Restore tab','Export your data and restore it if needed','#a3e635',`
-    ${step(1,'#a3e635','Click the <strong>Backup</strong> tab (in the SYSTEM group)')}
-    ${step(2,'#a3e635','Click <strong>\uD83D\uDCBE Export Full Backup (.json)</strong> — downloads a file with all your data to your computer')}
-    ${step(3,'#a3e635','Store this file somewhere safe (email it to yourself, save in Google Drive)')}
-    ${step(4,'#a3e635','To restore: click <strong>\uD83D\uDCC2 Restore from Backup</strong> → select the .json file → all data comes back')}
-    ${step(5,'#a3e635','To update the app with a new version: upload the new HTML to GitHub Pages — your Firebase data is completely separate and is never affected by app updates')}
+  ${card('🗄','Backup & Restore tab','Export your data and restore if needed','#a3e635',`
+    ${step(1,'#a3e635','Click the <strong>Backup</strong> tab → click <strong>💾 Export Full Backup (.json)</strong>')}
+    ${step(2,'#a3e635','Store the file somewhere safe (email it to yourself, save in Google Drive)')}
+    ${step(3,'#a3e635','To restore: click <strong>📂 Restore from Backup</strong> → select the .json file → all data comes back')}
     ${warn('Always export a backup before restoring. Restoring overwrites everything in Firebase with the backup file.')}
   `)}
 
-  
+  <!-- PART 11 -->
   ${section('Part 11 — Quick answers to common questions','')}
 
   <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
     ${[
       ['I logged in and some data is missing — what happened?',
-        'The Firebase connection may not have loaded in time. Look at the top header — does it say \uD83D\uDD25 LIVE or ⚡ OFFLINE? If OFFLINE, click Backup tab → Sync Now. If it still does not load, try signing out and back in.'],
+        'The Firebase connection may not have loaded in time. Check the top header — does it say 🔥 LIVE or ⚡ OFFLINE? If OFFLINE, click Backup tab → Sync Now. If it still does not load, try signing out and back in.'],
       ['The budget shows 0 for a month even though I entered rooms — why?',
         'The budget auto-calculates from CPOR × rooms. If CPOR is 0, the budget will be 0. Go to Settings & Base Data and check that the 2024 actual expenses and rooms sold are entered correctly. Once entered, all budgets recalculate automatically.'],
-      ['I entered a number but the field shows blank — why?',
-        'This can happen if you typed a number with commas and the field expected a plain number, or vice versa. Click the field, clear it, and type the number again. The system formats with commas automatically when you move to the next field.'],
       ['Pearl Valet is not showing in early 2024 months — is that a bug?',
-        'No — this is correct. Pearl opened in August 2024. The system automatically hides Pearl fields for January through July 2024. This cannot be changed because it reflects reality.'],
+        'No — this is correct. Pearl opened in August 2024. The system automatically hides Pearl fields for January through July 2024.'],
       ['I want to override the auto-calculated budget with a different number — can I?',
-        'Yes. In Monthly Entry, the Budget columns are editable. Just click the budget field and type your number. When manually set, the field turns gold to show it is a manual override. The auto-calc remains as the placeholder so you can see what it would have been.'],
+        'Yes. In Monthly Entry, the Budget columns are editable. Just click the budget field and type your number. When manually set, the field turns gold to show it is a manual override.'],
       ['How do I undo a mistake?',
-        'If you just made a change, refresh the page immediately — if it has not yet auto-saved, the field will revert. If it has already saved to Firebase, you will need to manually correct the field. This is why exporting a backup before major changes is recommended.'],
-      ['The system opens on the wrong year — how do I change the default?',
-        'The system opens on the current calendar year automatically. If you want to look at a different year, use the year pills at the top of any tab. Your selection is remembered within the session but resets on next login.'],
-      ['How do I add a new expense category that Finance has requested?',
-        'Go to Settings & Base Data tab → scroll to the bottom → Expense Line Manager → click ➕ Add New Line → enter the name, colour, date range it applies to, and whether it is CPOR-based or a fixed amount.'],
+        'If you just made a change, refresh the page immediately — if it has not yet auto-saved, the field will revert. If it has already saved to Firebase, manually correct the field. This is why exporting a backup before major changes is recommended.'],
+      ['The casual budget suggestion says "No data" — why?',
+        'The suggestion needs two things: historical actual days entered in the Entry view, and forecast rooms set in Projection Planner. If either is missing for a month, that month falls back to the plain average. If there are no actuals at all, the suggestion cannot run — enter at least one year of casual actual days first.'],
+      ['Can I add a third casual labour company?',
+        'Yes. In Casual Labour tab, click ➕ Company → enter the name and daily rate. It will appear in all three views (Entry, History, Budget Plan) immediately.'],
+      ['How do I change a company\'s daily rate when it increases next year?',
+        'Click ✏ Edit on the company card → click + Add Period → set the new rate with its start and end dates. The old rate stays for past months; the new rate applies to future months automatically.'],
       ['Can I use this on my phone or tablet?',
-        'Yes — the system is designed to work in any modern browser including mobile. Quick Entry is especially useful on mobile as it fits in one window. The tab bar scrolls horizontally on smaller screens.'],
+        'Yes — the system works in any modern browser including mobile. Quick Entry is especially useful on mobile as it fits in one window.'],
       ['I need to send the monthly report by email — how?',
-        'Print the Performance Pulse PDF (⚡ Pulse → \uD83D\uDDA8 Print PDF Report) or the Budget Report PDF, then attach to email. Alternatively export the Excel version from Budget Report tab for Finance to work with in a spreadsheet.'],
+        'Print the Performance Pulse PDF (⚡ Pulse → 🖨 Print PDF Report) or the Budget Report PDF, then attach to email. Or export the Excel version from Budget Report for Finance to work with in a spreadsheet.'],
     ].map(([q,a])=>`
       <div style="background:#1a2236;border:1px solid #253550;border-radius:10px;overflow:hidden">
         <div style="padding:12px 18px;background:#1e2d45;font-size:12px;font-weight:700;color:#e2e8f0;
@@ -8539,7 +8627,7 @@ function buildGuideTab(){
       </div>`).join('')}
   </div>
 
-  
+  <!-- FOOTER -->
   <div style="background:linear-gradient(135deg,#0f172a,#1e1b4b);border-radius:12px;
     padding:16px 24px;display:flex;align-items:center;justify-content:space-between;
     flex-wrap:wrap;gap:10px;margin-top:32px">
@@ -8553,6 +8641,8 @@ function buildGuideTab(){
 
   </div>`;
 }
+
+
 
 
 /* ════════════════════════════════════════
@@ -8610,7 +8700,7 @@ function setCasualBudget(y,m,compId,days){
   else delete DATA[y][m].casual[compId].budDays;
 }
 
-/* Average actual days per month across all years that have data for that month */
+/* Average actual days per month across all years that have data */
 function casualAvgDays(compId,m){
   let total=0,count=0;
   YEARS.forEach(y=>{
@@ -8620,17 +8710,45 @@ function casualAvgDays(compId,m){
   return count?Math.round(total/count):0;
 }
 
-/* Suggestion: fill budget year with averages where no budget days set yet */
+/* Average rooms sold per month across all years that have actual data */
+function casualAvgRooms(m){
+  let total=0,count=0;
+  YEARS.forEach(y=>{
+    const r=DATA[y]?.[m]?.roomsSold||0;
+    if(r>0){total+=r;count++;}
+  });
+  return count?Math.round(total/count):0;
+}
+
+/* Forecasted rooms for a month in the budget year — actual first, then PROJ, then 0 */
+function casualForecastRooms(y,m){
+  return DATA[y]?.[m]?.roomsSold || PROJ[y]?.[m]?.roomsSold || 0;
+}
+
+/* Occupancy-adjusted suggestion:
+   suggestedDays = avgDays × (forecastRooms / avgHistoricalRooms)
+   Falls back to plain avgDays if no rooms data available */
+function casualSuggestedDays(compId,m,budY){
+  const avg=casualAvgDays(compId,m);
+  if(!avg) return 0;
+  const avgRooms=casualAvgRooms(m);
+  const forecastRooms=casualForecastRooms(budY,m);
+  if(!avgRooms||!forecastRooms) return avg; // no rooms data — plain average
+  const ratio=forecastRooms/avgRooms;
+  return Math.max(1,Math.round(avg*ratio));
+}
+
+/* Suggestion: fill budget year using occupancy-adjusted days */
 function applyCasualSuggestion(y){
   const comps=getCasualCompanies();
   let applied=0;
   comps.forEach(c=>{
     for(let m=0;m<12;m++){
-      const avg=casualAvgDays(c.id,m);
-      if(avg>0){setCasualBudget(y,m,c.id,avg);applied++;}
+      const sug=casualSuggestedDays(c.id,m,y);
+      if(sug>0){setCasualBudget(y,m,c.id,sug);applied++;}
     }
   });
-  if(applied){autoSave();buildCasualTab();toast('Budget suggestion applied \u2713');}
+  if(applied){autoSave();buildCasualTab();toast('Occupancy-adjusted suggestion applied \u2713');}
   else toast('No historical data to base suggestion on');
 }
 
@@ -8911,19 +9029,18 @@ function buildCasualTab(){
   function buildBudgetView(){
     const nextY=casualY;
 
-    /* Check if there's suggestion data available */
-    const hasSuggestionData=comps.some(c=>Array.from({length:12},(_,m)=>casualAvgDays(c.id,m)).some(v=>v>0));
+
 
     const monthRows=MFF.map((mf,m)=>{
       const compCells=comps.map(c=>{
         const rate=casualRate(c.id,nextY,m);
         const budD=getCasualBudget(nextY,m,c.id);
-        const avgD=casualAvgDays(c.id,m);
+        const sugD=casualSuggestedDays(c.id,m,nextY);
         const budC=budD*rate;
         return `
           <td style="padding:4px 3px;text-align:center">
             <input type="text" inputmode="decimal"
-              value="${budD||''}" placeholder="${avgD||'—'}"
+              value="${budD||''}" placeholder="${sugD||'—'}"
               data-y="${nextY}" data-m="${m}" data-c="${c.id}" data-t="bud"
               onchange="casualSaveDay(this)"
               style="width:58px;background:var(--bg3);
@@ -8932,12 +9049,12 @@ function buildCasualTab(){
                 font-weight:700;color:var(--amber);text-align:center;outline:none">
           </td>
           <td style="padding:4px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;color:var(--amber)">${budC?fN(budC):'—'}</td>
-          <td style="padding:4px 5px;text-align:center;font-size:10px;color:#4a5568">${avgD||'—'}</td>`;
+          <td style="padding:4px 5px;text-align:center;font-size:10px;color:#a78bfa">${sugD||'—'}</td>`;
       }).join('');
 
       const totBudD=comps.reduce((_,c)=>_+getCasualBudget(nextY,m,c.id),0);
       const totBudC=comps.reduce((_,c)=>_+getCasualBudget(nextY,m,c.id)*casualRate(c.id,nextY,m),0);
-      const totAvgC=comps.reduce((_,c)=>_+casualAvgDays(c.id,m)*casualRate(c.id,nextY,m),0);
+      const totAvgC=comps.reduce((_,c)=>_+casualSuggestedDays(c.id,m,nextY)*casualRate(c.id,nextY,m),0);
       const variance=totBudC&&totAvgC?totBudC-totAvgC:null;
       const vc=variance===null?'#4a5568':Math.abs(variance)<1?'var(--teal)':variance>0?'var(--coral)':'var(--teal)';
 
@@ -8960,7 +9077,7 @@ function buildCasualTab(){
     const subHdrs=comps.map(()=>`
       <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--amber);border-left:2px solid rgba(255,179,71,.12);text-align:center">Bud Days</th>
       <th style="padding:4px 3px;font-size:8px;font-weight:700;color:var(--amber);text-align:right">Bud Cost</th>
-      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:center">Avg Days</th>`).join('');
+      <th style="padding:4px 3px;font-size:8px;font-weight:700;color:#a78bfa;text-align:center" title="Historical avg days adjusted for forecasted occupancy">Sug Days</th>`).join('');
 
     const totalsRow=comps.map(c=>{
       let totBD=0,totBC=0,totAD=0;
@@ -8968,7 +9085,7 @@ function buildCasualTab(){
         const r=casualRate(c.id,nextY,m);
         totBD+=getCasualBudget(nextY,m,c.id);
         totBC+=getCasualBudget(nextY,m,c.id)*r;
-        totAD+=casualAvgDays(c.id,m);
+        totAD+=casualSuggestedDays(c.id,m,nextY);
       }
       return `<td style="padding:7px 3px;text-align:center;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--amber);border-left:2px solid rgba(255,179,71,.2)">${totBD||'—'}</td>
         <td style="padding:7px 5px;text-align:right;font-family:var(--ff-m);font-size:10px;font-weight:800;color:var(--amber)">${totBC?fN(totBC):'—'}</td>
@@ -8979,7 +9096,7 @@ function buildCasualTab(){
     comps.forEach(c=>{
       for(let m=0;m<12;m++){
         grandBudCost+=getCasualBudget(nextY,m,c.id)*casualRate(c.id,nextY,m);
-        grandAvgCost+=casualAvgDays(c.id,m)*casualRate(c.id,nextY,m);
+        grandAvgCost+=casualSuggestedDays(c.id,m,nextY)*casualRate(c.id,nextY,m);
       }
     });
     const gVar=grandBudCost&&grandAvgCost?grandBudCost-grandAvgCost:null;
@@ -8987,22 +9104,69 @@ function buildCasualTab(){
 
     return `
       <!-- BUDGET SUGGESTION BAR -->
-      <div style="background:${hasSuggestionData?'rgba(167,139,250,.07)':'rgba(255,255,255,.03)'};border:1px solid ${hasSuggestionData?'rgba(167,139,250,.25)':'var(--border)'};border-radius:10px;padding:13px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-        <div>
-          <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:${hasSuggestionData?'#a78bfa':'#4a5568'}">🧠 Budget Suggestion — Average of All Years</div>
-          <div style="font-size:10px;color:#4a5568;margin-top:3px">
-            ${hasSuggestionData
-              ?`Based on your historical data, the <span style="color:#a78bfa">Avg Days</span> column shows the monthly average per company across all years. Click Apply to pre-fill budget days.`
-              :'No historical data yet. Enter actual days in the Entry tab first, then come back to plan the budget.'}
+      ${(()=>{
+        /* Check rooms data availability */
+        const hasHistory=comps.some(c=>Array.from({length:12},(_,m)=>casualAvgDays(c.id,m)).some(v=>v>0));
+        const projRoomsAvail=Array.from({length:12},(_,m)=>casualForecastRooms(nextY,m)).some(v=>v>0);
+        const avgRoomsAvail=Array.from({length:12},(_,m)=>casualAvgRooms(m)).some(v=>v>0);
+        const fullyLinked=projRoomsAvail&&avgRoomsAvail;
+
+        /* Build month-by-month occupancy adjustment preview strip */
+        const MF2=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const adjStrip=hasHistory?`
+          <div style="margin-top:12px;overflow-x:auto">
+            <table style="border-collapse:collapse;font-size:9px;min-width:700px;width:100%">
+              <thead>
+                <tr>
+                  <td style="padding:3px 8px;color:#4a5568;font-weight:700;font-size:8px">Metric</td>
+                  ${MF2.map(ms=>`<td style="padding:3px 5px;text-align:center;font-weight:700;color:#64748b;font-size:9px">${ms}</td>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background:rgba(56,189,248,.04)">
+                  <td style="padding:3px 8px;color:#38bdf8;font-size:8px;white-space:nowrap">Avg Hist Rooms</td>
+                  ${MF2.map((_,m)=>{const v=casualAvgRooms(m);return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);color:#38bdf8;font-size:9px">${v||'—'}</td>`;}).join('')}
+                </tr>
+                <tr style="background:rgba(167,139,250,.04)">
+                  <td style="padding:3px 8px;color:#a78bfa;font-size:8px;white-space:nowrap">${nextY} Forecast Rooms</td>
+                  ${MF2.map((_,m)=>{const v=casualForecastRooms(nextY,m);const src=DATA[nextY]?.[m]?.roomsSold?'act':PROJ[nextY]?.[m]?.roomsSold?'proj':'none';const col=src==='act'?'var(--teal)':src==='proj'?'#a78bfa':'var(--coral)';return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);color:${col};font-size:9px">${v||`<span style="color:var(--coral);font-size:8px">No data</span>`}</td>`;}).join('')}
+                </tr>
+                <tr style="background:rgba(255,179,71,.04)">
+                  <td style="padding:3px 8px;color:var(--amber);font-size:8px;white-space:nowrap">Adj Factor</td>
+                  ${MF2.map((_,m)=>{const avg=casualAvgRooms(m),fc=casualForecastRooms(nextY,m);if(!avg||!fc)return`<td style="padding:3px 5px;text-align:center;color:#4a5568;font-size:8px">×1.00</td>`;const r=fc/avg;const col=Math.abs(r-1)<0.02?'#64748b':r>1?'var(--coral)':'var(--teal)';return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);font-size:9px;font-weight:700;color:${col}">×${r.toFixed(2)}</td>`;}).join('')}
+                </tr>
+              </tbody>
+            </table>
+          </div>`:'';
+
+        const statusColor=!hasHistory?'#4a5568':fullyLinked?'rgba(0,212,184,.07)':'rgba(255,179,71,.07)';
+        const borderColor=!hasHistory?'var(--border)':fullyLinked?'rgba(0,212,184,.25)':'rgba(255,179,71,.25)';
+        const titleColor=!hasHistory?'#4a5568':fullyLinked?'var(--teal)':'var(--amber)';
+        const icon=!hasHistory?'📭':fullyLinked?'🔗':'⚠️';
+        const title=!hasHistory?'No historical data yet':fullyLinked?'Linked to Projection Planner — Occupancy Adjusted':'Partial Rooms Data';
+        const subtitle=!hasHistory
+          ?'Enter actual days in the Entry tab first, then come back to plan the budget.'
+          :fullyLinked
+            ?`Suggestion = Avg historical days × (${nextY} forecast rooms ÷ avg historical rooms). Rooms source: <span style="color:var(--teal)">■</span> actual &nbsp;<span style="color:#a78bfa">■</span> projection &nbsp;<span style="color:var(--coral)">■</span> missing — set in Projection Planner`
+            :`Some months have no ${nextY} forecast rooms. Set them in the <strong style="color:#a78bfa">Projection Planner</strong> tab for a fully adjusted suggestion. Missing months fall back to plain average.`;
+
+        return`<div style="background:${statusColor};border:1px solid ${borderColor};border-radius:10px;padding:13px 16px;margin-bottom:14px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div style="flex:1;min-width:240px">
+              <div style="font-family:var(--ff-d);font-size:12px;font-weight:700;color:${titleColor};margin-bottom:4px">${icon} ${title}</div>
+              <div style="font-size:10px;color:#4a5568;line-height:1.5">${subtitle}</div>
+            </div>
+            ${hasHistory?`<div style="display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0">
+              <button onclick="applyCasualSuggestion(${nextY})" style="padding:7px 16px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(0,212,184,.4);color:var(--teal);background:rgba(0,212,184,.1);cursor:pointer"
+                onmouseover="this.style.background='rgba(0,212,184,.2)'" onmouseout="this.style.background='rgba(0,212,184,.1)'">✨ Apply Suggestion</button>
+              <button onclick="clearCasualBudget(${nextY})" style="padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.25);color:var(--coral);background:transparent;cursor:pointer"
+                onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='transparent'">✕ Clear</button>
+              ${!projRoomsAvail?`<button onclick="goTab(document.querySelector('.ntab[onclick*=\\'project\\']'),'project')" style="padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(167,139,250,.4);color:#a78bfa;background:rgba(167,139,250,.1);cursor:pointer">→ Projection Planner</button>`:''}
+            </div>`:''}
           </div>
-        </div>
-        ${hasSuggestionData?`<div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="applyCasualSuggestion(${nextY})" style="padding:7px 16px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(167,139,250,.4);color:#a78bfa;background:rgba(167,139,250,.1);cursor:pointer"
-            onmouseover="this.style.background='rgba(167,139,250,.2)'" onmouseout="this.style.background='rgba(167,139,250,.1)'">✨ Apply Suggestion</button>
-          <button onclick="clearCasualBudget(${nextY})" style="padding:7px 14px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,107,107,.25);color:var(--coral);background:transparent;cursor:pointer"
-            onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background='transparent'">✕ Clear All</button>
-        </div>`:''}
-      </div>
+          ${adjStrip}
+        </div>`;
+      })()}
 
       <!-- KPI ROW -->
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
