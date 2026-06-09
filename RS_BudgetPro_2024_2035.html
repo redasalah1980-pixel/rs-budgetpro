@@ -6552,11 +6552,8 @@ function cqeLoad(){
       const rate    = casualRate(c.id, y, m);
       const ratePy  = casualRate(c.id, py, m);
       const actD    = getCasualActual(y, m, c.id);
-      const budD    = getCasualBudget(y, m, c.id);
       const pyD     = getCasualActual(py, m, c.id);
-      const sugD    = casualSuggestedDays(c.id, m, y);
       const actC    = actD * rate;
-      const budC    = budD * rate;
       const pyC     = pyD * ratePy;
       const vsPy    = pyD ? actD - pyD : null;
       const vsPyCol = vsPy === null ? '#4a5568' : vsPy <= 0 ? 'var(--teal)' : 'var(--coral)';
@@ -6572,43 +6569,27 @@ function cqeLoad(){
                 <div style="font-size:9px;color:#4a5568">QAR ${rate}/day · ${y}</div>
               </div>
             </div>
-            <!-- Mini stats -->
-            <div style="display:flex;gap:12px;text-align:right">
-              <div style="font-size:9px;color:#4a5568">
-                <div style="color:#64748b;margin-bottom:1px">${py} days</div>
-                <div style="font-family:var(--ff-m);font-size:11px;color:#64748b;font-weight:700">${pyD || '—'}</div>
-              </div>
-              <div style="font-size:9px;color:#4a5568">
-                <div style="color:#a78bfa;margin-bottom:1px">Suggestion</div>
-                <div style="font-family:var(--ff-m);font-size:11px;color:#a78bfa;font-weight:700">${sugD || '—'}</div>
+            <!-- Prior year reference -->
+            <div style="text-align:right">
+              <div style="font-size:9px;color:#4a5568;margin-bottom:1px">${py} same month</div>
+              <div style="font-family:var(--ff-m);font-size:12px;color:#64748b;font-weight:700">
+                ${pyD ? `${pyD} days · QAR ${fN(pyC)}` : '— no data'}
               </div>
             </div>
           </div>
 
-          <!-- Input grid -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <!-- Actual days -->
-            <div>
-              <label style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:5px">Actual Days</label>
-              <input id="cqe-act-${c.id}" type="text" inputmode="decimal"
-                value="${actD || ''}" placeholder="${pyD || '0'}"
-                oninput="cqeUpdateSummary()"
-                style="width:100%;background:var(--bg2);border:1px solid ${actD ? 'rgba(0,212,184,.4)' : 'var(--border)'};border-radius:7px;padding:9px 12px;font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--teal);outline:none;text-align:center">
-              <div style="font-size:9px;color:#4a5568;margin-top:4px;text-align:right">
-                Cost: <span style="font-family:var(--ff-m);color:var(--teal)">${actC ? 'QAR ' + fN(actC) : '—'}</span>
-                ${vsPy !== null ? `&nbsp;·&nbsp; vs ${py}: <span style="color:${vsPyCol};font-weight:700">${vsPy > 0 ? '+' : ''}${vsPy}d</span>` : ''}
+          <!-- Actual days — full width -->
+          <div>
+            <label style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:6px">Actual Days Worked</label>
+            <input id="cqe-act-${c.id}" type="text" inputmode="decimal"
+              value="${actD || ''}" placeholder="${pyD || '0'}"
+              oninput="cqeUpdateSummary()"
+              style="width:100%;background:var(--bg2);border:1px solid ${actD ? 'rgba(0,212,184,.4)' : 'var(--border)'};border-radius:8px;padding:11px 14px;font-family:var(--ff-m);font-size:22px;font-weight:700;color:var(--teal);outline:none;text-align:center">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+              <div style="font-size:10px;color:#4a5568">
+                Cost: <span style="font-family:var(--ff-m);color:var(--teal);font-weight:700">${actC ? 'QAR ' + fN(actC) : '—'}</span>
               </div>
-            </div>
-            <!-- Budget days -->
-            <div>
-              <label style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:5px">Budget Days</label>
-              <input id="cqe-bud-${c.id}" type="text" inputmode="decimal"
-                value="${budD || ''}" placeholder="${sugD || '0'}"
-                oninput="cqeUpdateSummary()"
-                style="width:100%;background:var(--bg2);border:1px solid ${budD ? 'rgba(255,179,71,.4)' : 'rgba(255,179,71,.15)'};border-radius:7px;padding:9px 12px;font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--amber);outline:none;text-align:center">
-              <div style="font-size:9px;color:#4a5568;margin-top:4px;text-align:right">
-                Cost: <span style="font-family:var(--ff-m);color:var(--amber)">${budC ? 'QAR ' + fN(budC) : '—'}</span>
-              </div>
+              ${vsPy !== null ? `<div style="font-size:10px;font-weight:700;color:${vsPyCol}">${vsPy > 0 ? '+' : ''}${vsPy}d vs ${py}</div>` : ''}
             </div>
           </div>
         </div>`;
@@ -6637,41 +6618,41 @@ function cqeUpdateSummary(){
   const y = parseInt(document.getElementById('cqe-year').value);
   const m = parseInt(document.getElementById('cqe-month').value);
   const comps = getCasualCompanies();
+  const py = y - 1;
 
-  let totActD=0, totActC=0, totBudD=0, totBudC=0;
+  let totActD=0, totActC=0, totPyD=0, totPyC=0;
   comps.forEach(c => {
     const rate  = casualRate(c.id, y, m);
     const actEl = document.getElementById('cqe-act-' + c.id);
-    const budEl = document.getElementById('cqe-bud-' + c.id);
     const aD = actEl ? (parseInt(actEl.value) || 0) : 0;
-    const bD = budEl ? (parseInt(budEl.value) || 0) : 0;
-    totActD += aD; totActC += aD * rate;
-    totBudD += bD; totBudC += bD * rate;
+    totActD += aD;
+    totActC += aD * rate;
+    totPyD  += getCasualActual(py, m, c.id);
+    totPyC  += getCasualActual(py, m, c.id) * casualRate(c.id, py, m);
   });
 
-  const variance = totActC && totBudC ? totActC - totBudC : null;
-  const varCol   = variance === null ? '#4a5568' : variance <= 0 ? 'var(--teal)' : 'var(--coral)';
+  const vsDays = totPyD ? totActD - totPyD : null;
+  const vsCost = totPyC ? totActC - totPyC : null;
+  const vsCol  = vsDays === null ? '#4a5568' : vsDays <= 0 ? 'var(--teal)' : 'var(--coral)';
 
   const summary = document.getElementById('cqe-summary');
   if(!summary) return;
 
-  if(!totActD && !totBudD){
+  if(!totActD){
     summary.innerHTML = '<span style="color:#4a5568">Fill in days above to see summary</span>';
     return;
   }
 
   summary.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;text-align:left">
-      ${totActD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Actual Days</div>
-        <div style="font-family:var(--ff-m);font-size:12px;color:var(--teal);font-weight:700">${totActD} days</div></div>` : ''}
-      ${totActC ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Actual Cost</div>
-        <div style="font-family:var(--ff-m);font-size:12px;color:var(--teal);font-weight:700">QAR ${fN(totActC)}</div></div>` : ''}
-      ${totBudD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Budget Days</div>
-        <div style="font-family:var(--ff-m);font-size:12px;color:var(--amber);font-weight:700">${totBudD} days</div></div>` : ''}
-      ${totBudC ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Budget Cost</div>
-        <div style="font-family:var(--ff-m);font-size:12px;color:var(--amber);font-weight:700">QAR ${fN(totBudC)}</div></div>` : ''}
-      ${variance !== null ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Actual vs Budget</div>
-        <div style="font-family:var(--ff-m);font-size:12px;font-weight:700;color:${varCol}">${variance > 0 ? '+' : ''}${fN(variance)}</div></div>` : ''}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;text-align:left">
+      <div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Days This Month</div>
+        <div style="font-family:var(--ff-m);font-size:14px;color:var(--teal);font-weight:700">${totActD} days</div></div>
+      <div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Cost (QAR)</div>
+        <div style="font-family:var(--ff-m);font-size:14px;color:var(--teal);font-weight:700">${fN(totActC)}</div></div>
+      ${totPyD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">${py} Same Month</div>
+        <div style="font-family:var(--ff-m);font-size:14px;color:#64748b;font-weight:700">${totPyD}d · ${fN(totPyC)}</div></div>` : ''}
+      ${vsDays !== null ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">vs ${py}</div>
+        <div style="font-family:var(--ff-m);font-size:14px;font-weight:700;color:${vsCol}">${vsDays > 0 ? '+' : ''}${vsDays}d &nbsp; ${vsCost > 0 ? '+' : ''}${fN(vsCost)}</div></div>` : ''}
     </div>`;
 }
 
@@ -6682,11 +6663,8 @@ function cqeSave(goNext){
 
   comps.forEach(c => {
     const actEl = document.getElementById('cqe-act-' + c.id);
-    const budEl = document.getElementById('cqe-bud-' + c.id);
     const aD = actEl ? (parseInt(actEl.value) || 0) : null;
-    const bD = budEl ? (parseInt(budEl.value) || 0) : null;
     if(aD !== null) setCasualActual(y, m, c.id, aD);
-    if(bD !== null) setCasualBudget(y, m, c.id, bD);
   });
 
   autoSave();
@@ -13636,7 +13614,7 @@ window.addEventListener('beforeunload',saveAll);
         <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,179,71,.15);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:16px">👷</div>
         <div>
           <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--amber)">Casual Labour Entry</div>
-          <div style="font-size:10px;color:var(--text3)">Actual Days · Budget Days — all companies</div>
+          <div style="font-size:10px;color:var(--text3)">Actual Days worked — all companies</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
