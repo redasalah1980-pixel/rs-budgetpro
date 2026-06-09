@@ -1118,6 +1118,15 @@ select option{background:var(--bg4)}
       onmouseout="this.style.background='rgba(0,212,184,.1)';this.style.boxShadow='0 0 12px rgba(0,212,184,.15)'">
       ⚡ Quick Entry
     </button>
+    <button onclick="openCQE()"
+      style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;
+        letter-spacing:.3px;border:2px solid rgba(255,179,71,.5);color:#ffb347;
+        background:rgba(255,179,71,.1);cursor:pointer;font-family:'Syne',sans-serif;
+        transition:all .2s;white-space:nowrap;box-shadow:0 0 12px rgba(255,179,71,.15)"
+      onmouseover="this.style.background='rgba(255,179,71,.2)';this.style.boxShadow='0 0 20px rgba(255,179,71,.3)'"
+      onmouseout="this.style.background='rgba(255,179,71,.1)';this.style.boxShadow='0 0 12px rgba(255,179,71,.15)'">
+      👷 Casual Entry
+    </button>
     <button onclick="signOut()" style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;
       letter-spacing:.3px;border:1px solid rgba(255,107,107,.4);color:#ff6b6b;
       background:rgba(255,107,107,.08);cursor:pointer;font-family:var(--ff-b);
@@ -6488,9 +6497,222 @@ function qmeSave(goNext){
 
 
 /* ════════════════════════════════════════
-   BULK BUDGET ENTRY MODAL
+   CASUAL QUICK ENTRY — CQE
    ════════════════════════════════════════ */
-let _budModalYear = 2025;
+const CQE_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function openCQE(){
+  const sel_y = document.getElementById('cqe-year');
+  const sel_m = document.getElementById('cqe-month');
+  if(!sel_y || !sel_m){ console.error('CQE overlay not found'); return; }
+
+  if(sel_y.options.length === 0){
+    YEARS.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      sel_y.appendChild(opt);
+    });
+  }
+
+  const now = new Date();
+  if(!sel_y.dataset.userSet){
+    sel_y.value = String(now.getFullYear());
+    sel_m.value = String(now.getMonth());
+  }
+
+  cqeLoad();
+  const ov = document.getElementById('cqe-overlay');
+  ov.style.display = 'flex';
+  ov.onclick = e => { if(e.target === ov) closeCQE(); };
+  document.addEventListener('keydown', cqeEscHandler);
+}
+
+function closeCQE(){
+  document.getElementById('cqe-overlay').style.display = 'none';
+  document.removeEventListener('keydown', cqeEscHandler);
+}
+
+function cqeEscHandler(e){ if(e.key==='Escape') closeCQE(); }
+
+function cqeLoad(){
+  const y  = parseInt(document.getElementById('cqe-year').value);
+  const m  = parseInt(document.getElementById('cqe-month').value);
+  document.getElementById('cqe-year').dataset.userSet = '1';
+
+  const savedBar = document.getElementById('cqe-saved-bar');
+  if(savedBar) savedBar.style.display = 'none';
+
+  const comps = getCasualCompanies();
+  const py = y - 1;
+
+  /* Build the dynamic company rows area */
+  const rowsEl = document.getElementById('cqe-comp-rows');
+  if(rowsEl){
+    rowsEl.innerHTML = comps.map(c => {
+      const rate    = casualRate(c.id, y, m);
+      const ratePy  = casualRate(c.id, py, m);
+      const actD    = getCasualActual(y, m, c.id);
+      const budD    = getCasualBudget(y, m, c.id);
+      const pyD     = getCasualActual(py, m, c.id);
+      const sugD    = casualSuggestedDays(c.id, m, y);
+      const actC    = actD * rate;
+      const budC    = budD * rate;
+      const pyC     = pyD * ratePy;
+      const vsPy    = pyD ? actD - pyD : null;
+      const vsPyCol = vsPy === null ? '#4a5568' : vsPy <= 0 ? 'var(--teal)' : 'var(--coral)';
+
+      return `
+        <div style="background:var(--bg3);border:1px solid rgba(255,179,71,.2);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+          <!-- Company header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:28px;height:28px;border-radius:7px;background:rgba(255,179,71,.15);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:13px">👷</div>
+              <div>
+                <div style="font-family:var(--ff-d);font-size:12px;font-weight:800;color:var(--amber)">${c.name}</div>
+                <div style="font-size:9px;color:#4a5568">QAR ${rate}/day · ${y}</div>
+              </div>
+            </div>
+            <!-- Mini stats -->
+            <div style="display:flex;gap:12px;text-align:right">
+              <div style="font-size:9px;color:#4a5568">
+                <div style="color:#64748b;margin-bottom:1px">${py} days</div>
+                <div style="font-family:var(--ff-m);font-size:11px;color:#64748b;font-weight:700">${pyD || '—'}</div>
+              </div>
+              <div style="font-size:9px;color:#4a5568">
+                <div style="color:#a78bfa;margin-bottom:1px">Suggestion</div>
+                <div style="font-family:var(--ff-m);font-size:11px;color:#a78bfa;font-weight:700">${sugD || '—'}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <!-- Actual days -->
+            <div>
+              <label style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:5px">Actual Days</label>
+              <input id="cqe-act-${c.id}" type="text" inputmode="decimal"
+                value="${actD || ''}" placeholder="${pyD || '0'}"
+                oninput="cqeUpdateSummary()"
+                style="width:100%;background:var(--bg2);border:1px solid ${actD ? 'rgba(0,212,184,.4)' : 'var(--border)'};border-radius:7px;padding:9px 12px;font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--teal);outline:none;text-align:center">
+              <div style="font-size:9px;color:#4a5568;margin-top:4px;text-align:right">
+                Cost: <span style="font-family:var(--ff-m);color:var(--teal)">${actC ? 'QAR ' + fN(actC) : '—'}</span>
+                ${vsPy !== null ? `&nbsp;·&nbsp; vs ${py}: <span style="color:${vsPyCol};font-weight:700">${vsPy > 0 ? '+' : ''}${vsPy}d</span>` : ''}
+              </div>
+            </div>
+            <!-- Budget days -->
+            <div>
+              <label style="font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:5px">Budget Days</label>
+              <input id="cqe-bud-${c.id}" type="text" inputmode="decimal"
+                value="${budD || ''}" placeholder="${sugD || '0'}"
+                oninput="cqeUpdateSummary()"
+                style="width:100%;background:var(--bg2);border:1px solid ${budD ? 'rgba(255,179,71,.4)' : 'rgba(255,179,71,.15)'};border-radius:7px;padding:9px 12px;font-family:var(--ff-m);font-size:16px;font-weight:700;color:var(--amber);outline:none;text-align:center">
+              <div style="font-size:9px;color:#4a5568;margin-top:4px;text-align:right">
+                Cost: <span style="font-family:var(--ff-m);color:var(--amber)">${budC ? 'QAR ' + fN(budC) : '—'}</span>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /* Update month header info */
+  const infoEl = document.getElementById('cqe-month-info');
+  if(infoEl){
+    const totActD = comps.reduce((_,c) => _ + getCasualActual(y,m,c.id), 0);
+    const totActC = comps.reduce((_,c) => _ + getCasualActual(y,m,c.id)*casualRate(c.id,y,m), 0);
+    const totPyD  = comps.reduce((_,c) => _ + getCasualActual(py,m,c.id), 0);
+    const totPyC  = comps.reduce((_,c) => _ + getCasualActual(py,m,c.id)*casualRate(c.id,py,m), 0);
+
+    infoEl.innerHTML = (totActD || totPyD) ? `
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        ${totActD ? `<div><div style="font-size:8px;color:#4a5568;margin-bottom:1px">This year total days</div><div style="font-family:var(--ff-m);font-size:12px;color:var(--teal);font-weight:700">${totActD} days · QAR ${fN(totActC)}</div></div>` : ''}
+        ${totPyD  ? `<div><div style="font-size:8px;color:#4a5568;margin-bottom:1px">${py} total days</div><div style="font-family:var(--ff-m);font-size:12px;color:#64748b;font-weight:700">${totPyD} days · QAR ${fN(totPyC)}</div></div>` : ''}
+      </div>` : '<span style="color:#4a5568;font-size:10px">No data entered yet for this month</span>';
+  }
+
+  cqeUpdateSummary();
+}
+
+function cqeUpdateSummary(){
+  const y = parseInt(document.getElementById('cqe-year').value);
+  const m = parseInt(document.getElementById('cqe-month').value);
+  const comps = getCasualCompanies();
+
+  let totActD=0, totActC=0, totBudD=0, totBudC=0;
+  comps.forEach(c => {
+    const rate  = casualRate(c.id, y, m);
+    const actEl = document.getElementById('cqe-act-' + c.id);
+    const budEl = document.getElementById('cqe-bud-' + c.id);
+    const aD = actEl ? (parseInt(actEl.value) || 0) : 0;
+    const bD = budEl ? (parseInt(budEl.value) || 0) : 0;
+    totActD += aD; totActC += aD * rate;
+    totBudD += bD; totBudC += bD * rate;
+  });
+
+  const variance = totActC && totBudC ? totActC - totBudC : null;
+  const varCol   = variance === null ? '#4a5568' : variance <= 0 ? 'var(--teal)' : 'var(--coral)';
+
+  const summary = document.getElementById('cqe-summary');
+  if(!summary) return;
+
+  if(!totActD && !totBudD){
+    summary.innerHTML = '<span style="color:#4a5568">Fill in days above to see summary</span>';
+    return;
+  }
+
+  summary.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;text-align:left">
+      ${totActD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Actual Days</div>
+        <div style="font-family:var(--ff-m);font-size:12px;color:var(--teal);font-weight:700">${totActD} days</div></div>` : ''}
+      ${totActC ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Actual Cost</div>
+        <div style="font-family:var(--ff-m);font-size:12px;color:var(--teal);font-weight:700">QAR ${fN(totActC)}</div></div>` : ''}
+      ${totBudD ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Budget Days</div>
+        <div style="font-family:var(--ff-m);font-size:12px;color:var(--amber);font-weight:700">${totBudD} days</div></div>` : ''}
+      ${totBudC ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Total Budget Cost</div>
+        <div style="font-family:var(--ff-m);font-size:12px;color:var(--amber);font-weight:700">QAR ${fN(totBudC)}</div></div>` : ''}
+      ${variance !== null ? `<div><div style="font-size:9px;color:#64748b;margin-bottom:2px">Actual vs Budget</div>
+        <div style="font-family:var(--ff-m);font-size:12px;font-weight:700;color:${varCol}">${variance > 0 ? '+' : ''}${fN(variance)}</div></div>` : ''}
+    </div>`;
+}
+
+function cqeSave(goNext){
+  const y = parseInt(document.getElementById('cqe-year').value);
+  const m = parseInt(document.getElementById('cqe-month').value);
+  const comps = getCasualCompanies();
+
+  comps.forEach(c => {
+    const actEl = document.getElementById('cqe-act-' + c.id);
+    const budEl = document.getElementById('cqe-bud-' + c.id);
+    const aD = actEl ? (parseInt(actEl.value) || 0) : null;
+    const bD = budEl ? (parseInt(budEl.value) || 0) : null;
+    if(aD !== null) setCasualActual(y, m, c.id, aD);
+    if(bD !== null) setCasualBudget(y, m, c.id, bD);
+  });
+
+  autoSave();
+
+  /* Refresh casual tab if open */
+  if(document.querySelector('#pane-casual.active')) buildCasualTab();
+
+  const savedBar = document.getElementById('cqe-saved-bar');
+  if(savedBar){ savedBar.style.display='flex'; setTimeout(()=>savedBar.style.display='none', 2000); }
+
+  toast(`✓ Casual ${CQE_MONTHS[m]} ${y} saved`);
+
+  if(goNext){
+    let ny = y, nm = m + 1;
+    if(nm > 11){ nm = 0; ny = y + 1; }
+    if(ny <= 2035){
+      document.getElementById('cqe-year').value = String(ny);
+      document.getElementById('cqe-month').value = String(nm);
+      cqeLoad();
+    } else {
+      toast('✓ All done — reached end of 2035');
+    }
+  }
+}
+
+
 
 function openBudgetModal(y){
   _budModalYear = y || activeY;
@@ -13404,6 +13626,64 @@ window.addEventListener('beforeunload',saveAll);
 </div>
 
 <!-- ══ QUICK MONTH ENTRY OVERLAY ══ -->
+<!-- ══ CASUAL QUICK ENTRY OVERLAY ══ -->
+<div id="cqe-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg2);border:1px solid rgba(255,179,71,.25);border-radius:16px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 28px 80px rgba(0,0,0,.7)">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:10">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,179,71,.15);border:1px solid rgba(255,179,71,.3);display:flex;align-items:center;justify-content:center;font-size:16px">👷</div>
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--amber)">Casual Labour Entry</div>
+          <div style="font-size:10px;color:var(--text3)">Actual Days · Budget Days — all companies</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <select id="cqe-year" onchange="cqeLoad()" style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--ff-m);font-size:12px;font-weight:700;padding:6px 10px;outline:none;cursor:pointer">
+        </select>
+        <select id="cqe-month" onchange="cqeLoad()" style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--ff-m);font-size:12px;font-weight:700;padding:6px 10px;outline:none;cursor:pointer">
+          <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+          <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+          <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+          <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+        </select>
+        <button onclick="closeCQE()" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;line-height:1">×</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:16px 20px">
+
+      <!-- Saved bar -->
+      <div id="cqe-saved-bar" style="display:none;background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--amber);font-weight:700;margin-bottom:12px;text-align:center">✅ Saved successfully</div>
+
+      <!-- Month context strip -->
+      <div id="cqe-month-info" style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 14px;margin-bottom:12px;min-height:36px;display:flex;align-items:center"></div>
+
+      <!-- Company rows (built dynamically by cqeLoad) -->
+      <div id="cqe-comp-rows"></div>
+
+      <!-- Summary bar -->
+      <div id="cqe-summary" style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:11px">
+        <span style="color:#4a5568">Fill in days above to see summary</span>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px;justify-content:space-between;align-items:center">
+        <button onclick="closeCQE()" style="padding:9px 18px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid var(--border);color:var(--text2);background:transparent;cursor:pointer">✕ Close</button>
+        <div style="display:flex;gap:8px">
+          <button onclick="cqeSave(false)" style="padding:9px 20px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,179,71,.4);color:var(--amber);background:rgba(255,179,71,.1);cursor:pointer"
+            onmouseover="this.style.background='rgba(255,179,71,.2)'" onmouseout="this.style.background='rgba(255,179,71,.1)'">💾 Save</button>
+          <button onclick="cqeSave(true)" style="padding:9px 20px;border-radius:8px;font-size:11px;font-weight:700;font-family:var(--ff-d);border:1px solid rgba(255,179,71,.5);color:#0b0f1a;background:var(--amber);cursor:pointer"
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">💾 Save &amp; Next Month →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <div id="qme-overlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:620px;max-height:92vh;overflow-y:auto;box-shadow:0 28px 80px rgba(0,0,0,.7)">
 
