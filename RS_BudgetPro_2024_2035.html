@@ -5529,8 +5529,8 @@ function printReport(){
   const html = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8">
     <title>RS BudgetPro — Budget Performance Report ${y}</title>
-    <style>${CSS}</style>
-  </head><body>
+    <style>${CSS}<\/style>
+  <\/head><body>
 
     <!-- PAGE 1: Jan – Jun -->
     <div class="pg" style="padding:12px 14px">
@@ -5556,7 +5556,7 @@ function printReport(){
       ${footer()}
     </div>
 
-  </body></html>`;
+  <\/body><\/html>`;
 
   const w = window.open('','_blank','width=1400,height=900');
   w.document.write(html);
@@ -7542,7 +7542,7 @@ function printPulsePDF(){
     @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
     .section-label{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:5px 10px;background:#f1f5f9;color:#475569;border-top:2px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
     .page-break{page-break-before:always}
-  </style></head><body>
+  <\/style><\/head><body>
 
   <!-- ═══ HEADER ═══ -->
   <div style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#1e1b4b 100%);padding:18px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
@@ -7668,7 +7668,7 @@ function printPulsePDF(){
     </div>
   </div>
 
-  </body></html>`;
+  <\/body><\/html>`;
 
   const w = window.open('','_blank','width=1400,height=900');
   w.document.write(html);
@@ -9075,8 +9075,8 @@ function printCasualPDF(){
   const gv=totActC&&totProjC?totActC-totProjC:null;
 
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Casual Labour ${casualY}</title>
-  <style>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
-  </head><body style="padding:10px">
+  <style>*{box-sizing:border-box;margin:0;padding:0}@page{size:A3 landscape;margin:7mm}body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1e293b}table{border-collapse:collapse}th,td{border:1px solid #e2e8f0}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}<\/style>
+  <\/head><body style="padding:10px">
   <div style="background:linear-gradient(135deg,#0f172a,#1a3a5c,#1e1040);padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border-radius:10px">
     <div style="display:flex;align-items:center;gap:12px">
       ${LOGO?`<img src="${LOGO}" style="width:40px;height:40px;border-radius:8px">`:''}
@@ -9101,7 +9101,7 @@ function printCasualPDF(){
   <div style="margin-top:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:7px 14px;font-size:8px;color:#94a3b8">
     Projected days = Rooms \xd7 ${kgRnR?kgRnR.toFixed(3):'—'} KG/RN (${py} ratio) \xf7 Company KG/Day ratio (${py}) &nbsp;\xb7&nbsp; Rooms from Monthly Entry actuals or Projection Planner &nbsp;\xb7&nbsp; RS BudgetPro V3.0
   </div>
-  </body></html>`;
+  <\/body><\/html>`;
 
   const w=window.open('','_blank','width=1400,height=900');
   w.document.write(html); w.document.close();
