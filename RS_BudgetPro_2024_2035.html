@@ -8901,19 +8901,28 @@ function setCasualBudget(y,m,compId,days){
 }
 
 /* Average actual days per month across all years that have data */
-function casualAvgDays(compId,m){
+/* Pearl-era aware average days:
+   Only averages years whose Pearl status matches the budget year's Pearl status for that month.
+   Pre-Pearl months (Jan–Jul 2024) only average against other pre-Pearl months.
+   Post-Pearl months (Aug 2024+) only average against other post-Pearl months.
+   This prevents the structural demand jump from distorting the suggestion. */
+function casualAvgDays(compId,m,budY){
+  const budPearl=pearlActive(budY,m);
   let total=0,count=0;
   YEARS.forEach(y=>{
+    if(pearlActive(y,m)!==budPearl) return; // skip — wrong era
     const d=getCasualActual(y,m,compId);
     if(d>0){total+=d;count++;}
   });
   return count?Math.round(total/count):0;
 }
 
-/* Average rooms sold per month across all years that have actual data */
-function casualAvgRooms(m){
+/* Pearl-era aware average rooms — same logic as casualAvgDays */
+function casualAvgRooms(m,budY){
+  const budPearl=pearlActive(budY,m);
   let total=0,count=0;
   YEARS.forEach(y=>{
+    if(pearlActive(y,m)!==budPearl) return; // skip — wrong era
     const r=DATA[y]?.[m]?.roomsSold||0;
     if(r>0){total+=r;count++;}
   });
@@ -8929,9 +8938,9 @@ function casualForecastRooms(y,m){
    suggestedDays = avgDays × (forecastRooms / avgHistoricalRooms)
    Falls back to plain avgDays if no rooms data available */
 function casualSuggestedDays(compId,m,budY){
-  const avg=casualAvgDays(compId,m);
+  const avg=casualAvgDays(compId,m,budY);
   if(!avg) return 0;
-  const avgRooms=casualAvgRooms(m);
+  const avgRooms=casualAvgRooms(m,budY);
   const forecastRooms=casualForecastRooms(budY,m);
   if(!avgRooms||!forecastRooms) return avg; // no rooms data — plain average
   const ratio=forecastRooms/avgRooms;
@@ -9306,9 +9315,9 @@ function buildCasualTab(){
       <!-- BUDGET SUGGESTION BAR -->
       ${(()=>{
         /* Check rooms data availability */
-        const hasHistory=comps.some(c=>Array.from({length:12},(_,m)=>casualAvgDays(c.id,m)).some(v=>v>0));
+        const hasHistory=comps.some(c=>Array.from({length:12},(_,m)=>casualAvgDays(c.id,m,nextY)).some(v=>v>0));
         const projRoomsAvail=Array.from({length:12},(_,m)=>casualForecastRooms(nextY,m)).some(v=>v>0);
-        const avgRoomsAvail=Array.from({length:12},(_,m)=>casualAvgRooms(m)).some(v=>v>0);
+        const avgRoomsAvail=Array.from({length:12},(_,m)=>casualAvgRooms(m,nextY)).some(v=>v>0);
         const fullyLinked=projRoomsAvail&&avgRoomsAvail;
 
         /* Build month-by-month occupancy adjustment preview strip */
@@ -9325,7 +9334,7 @@ function buildCasualTab(){
               <tbody>
                 <tr style="background:rgba(56,189,248,.04)">
                   <td style="padding:3px 8px;color:#38bdf8;font-size:8px;white-space:nowrap">Avg Hist Rooms</td>
-                  ${MF2.map((_,m)=>{const v=casualAvgRooms(m);return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);color:#38bdf8;font-size:9px">${v||'—'}</td>`;}).join('')}
+                  ${MF2.map((_,m)=>{const v=casualAvgRooms(m,nextY);return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);color:#38bdf8;font-size:9px">${v||'—'}</td>`;}).join('')}
                 </tr>
                 <tr style="background:rgba(167,139,250,.04)">
                   <td style="padding:3px 8px;color:#a78bfa;font-size:8px;white-space:nowrap">${nextY} Forecast Rooms</td>
@@ -9333,7 +9342,7 @@ function buildCasualTab(){
                 </tr>
                 <tr style="background:rgba(255,179,71,.04)">
                   <td style="padding:3px 8px;color:var(--amber);font-size:8px;white-space:nowrap">Adj Factor</td>
-                  ${MF2.map((_,m)=>{const avg=casualAvgRooms(m),fc=casualForecastRooms(nextY,m);if(!avg||!fc)return`<td style="padding:3px 5px;text-align:center;color:#4a5568;font-size:8px">×1.00</td>`;const r=fc/avg;const col=Math.abs(r-1)<0.02?'#64748b':r>1?'var(--coral)':'var(--teal)';return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);font-size:9px;font-weight:700;color:${col}">×${r.toFixed(2)}</td>`;}).join('')}
+                  ${MF2.map((_,m)=>{const avg=casualAvgRooms(m,nextY),fc=casualForecastRooms(nextY,m);if(!avg||!fc)return`<td style="padding:3px 5px;text-align:center;color:#4a5568;font-size:8px">×1.00</td>`;const r=fc/avg;const col=Math.abs(r-1)<0.02?'#64748b':r>1?'var(--coral)':'var(--teal)';return`<td style="padding:3px 5px;text-align:center;font-family:var(--ff-m);font-size:9px;font-weight:700;color:${col}">×${r.toFixed(2)}</td>`;}).join('')}
                 </tr>
               </tbody>
             </table>
