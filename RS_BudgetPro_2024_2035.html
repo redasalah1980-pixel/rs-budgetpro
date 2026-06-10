@@ -2548,10 +2548,27 @@ function doLogin(){
 
     // Sign in to Firebase — wait for it to fully complete before proceeding
     fbSignIn(FB_EMAIL, p)
-      .then(proceed)   // auth succeeded → _fbAuth is true → load will work
-      .catch(()=>{
-        console.warn('Firebase sign-in failed — proceeding with local cache');
-        proceed();     // still open the app, just with local data
+      .then(()=>{
+        proceed(); // auth succeeded → _fbAuth is true → saves will reach cloud
+      })
+      .catch((fbErr)=>{
+        // Firebase auth failed — proceed with local data BUT show persistent warning
+        console.warn('Firebase sign-in failed:', fbErr && fbErr.code);
+        proceed();
+        // After UI opens, show a prominent warning that cloud sync is broken
+        setTimeout(()=>{
+          const lbl=document.getElementById('as-label');
+          const dot=document.getElementById('as-dot');
+          if(lbl){
+            lbl.style.color='#f87171';
+            lbl.textContent='⚠️ CLOUD SYNC OFFLINE — data saves to THIS device only! Check Firebase connection.';
+          }
+          if(dot) dot.className='autosave-dot';
+          // Show modal-style alert so it cannot be missed
+          setTimeout(()=>{
+            alert('⚠️ WARNING: Firebase cloud sync failed to connect.\n\nAll data will only be saved on THIS device (not synced to cloud).\n\nDo NOT enter important data until the Firebase badge shows LIVE.\n\nTry: refresh the page and log in again.');
+          }, 1200);
+        }, 1500);
       });
 
   }else{
@@ -2599,6 +2616,16 @@ function saveAll(){
   localStorage.setItem('rsBP_lastSaved',new Date().toLocaleString());
 
   // 2. Save to Firebase (cloud backup)
+  // If not authenticated, show persistent warning — do NOT silently fail
+  if(!_fbAuth){
+    const lbl=document.getElementById('as-label');
+    const dot=document.getElementById('as-dot');
+    if(lbl){lbl.style.color='#f87171';lbl.textContent='⚠️ LOCAL ONLY — Firebase OFFLINE! Data NOT synced to cloud.';}
+    if(dot) dot.className='autosave-dot';
+  } else {
+    const lbl=document.getElementById('as-label');
+    if(lbl) lbl.style.color=''; // clear any previous error colour
+  }
   fbSave({
     DATA, INCS, SETT, PROJ, SPEC, REV, REV_BUD, LOCKS, REV_LOCKS,
     _savedAt: new Date().toISOString()
