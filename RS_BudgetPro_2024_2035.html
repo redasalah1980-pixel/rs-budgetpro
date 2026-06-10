@@ -2619,6 +2619,59 @@ function markSaved(){
 }
 function manualSave(){saveAll();markSaved()}
 function autoSave(){markUnsaved();clearTimeout(_at);_at=setTimeout(()=>{saveAll();markSaved()},1600)}
+function forceCloudSync(){
+  const lbl=document.getElementById('as-label');
+  const dot=document.getElementById('as-dot');
+  if(lbl){lbl.style.color='';lbl.textContent='☁️ Syncing to cloud...';}
+  if(dot) dot.className='autosave-dot saving';
+  // Save locally first
+  try{
+    localStorage.setItem(K_D,  JSON.stringify(DATA));
+    localStorage.setItem(K_I,  JSON.stringify(INCS));
+    localStorage.setItem(K_S,  JSON.stringify(SETT));
+    localStorage.setItem(K_P,  JSON.stringify(PROJ));
+    localStorage.setItem(K_REV, JSON.stringify(REV));
+    localStorage.setItem(K_REVB,JSON.stringify(REV_BUD));
+    localStorage.setItem(K_LK,  JSON.stringify(LOCKS));
+    localStorage.setItem(K_RLK, JSON.stringify(REV_LOCKS));
+    localStorage.setItem(K_SI, JSON.stringify(SPEC));
+  }catch(e){}
+  // Force Firebase sync — wait for auth if needed
+  let attempts=0;
+  function trySync(){
+    if(_fbAuth){
+      fbGetToken().then(token=>{
+        if(!token){
+          if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ No auth token — try logging out and back in.';}
+          return;
+        }
+        const payload={DATA,INCS,SETT,PROJ,SPEC,REV,REV_BUD,LOCKS,REV_LOCKS,_savedAt:new Date().toISOString()};
+        db.ref(FB_NODE).set(payload)
+          .then(()=>{
+            fbSetConn(true); _fbLastSync=new Date();
+            if(dot){dot.className='autosave-dot saved';setTimeout(()=>dot.className='autosave-dot',4000);}
+            if(lbl){lbl.style.color='#4ade80';lbl.textContent='✅ Cloud sync successful! Data is now available on all devices.';
+              setTimeout(()=>{if(lbl){lbl.style.color='';lbl.textContent='All changes saved';}},5000);}
+          })
+          .catch(e=>{
+            fbSetConn(false);
+            if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ Firebase error: '+e.message;}
+            if(dot) dot.className='autosave-dot';
+          });
+      });
+    } else {
+      attempts++;
+      if(attempts<10){
+        if(lbl) lbl.textContent='☁️ Waiting for authentication... ('+attempts+'/10)';
+        setTimeout(trySync, 2000);
+      } else {
+        if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ Not authenticated — please log out and log back in.';}
+        if(dot) dot.className='autosave-dot';
+      }
+    }
+  }
+  trySync();
+}
 function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),2200)}
 
 /* ── CALC ── */
@@ -10336,13 +10389,43 @@ document.addEventListener('click', function(e){
 });
 
 // ── SAVE with auth token ──
-function fbSave(payload){
-  if(!_fbAuth){ fbSetConn(false); return; }
+function fbSave(payload, _retry){
+  _retry = _retry||0;
+  if(!_fbAuth){
+    fbSetConn(false);
+    const lbl=document.getElementById('as-label');
+    const dot=document.getElementById('as-dot');
+    if(_retry < 5){
+      if(lbl) lbl.textContent='⚠️ Saved locally — waiting for cloud sync...';
+      setTimeout(()=>fbSave(payload,_retry+1), 3000);
+    } else {
+      if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ Cloud sync failed — data saved on THIS device only! Open on your laptop to sync.';}
+      if(dot) dot.className='autosave-dot';
+    }
+    return;
+  }
   fbGetToken().then(token => {
-    if(!token) return;
+    if(!token){
+      if(_retry < 5) setTimeout(()=>fbSave(payload,_retry+1), 3000);
+      return;
+    }
     db.ref(FB_NODE).set(payload)
-      .then(()  => { fbSetConn(true); markSaved(); _fbLastSync=new Date(); })
-      .catch(e  => { console.warn('FB save err',e); fbSetConn(false); markSaved(); });
+      .then(()  => {
+        fbSetConn(true); markSaved(); _fbLastSync=new Date();
+        const lbl=document.getElementById('as-label');
+        if(lbl) lbl.style.color='';
+      })
+      .catch(e  => {
+        console.warn('FB save err',e); fbSetConn(false);
+        if(_retry < 3){ setTimeout(()=>fbSave(payload,_retry+1), 4000); }
+        else {
+          markSaved();
+          const lbl=document.getElementById('as-label');
+          const dot=document.getElementById('as-dot');
+          if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ Cloud sync failed — data saved on THIS device only!';}
+          if(dot) dot.className='autosave-dot';
+        }
+      });
   });
 }
 
@@ -13825,7 +13908,8 @@ window.addEventListener('beforeunload',saveAll);
     <div class="autosave-dot" id="as-dot"></div>
     <span id="as-label">All changes saved</span>
   </div>
-  <button class="sticky-save-btn" onclick="manualSave()">💾 Save Now</button>
+  <button class="sticky-save-btn" onclick="manualSave()" style="margin-right:8px">💾 Save Now</button>
+  <button class="sticky-save-btn" onclick="forceCloudSync()" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);margin-right:8px" title="Force push all data to Firebase cloud">☁️ Sync to Cloud</button>
 </div>
 
 </body>
