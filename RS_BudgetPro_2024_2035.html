@@ -1143,6 +1143,7 @@ select option{background:var(--bg4)}
   <div class="ntab active" onclick="goTab(this,'entry')">Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:5px;padding:1px 4px;margin-left:2px">ACT</span></div>
   <div class="ntab" onclick="goTab(this,'project')">Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:5px;padding:1px 4px;margin-left:2px">FCST</span></div>
   <div class="ntab" onclick="goTab(this,'revenue')">Revenue</div>
+  <div class="ntab" onclick="goTab(this,'forecast')">📈 Year-End Forecast <span style="font-size:8px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);border-radius:5px;padding:1px 4px;margin-left:2px">FCST</span></div>
   <div class="ntab" onclick="goTab(this,'increases')">Budget Adjustments</div>
   <div class="ntab" onclick="goTab(this,'settings')">Settings</div>
   <div class="nav-sep"></div>
@@ -2967,6 +2968,7 @@ function goTab(el,id){
   if(id==='pulse')    {buildPulseTab()}
   if(id==='scenario') {buildScenarioTab()}
   if(id==='casual')   {buildCasualTab()}
+  if(id==='forecast') {buildForecastTab()}
   if(id==='dashboard'){buildYP();buildDash()}
 }
 
@@ -8981,6 +8983,374 @@ function setCasualBudget(y,m,compId,days){
 }
 
 /* Average actual days per month across all years that have data */
+
+/* ══════════════════════════════════════════
+   📈  YEAR-END FORECAST TAB
+   FS Doha only — Revenue + 3 Expense Lines
+   Actuals YTD + Projected remainder
+   ══════════════════════════════════════════ */
+
+let _fcstY = new Date().getFullYear();
+
+/* ── Historical RPOR/CPOR (Pearl-era aware, weighted avg) ── */
+function fcstHistRate(budY){
+  const budPearl = pearlActive(budY, 0); // use Jan as proxy for full-year era
+  let totRev=0, totLa=0, totOp=0, totPr=0, totRooms=0;
+  YEARS.forEach(y=>{
+    for(let m=0;m<12;m++){
+      if(pearlActive(y,m) !== pearlActive(budY,m)) continue;
+      const r = DATA[y]?.[m];
+      if(!r) continue;
+      const rooms = r.roomsSold||0;
+      if(!rooms) continue;
+      const revActual = (REV[y]?.[m]?.laA)||0;
+      totRev  += revActual;
+      totLa   += (r.laA||0);
+      totOp   += (r.opA||0);
+      totPr   += (r.prA||0);
+      totRooms+= rooms;
+    }
+  });
+  if(!totRooms) return {rpor:0, cpor_la:0, cpor_op:0, cpor_pr:0, rooms:0};
+  return {
+    rpor    : totRev / totRooms,
+    cpor_la : totLa  / totRooms,
+    cpor_op : totOp  / totRooms,
+    cpor_pr : totPr  / totRooms,
+    rooms   : totRooms
+  };
+}
+
+/* ── Per-month forecast row ── */
+function fcstRow(y, m, rates){
+  const actual = DATA[y]?.[m];
+  const hasActual = actual && (actual.roomsSold||actual.laA||actual.opA||actual.prA);
+  if(hasActual){
+    return {
+      isActual : true,
+      rooms    : actual.roomsSold||0,
+      rev      : REV[y]?.[m]?.laA||0,
+      la       : actual.laA||0,
+      op       : actual.opA||0,
+      pr       : actual.prA||0,
+    };
+  }
+  // Forecast
+  const rooms = PROJ[y]?.[m]?.roomsSold || 0;
+  const mult  = incMult(y,m);
+  return {
+    isActual : false,
+    rooms    : rooms,
+    rev      : rooms * rates.rpor,
+    la       : rooms * rates.cpor_la * mult,
+    op       : rooms * rates.cpor_op,
+    pr       : rooms * rates.cpor_pr,
+  };
+}
+
+function buildForecastTab(){
+  const pane = document.getElementById('pane-forecast');
+  if(!pane) return;
+
+  const y      = _fcstY;
+  const rates  = fcstHistRate(y);
+  const MS2    = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Collect rows
+  const rows   = MS2.map((_,m)=>fcstRow(y,m,rates));
+  const lastActualM = rows.reduce((acc,r,i)=>r.isActual?i:acc, -1);
+
+  // Totals
+  let totRooms=0,totRev=0,totLa=0,totOp=0,totPr=0;
+  let actRooms=0,actRev=0,actLa=0,actOp=0,actPr=0;
+  let fstRooms=0,fstRev=0,fstLa=0,fstOp=0,fstPr=0;
+  rows.forEach(r=>{
+    totRooms+=r.rooms; totRev+=r.rev; totLa+=r.la; totOp+=r.op; totPr+=r.pr;
+    if(r.isActual){actRooms+=r.rooms;actRev+=r.rev;actLa+=r.la;actOp+=r.op;actPr+=r.pr;}
+    else{fstRooms+=r.rooms;fstRev+=r.rev;fstLa+=r.la;fstOp+=r.op;fstPr+=r.pr;}
+  });
+
+  // Annual budget totals
+  let budRev=0,budLa=0,budOp=0,budPr=0;
+  for(let m=0;m<12;m++){
+    const rs = getRooms(y,m);
+    const b  = bud(y,m,rs);
+    budRev += (REV_BUD[y]?.[m]?.laB)||0;
+    budLa  += b.la; budOp += b.op; budPr += b.pr;
+  }
+  const budTotExp = budLa+budOp+budPr;
+  const fcstTotExp= totLa+totOp+totPr;
+
+  // Rate display
+  const rateBox = rates.rooms > 0 ? `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+      ${[
+        ['RPOR (Revenue/Room)', rates.rpor, '#a78bfa'],
+        ['CPOR — Laundry Supplies', rates.cpor_la, '#38bdf8'],
+        ['CPOR — Operating', rates.cpor_op, '#00d4b8'],
+        ['CPOR — Printing', rates.cpor_pr, '#f5c542'],
+      ].map(([lbl,val,col])=>`
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 16px;min-width:160px">
+          <div style="font-size:9px;color:#64748b;margin-bottom:4px">${lbl}</div>
+          <div style="font-size:16px;font-weight:700;color:${col};font-family:var(--ff-m)">QAR ${val.toFixed(2)}</div>
+          <div style="font-size:8px;color:#4a5568;margin-top:2px">per room night</div>
+        </div>`).join('')}
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 16px;min-width:160px">
+        <div style="font-size:9px;color:#64748b;margin-bottom:4px">Historical Basis</div>
+        <div style="font-size:16px;font-weight:700;color:#e2e8f0;font-family:var(--ff-m)">${rates.rooms.toLocaleString()}</div>
+        <div style="font-size:8px;color:#4a5568;margin-top:2px">room nights used</div>
+      </div>
+    </div>` : `<div style="color:#f87171;padding:12px;background:rgba(248,113,113,.08);border-radius:8px;margin-bottom:16px;font-size:12px">⚠️ No historical actuals found — enter actual data in Monthly Entry first to enable forecasting.</div>`;
+
+  // Summary strip
+  const varRev = totRev - budRev;
+  const varExp = fcstTotExp - budTotExp;
+  const summaryStrip = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:20px">
+      ${[
+        ['YTD Actual Revenue', actRev, '#a78bfa', 'Months with actual data'],
+        ['Forecast Revenue', fstRev, '#7c3aed', 'Projected remaining months'],
+        ['Full Year Revenue', totRev, '#a78bfa', `vs Budget: ${varRev>=0?'+':''}${fN(varRev)}`, varRev>=0?'#00d4b8':'#ff6b6b'],
+        ['YTD Actual Expense', actLa+actOp+actPr, '#38bdf8', 'All 3 lines combined'],
+        ['Forecast Expense', fstLa+fstOp+fstPr, '#1d6fa4', 'Projected remaining months'],
+        ['Full Year Expense', fcstTotExp, '#38bdf8', `vs Budget: ${varExp>=0?'+':''}${fN(varExp)}`, varExp<=0?'#00d4b8':'#ff6b6b'],
+      ].map(([lbl,val,col,sub,subCol])=>`
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px 16px">
+          <div style="font-size:9px;color:#64748b;margin-bottom:4px">${lbl}</div>
+          <div style="font-size:17px;font-weight:700;color:${col};font-family:var(--ff-m)">${fN(val)}</div>
+          <div style="font-size:9px;color:${subCol||'#4a5568'};margin-top:3px">${sub}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Main table
+  const tHead = `
+    <thead>
+      <tr style="background:rgba(255,255,255,.04)">
+        <th style="padding:8px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;white-space:nowrap">Month</th>
+        <th style="padding:8px 10px;text-align:center;font-size:10px;color:#64748b;font-weight:700">Type</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#64748b;font-weight:700">Rooms</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#a78bfa;font-weight:700">Revenue</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#38bdf8;font-weight:700">La Supplies</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#00d4b8;font-weight:700">Operating</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#f5c542;font-weight:700">Printing</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#e2e8f0;font-weight:700">Total Exp</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#94a3b8;font-weight:700">Bud Exp</th>
+        <th style="padding:8px 10px;text-align:right;font-size:10px;color:#94a3b8;font-weight:700">Var</th>
+      </tr>
+    </thead>`;
+
+  const tBody = rows.map((r,m)=>{
+    const b    = bud(y,m,r.rooms);
+    const totE = r.la+r.op+r.pr;
+    const budE = b.la+b.op+b.pr;
+    const varE = totE-budE;
+    const isAct= r.isActual;
+    const rowBg= isAct ? 'rgba(0,212,184,.04)' : 'rgba(167,139,250,.03)';
+    const badge= isAct
+      ? `<span style="font-size:8px;background:rgba(0,212,184,.15);color:#00d4b8;border-radius:4px;padding:1px 5px;font-weight:700">ACT</span>`
+      : `<span style="font-size:8px;background:rgba(167,139,250,.15);color:#a78bfa;border-radius:4px;padding:1px 5px;font-weight:700">FCST</span>`;
+    const numCol= isAct ? '#e2e8f0' : '#94a3b8';
+    const revCol= isAct ? '#a78bfa' : '#7c3aed';
+    const varCol= varE<=0?'#00d4b8':'#ff6b6b';
+    const sep   = m===lastActualM ? 'border-bottom:2px solid rgba(167,139,250,.4)' : '';
+    return `<tr style="background:${rowBg};${sep}">
+      <td style="padding:7px 10px;font-weight:700;color:#e2e8f0;font-size:11px">${MS2[m]}</td>
+      <td style="padding:7px 10px;text-align:center">${badge}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${numCol};font-size:11px">${r.rooms?r.rooms.toLocaleString():'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${revCol};font-size:11px">${r.rev?fN(r.rev):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${numCol};font-size:11px">${r.la?fN(r.la):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${numCol};font-size:11px">${r.op?fN(r.op):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${numCol};font-size:11px">${r.pr?fN(r.pr):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${numCol};font-size:11px;font-weight:700">${totE?fN(totE):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:#4a5568;font-size:11px">${budE?fN(budE):'—'}</td>
+      <td style="padding:7px 10px;text-align:right;font-family:var(--ff-m);color:${varCol};font-size:11px;font-weight:700">${budE?(varE>0?'+':'')+fN(varE):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals row
+  const totBudExp = budLa+budOp+budPr;
+  const totVarExp = fcstTotExp - totBudExp;
+  const tFoot = `
+    <tfoot>
+      <tr style="background:rgba(255,255,255,.07);border-top:2px solid rgba(255,255,255,.12)">
+        <td style="padding:9px 10px;font-weight:700;color:#e2e8f0;font-size:12px" colspan="2">FULL YEAR</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#e2e8f0;font-weight:700;font-size:12px">${totRooms.toLocaleString()}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#a78bfa;font-weight:700;font-size:12px">${fN(totRev)}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#e2e8f0;font-weight:700;font-size:12px">${fN(totLa)}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#e2e8f0;font-weight:700;font-size:12px">${fN(totOp)}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#e2e8f0;font-weight:700;font-size:12px">${fN(totPr)}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#38bdf8;font-weight:700;font-size:12px">${fN(fcstTotExp)}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:#4a5568;font-weight:700;font-size:12px">${fN(totBudExp)}</td>
+        <td style="padding:9px 10px;text-align:right;font-family:var(--ff-m);color:${totVarExp<=0?'#00d4b8':'#ff6b6b'};font-weight:700;font-size:12px">${(totVarExp>0?'+':'')+fN(totVarExp)}</td>
+      </tr>
+    </tfoot>`;
+
+  // Year selector
+  const ySel = YEARS.map(yr=>`<button onclick="_fcstY=${yr};buildForecastTab()" style="padding:5px 14px;border-radius:6px;border:1px solid rgba(255,255,255,.1);cursor:pointer;font-size:12px;font-weight:700;font-family:var(--ff-d);background:${yr===y?'var(--gold)':'rgba(255,255,255,.05)'};color:${yr===y?'#0d0118':'#94a3b8'}">${yr}</button>`).join('');
+
+  pane.innerHTML = `
+    <div style="padding:20px 24px;max-width:1200px">
+      <div class="pt">📈 Year-End Forecast <span>FS Doha — Revenue &amp; Expenses · Actuals + Projected Remainder</span></div>
+
+      <!-- Year selector -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+        <span style="font-size:11px;color:#64748b;font-weight:700">YEAR:</span>
+        ${ySel}
+        <button onclick="printForecast()" style="margin-left:auto;padding:7px 18px;border-radius:8px;border:1px solid rgba(167,139,250,.3);background:rgba(167,139,250,.1);color:#a78bfa;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--ff-d)">🖨️ Print Forecast</button>
+      </div>
+
+      <!-- Rates used -->
+      <div style="margin-bottom:6px">
+        <div style="font-size:10px;color:#64748b;font-weight:700;margin-bottom:8px;letter-spacing:.05em">HISTORICAL RATES USED FOR FORECAST (PEARL-ERA AWARE)</div>
+        ${rateBox}
+      </div>
+
+      <!-- Summary strip -->
+      <div style="font-size:10px;color:#64748b;font-weight:700;margin-bottom:8px;letter-spacing:.05em">FULL YEAR SUMMARY</div>
+      ${summaryStrip}
+
+      <!-- Main table -->
+      <div style="font-size:10px;color:#64748b;font-weight:700;margin-bottom:8px;letter-spacing:.05em">MONTH-BY-MONTH DETAIL &nbsp;·&nbsp; <span style="color:#00d4b8">ACT</span> = actual entered &nbsp;·&nbsp; <span style="color:#a78bfa">FCST</span> = projected from rooms × historical rate</div>
+      <div style="overflow-x:auto">
+        <table style="border-collapse:collapse;width:100%;min-width:800px">
+          ${tHead}
+          <tbody>${tBody}</tbody>
+          ${tFoot}
+        </table>
+      </div>
+
+      <div style="margin-top:12px;font-size:9px;color:#334155;line-height:1.6">
+        ℹ️ Forecast rates are calculated from all historical actuals in the system (Pearl-era aware). 
+        Rooms for forecasted months come from the Projection Planner. 
+        Budget column uses CPOR × rooms (same as Monthly Entry). 
+        Variance = Forecast vs Budget (green = under budget, red = over budget).
+      </div>
+    </div>`;
+}
+
+/* ── Print Forecast ── */
+function printForecast(){
+  const y     = _fcstY;
+  const rates = fcstHistRate(y);
+  const MS2   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const rows  = MS2.map((_,m)=>fcstRow(y,m,rates));
+
+  let totRooms=0,totRev=0,totLa=0,totOp=0,totPr=0;
+  rows.forEach(r=>{totRooms+=r.rooms;totRev+=r.rev;totLa+=r.la;totOp+=r.op;totPr+=r.pr;});
+  const totExp=totLa+totOp+totPr;
+
+  let budRev=0,budLa=0,budOp=0,budPr=0;
+  for(let m=0;m<12;m++){
+    const rs=getRooms(y,m);const b=bud(y,m,rs);
+    budRev+=(REV_BUD[y]?.[m]?.laB)||0;
+    budLa+=b.la;budOp+=b.op;budPr+=b.pr;
+  }
+  const budExp=budLa+budOp+budPr;
+  const varExp=totExp-budExp;
+  const varRev=totRev-budRev;
+
+  const tRows = rows.map((r,m)=>{
+    const b=bud(y,m,r.rooms);
+    const totE=r.la+r.op+r.pr;
+    const budE=b.la+b.op+b.pr;
+    const varE=totE-budE;
+    const type=r.isActual?'ACT':'FCST';
+    const varC=varE<=0?'#006644':'#cc0000';
+    return `<tr style="background:${m%2===0?'#f8f9fa':'#fff'}">
+      <td style="padding:5px 8px;font-weight:600;font-size:11px">${MS2[m]}</td>
+      <td style="padding:5px 8px;text-align:center;font-size:10px;font-weight:700;color:${r.isActual?'#006644':'#5b21b6'}">${type}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px">${r.rooms?r.rooms.toLocaleString():'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px;color:#5b21b6">${r.rev?fN(r.rev):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px">${r.la?fN(r.la):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px">${r.op?fN(r.op):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px">${r.pr?fN(r.pr):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px;font-weight:700">${totE?fN(totE):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px;color:#555">${budE?fN(budE):'—'}</td>
+      <td style="padding:5px 8px;text-align:right;font-size:11px;font-weight:700;color:${varC}">${budE?(varE>0?'+':'')+fN(varE):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+  <title>Year-End Forecast ${y} — FS Doha</title>
+  <style>
+    body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:0;color:#1a1a2e;background:#fff}
+    .hdr{background:linear-gradient(135deg,#0d1b2a,#1a3a5c);color:#fff;padding:20px 30px;display:flex;align-items:center;justify-content:space-between}
+    .hdr-title{font-size:20px;font-weight:700;letter-spacing:.03em}
+    .hdr-sub{font-size:11px;opacity:.7;margin-top:3px}
+    .hdr-badge{font-size:11px;color:#f5c542;font-weight:700;border:1px solid rgba(245,197,66,.4);border-radius:6px;padding:4px 12px}
+    .section{padding:20px 30px}
+    .section-title{font-size:10px;font-weight:700;letter-spacing:.08em;color:#64748b;margin-bottom:10px;text-transform:uppercase}
+    .rate-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+    .rate-box{background:#f8f9fa;border:1px solid #e2e8f0;border-radius:6px;padding:10px 16px;min-width:140px}
+    .rate-box .lbl{font-size:9px;color:#64748b;margin-bottom:3px}
+    .rate-box .val{font-size:15px;font-weight:700;color:#1a1a2e;font-family:'Courier New',monospace}
+    .sum-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+    .sum-box{background:#f8f9fa;border:1px solid #e2e8f0;border-radius:6px;padding:10px 16px;min-width:150px}
+    .sum-box .lbl{font-size:9px;color:#64748b;margin-bottom:3px}
+    .sum-box .val{font-size:16px;font-weight:700;font-family:'Courier New',monospace}
+    table{border-collapse:collapse;width:100%;font-size:11px}
+    th{background:#1a3a5c;color:#fff;padding:7px 8px;font-size:10px;font-weight:700}
+    th:first-child,th:nth-child(2){text-align:left}
+    th:not(:first-child):not(:nth-child(2)){text-align:right}
+    tr.total-row td{background:#1a3a5c!important;color:#fff;font-weight:700;padding:8px;font-size:12px}
+    .footer{padding:10px 30px 20px;font-size:9px;color:#94a3b8;border-top:1px solid #e2e8f0;margin-top:10px}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style></head><body>
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">📈 Year-End Forecast ${y} — FS Doha</div>
+      <div class="hdr-sub">Laundry Revenue &amp; Expenses · Actuals + Projected Remainder · Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div>
+    </div>
+    <div class="hdr-badge">RS BudgetPro</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Historical Rates Used (Pearl-Era Aware)</div>
+    <div class="rate-grid">
+      <div class="rate-box"><div class="lbl">RPOR — Revenue/Room</div><div class="val">QAR ${rates.rpor.toFixed(2)}</div></div>
+      <div class="rate-box"><div class="lbl">CPOR — Laundry Supplies</div><div class="val">QAR ${rates.cpor_la.toFixed(2)}</div></div>
+      <div class="rate-box"><div class="lbl">CPOR — Operating</div><div class="val">QAR ${rates.cpor_op.toFixed(2)}</div></div>
+      <div class="rate-box"><div class="lbl">CPOR — Printing</div><div class="val">QAR ${rates.cpor_pr.toFixed(2)}</div></div>
+      <div class="rate-box"><div class="lbl">Room Nights (Historical Basis)</div><div class="val">${rates.rooms.toLocaleString()}</div></div>
+    </div>
+
+    <div class="section-title">Full Year Summary</div>
+    <div class="sum-grid">
+      <div class="sum-box"><div class="lbl">Full Year Revenue Forecast</div><div class="val" style="color:#5b21b6">QAR ${fN(totRev)}</div><div style="font-size:9px;color:${varRev>=0?'#006644':'#cc0000'};margin-top:3px">vs Budget: ${varRev>=0?'+':''}${fN(varRev)}</div></div>
+      <div class="sum-box"><div class="lbl">Full Year Expense Forecast</div><div class="val" style="color:#0369a1">QAR ${fN(totExp)}</div><div style="font-size:9px;color:${varExp<=0?'#006644':'#cc0000'};margin-top:3px">vs Budget: ${varExp>0?'+':''}${fN(varExp)}</div></div>
+      <div class="sum-box"><div class="lbl">Total Rooms</div><div class="val">${totRooms.toLocaleString()}</div></div>
+    </div>
+
+    <div class="section-title">Month-by-Month Detail &nbsp;·&nbsp; ACT = actual &nbsp;·&nbsp; FCST = projected</div>
+    <table>
+      <thead><tr>
+        <th>Month</th><th>Type</th><th style="text-align:right">Rooms</th>
+        <th style="text-align:right">Revenue</th><th style="text-align:right">La Supplies</th>
+        <th style="text-align:right">Operating</th><th style="text-align:right">Printing</th>
+        <th style="text-align:right">Total Exp</th><th style="text-align:right">Bud Exp</th><th style="text-align:right">Variance</th>
+      </tr></thead>
+      <tbody>${tRows}</tbody>
+      <tr class="total-row">
+        <td colspan="2">FULL YEAR ${y}</td>
+        <td style="text-align:right">${totRooms.toLocaleString()}</td>
+        <td style="text-align:right">${fN(totRev)}</td>
+        <td style="text-align:right">${fN(totLa)}</td>
+        <td style="text-align:right">${fN(totOp)}</td>
+        <td style="text-align:right">${fN(totPr)}</td>
+        <td style="text-align:right">${fN(totExp)}</td>
+        <td style="text-align:right">${fN(budExp)}</td>
+        <td style="text-align:right;color:${varExp<=0?'#4ade80':'#fca5a5'}">${varExp>0?'+':''}${fN(varExp)}</td>
+      </tr>
+    </table>
+  </div>
+  <div class="footer">RS BudgetPro · Four Seasons Hotel Doha · Laundry Division · Forecast generated ${new Date().toLocaleString()}</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+
 /* Pearl-era aware average days:
    Only averages years whose Pearl status matches the budget year's Pearl status for that month.
    Pre-Pearl months (Jan–Jul 2024) only average against other pre-Pearl months.
@@ -13910,6 +14280,8 @@ window.addEventListener('beforeunload',saveAll);
     <div id="bwiz-body" style="padding:20px"></div>
   </div>
 </div>
+
+<div id="pane-forecast" class="pane"></div>
 
 <div id="pane-casual" class="pane">
   <div id="casual-body"></div>
