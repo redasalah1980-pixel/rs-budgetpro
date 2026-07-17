@@ -9109,7 +9109,7 @@ function printCasualPDF(){
   toast('Casual Labour PDF ready \u2713');
 }
 
-
+function buildBackupTab(){
   // Count data stats
   let months=0,notes=0,yearsWithData=[];
   YEARS.forEach(y=>{
@@ -9507,10 +9507,10 @@ function buildNavTabs(){
 /* ════════════════════════════════════════
    FIREBASE CONFIG + AUTH
    ════════════════════════════════════════ */
-const FB_BASE     = 'https://rs-budgetpro-default-rtdb.asia-southeast1.firebasedatabase.app';
-const FB_NODE     = 'rsBudgetPro/doha';
-const FB_UID      = 'F5SjbcVQT7RcxAjZBTlCHkUrudn2';
-const FB_EMAIL    = 'reda.salah1980@gmail.com';
+var   FB_BASE     = 'https://rs-budgetpro-default-rtdb.asia-southeast1.firebasedatabase.app';
+var   FB_NODE     = 'rsBudgetPro/doha';
+var   FB_UID      = 'F5SjbcVQT7RcxAjZBTlCHkUrudn2';
+var   FB_EMAIL    = 'reda.salah1980@gmail.com';
 let   _fbToken    = null;   // Firebase ID token
 let   _fbAuth     = false;  // authenticated flag
 
