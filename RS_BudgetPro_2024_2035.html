@@ -1134,6 +1134,7 @@ select option{background:var(--bg4)}
   <div class="ntab active" onclick="goTab(this,'entry')">Monthly Entry <span style="font-size:8px;font-weight:700;color:#00d4b8;background:rgba(0,212,184,.12);border:1px solid rgba(0,212,184,.25);border-radius:5px;padding:1px 4px;margin-left:2px">ACT</span></div>
   <div class="ntab" onclick="goTab(this,'project')">Projection Planner <span style="font-size:8px;font-weight:700;color:#f5c542;background:rgba(245,197,66,.12);border:1px solid rgba(245,197,66,.25);border-radius:5px;padding:1px 4px;margin-left:2px">FCST</span></div>
   <div class="ntab" onclick="goTab(this,'revenue')">Revenue</div>
+  <div class="ntab" onclick="goTab(this,'forecast')">📈 Year-End Forecast <span style="font-size:8px;font-weight:700;color:#a78bfa;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.25);border-radius:5px;padding:1px 4px;margin-left:2px">NEW</span></div>
   <div class="ntab" onclick="goTab(this,'increases')">Budget Adjustments</div>
   <div class="ntab" onclick="goTab(this,'settings')">Settings</div>
   <div class="nav-sep"></div>
@@ -2609,6 +2610,50 @@ function markSaved(){
   if(lbl){lbl.textContent='All changes saved';setTimeout(()=>{if(lbl)lbl.textContent='All changes saved'},3000)}
 }
 function manualSave(){saveAll();markSaved()}
+
+function forceCloudSync(){
+  const lbl=document.getElementById('as-label');
+  const dot=document.getElementById('as-dot');
+  if(lbl){lbl.style.color='';lbl.textContent='☁️ Syncing to cloud...';}
+  if(dot) dot.className='autosave-dot saving';
+  try{
+    localStorage.setItem(K_D,JSON.stringify(DATA));
+    localStorage.setItem(K_I,JSON.stringify(INCS));
+    localStorage.setItem(K_S,JSON.stringify(SETT));
+    localStorage.setItem(K_P,JSON.stringify(PROJ));
+    localStorage.setItem(K_REV,JSON.stringify(REV));
+    localStorage.setItem(K_REVB,JSON.stringify(REV_BUD));
+    localStorage.setItem(K_LK,JSON.stringify(LOCKS));
+    localStorage.setItem(K_RLK,JSON.stringify(REV_LOCKS));
+    localStorage.setItem(K_SI,JSON.stringify(SPEC));
+  }catch(e){}
+  let attempts=0;
+  function trySync(){
+    if(_fbAuth){
+      fbGetToken().then(token=>{
+        if(!token){if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ No auth token — try logging out and back in.';}return;}
+        const payload={DATA,INCS,SETT,PROJ,SPEC,REV,REV_BUD,LOCKS,REV_LOCKS,_savedAt:new Date().toISOString()};
+        db.ref(FB_NODE).set(payload)
+          .then(()=>{
+            fbSetConn(true);_fbLastSync=new Date();
+            if(dot){dot.className='autosave-dot saved';setTimeout(()=>dot.className='autosave-dot',4000);}
+            if(lbl){lbl.style.color='#4ade80';lbl.textContent='✅ Cloud sync successful!';
+              setTimeout(()=>{if(lbl){lbl.style.color='';lbl.textContent='All changes saved';}},4000);}
+          })
+          .catch(e=>{
+            if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ Firebase error: '+e.message;}
+            if(dot) dot.className='autosave-dot';
+          });
+      });
+    } else {
+      attempts++;
+      if(attempts<10){if(lbl)lbl.textContent='☁️ Waiting for auth... ('+attempts+'/10)';setTimeout(trySync,2000);}
+      else{if(lbl){lbl.style.color='#f87171';lbl.textContent='❌ Not authenticated — please log out and back in.';}if(dot)dot.className='autosave-dot';}
+    }
+  }
+  trySync();
+}
+
 function autoSave(){markUnsaved();clearTimeout(_at);_at=setTimeout(()=>{saveAll();markSaved()},1600)}
 function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),2200)}
 
@@ -2878,6 +2923,7 @@ function goTab(el,id){
   if(id==='pulse')    {buildPulseTab()}
   if(id==='scenario') {buildScenarioTab()}
   if(id==='casual')   {buildCasualTab()}
+  if(id==='forecast') {buildForecastTab()}
   if(id==='dashboard'){buildYP();buildDash()}
 }
 
@@ -8616,6 +8662,13 @@ let casualY=new Date().getFullYear();
 /* ════════════════════════════════════════
    CASUAL LABOUR — BUILD TAB
    ════════════════════════════════════════ */
+
+function buildForecastTab(){
+  const pane=document.getElementById('pane-forecast');
+  if(!pane) return;
+  pane.innerHTML='<div style="padding:24px"><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px">📈 Year-End Forecast</div><div style="color:var(--text2);font-size:13px">Coming soon — enter actuals in Monthly Entry and set Projection Planner rooms to enable this tab.</div></div>';
+}
+
 function buildCasualTab(){
   const el=document.getElementById('casual-body');
   if(!el) return;
@@ -13115,6 +13168,8 @@ window.addEventListener('beforeunload',saveAll);
     <div id="bwiz-body" style="padding:20px"></div>
   </div>
 </div>
+
+<div id="pane-forecast" class="pane"></div>
 
 <div id="pane-casual" class="pane">
   <div id="casual-body"></div>
